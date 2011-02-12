@@ -1,0 +1,8 @@
+reset master;
+call mtr.add_suppression("Failed during slave I/O thread initialization");
+stop slave;
+reset slave;
+SET GLOBAL debug="d,simulate_io_slave_error_on_init,simulate_sql_slave_error_on_init";
+start slave;
+Last_SQL_Error = Failed during slave thread initialization
+SET GLOBAL debug="";

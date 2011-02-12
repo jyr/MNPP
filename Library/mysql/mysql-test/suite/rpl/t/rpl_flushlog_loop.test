@@ -1,0 +1,65 @@
+# Testing if "flush logs" command bouncing resulting in logs created in a loop 
+# in case of bi-directional replication
+-- source include/master-slave.inc
+
+let $MYSQLD_DATADIR= `select @@datadir`;
+--replace_result $MYSQLD_DATADIR MYSQLD_DATADIR/
+show variables like 'relay_log%';
+
+connection slave;
+--disable_warnings
+stop slave;
+--enable_warnings
+--replace_result $MASTER_MYPORT MASTER_PORT
+eval change master to master_host='127.0.0.1',master_user='root',
+ master_password='',master_port=$MASTER_MYPORT;
+start slave;
+
+#
+#  Start replication slave -> master
+#
+connection master;
+--disable_warnings
+stop slave;
+--enable_warnings
+--replace_result $SLAVE_MYPORT SLAVE_PORT
+eval change master to master_host='127.0.0.1',master_user='root',
+ master_password='',master_port=$SLAVE_MYPORT;
+
+source include/start_slave.inc;
+
+#
+#  Flush logs of slave
+#
+# Create full loop by following way:
+# 1. Insert into t1 on master (1st).
+# 2. Insert into t1 on slave (2nd) when the event (1st) for t1 replicated.
+# 3. Master waits until the event (2nd) for t1 will be replicated.
+
+CREATE TABLE t1 (a INT KEY) ENGINE= MyISAM;
+let $wait_binlog_event= CREATE TABLE t1;
+--source include/wait_for_binlog_event.inc
+sync_slave_with_master;
+
+connection master;
+INSERT INTO t1 VALUE(1);
+FLUSH LOGS;
+sync_slave_with_master;
+
+INSERT INTO t1 VALUE(2);
+let $slave_param_value= query_get_value(SHOW MASTER STATUS, Position, 1);
+sync_slave_with_master master;
+
+#
+# Check that the master server's slave threads are still running and show
+# Relay_Log_File
+#
+--source include/check_slave_is_running.inc
+--let status_items= Relay_Log_File
+--source include/show_slave_status.inc
+
+--disable_query_log
+connection master;
+DROP TABLE t1;
+sync_slave_with_master;
+--enable_query_log

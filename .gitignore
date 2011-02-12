@@ -1,0 +1,10 @@
+Library/nginx/logs/access.log
+Library/nginx/logs/error.log
+Library/php/var/log/php-fpm.log
+logs/mysql_error_log.err
+logs/nginx/mepp.access.log
+logs/php/php-fpm.log
+run/nginx
+run/php-fpm.pid
+tmp/mysql/mysql.pid
+tmp/mysql/mysql.sock

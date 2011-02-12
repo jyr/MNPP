@@ -1,0 +1,30 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+create table t1 (n int);
+reset master;
+stop slave;
+change master to master_port=SLAVE_PORT;
+start slave;
+insert into t1 values (1);
+select * from t1;
+n
+1
+1
+stop slave;
+drop table t1;
+reset master;
+create table t1(n int);
+create table t2(n int);
+change master to master_port=MASTER_PORT;
+start slave until master_log_file='master-bin.000001', master_log_pos=UNTIL_POS;
+*** checking until postion execution: must be only t1 in the list ***
+show tables;
+Tables_in_test
+t1
+start slave sql_thread;
+drop table t1;
+drop table t2;

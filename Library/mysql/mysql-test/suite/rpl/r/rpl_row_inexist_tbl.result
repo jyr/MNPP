@@ -1,0 +1,21 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+==== Setup table on master but not on slave ====
+[on master]
+CREATE TABLE t1 (a INT);
+[on slave]
+DROP TABLE t1;
+==== Modify table on master ====
+[on master]
+INSERT INTO t1 VALUES (1);
+==== Verify error on slave ====
+[on slave]
+Last_SQL_Error = Error 'Table 'test.t1' doesn't exist' on opening tables
+==== Clean up ====
+include/stop_slave.inc
+[on master]
+DROP TABLE t1;
