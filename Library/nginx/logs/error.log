@@ -1,0 +1,8 @@
+2011/02/12 14:37:47 [emerg] 2784#0: unknown log format "main" in /Applications/MEPP/conf/nginx/sites-enabled/mepp.astrata.local:7
+2011/02/12 14:47:02 [notice] 2891#0: signal process started
+2011/02/12 14:50:12 [notice] 3035#0: signal process started
+2011/02/12 14:51:29 [notice] 3136#0: signal process started
+2011/02/12 14:51:29 [error] 3136#0: open() "/Applications/MEPP/tmp/nginx" failed (2: No such file or directory)
+2011/02/12 14:56:54 [notice] 3386#0: signal process started
+2011/02/12 14:59:49 [notice] 3535#0: signal process started
+2011/02/14 23:03:06 [notice] 12326#0: signal process started
