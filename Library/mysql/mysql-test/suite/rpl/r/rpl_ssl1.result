@@ -1,0 +1,59 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+grant replication slave on *.* to replssl@localhost require ssl;
+create table t1 (t int);
+stop slave;
+change master to master_user='replssl',master_password='';
+start slave;
+insert into t1 values (1);
+select * from t1;
+t
+stop slave;
+change master to master_ssl=1 , master_ssl_ca ='MYSQL_TEST_DIR/std_data/cacert.pem', master_ssl_cert='MYSQL_TEST_DIR/std_data/client-cert.pem', master_ssl_key='MYSQL_TEST_DIR/std_data/client-key.pem';
+start slave;
+select * from t1;
+t
+1
+Master_SSL_Allowed	Yes
+Master_SSL_CA_Path	
+Master_SSL_CA_File	MYSQL_TEST_DIR/std_data/cacert.pem
+Master_SSL_Cert	MYSQL_TEST_DIR/std_data/client-cert.pem
+Master_SSL_Key	MYSQL_TEST_DIR/std_data/client-key.pem
+Checking that both slave threads are running.
+stop slave;
+change master to master_user='root',master_password='', master_ssl=0;
+start slave;
+drop user replssl@localhost;
+drop table t1;
+Master_SSL_Allowed	No
+Master_SSL_CA_Path	
+Master_SSL_CA_File	MYSQL_TEST_DIR/std_data/cacert.pem
+Master_SSL_Cert	MYSQL_TEST_DIR/std_data/client-cert.pem
+Master_SSL_Key	MYSQL_TEST_DIR/std_data/client-key.pem
+Checking that both slave threads are running.
+stop slave;
+change master to
+master_host="localhost",
+master_ssl=1 ,
+master_ssl_ca ='MYSQL_TEST_DIR/std_data/cacert.pem',
+master_ssl_cert='MYSQL_TEST_DIR/std_data/client-cert.pem',
+master_ssl_key='MYSQL_TEST_DIR/std_data/client-key.pem',
+master_ssl_verify_server_cert=1;
+start slave;
+create table t1 (t int);
+insert into t1 values (1);
+on slave
+select * from t1;
+t
+1
+Master_SSL_Allowed	Yes
+Master_SSL_CA_Path	
+Master_SSL_CA_File	MYSQL_TEST_DIR/std_data/cacert.pem
+Master_SSL_Cert	MYSQL_TEST_DIR/std_data/client-cert.pem
+Master_SSL_Key	MYSQL_TEST_DIR/std_data/client-key.pem
+Checking that both slave threads are running.
+drop table t1;

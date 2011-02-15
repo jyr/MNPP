@@ -1,0 +1,24 @@
+# This test checks that the slave I/O thread refuses to start if slave
+# and master have the same server id (because this is a useless setup,
+# and otherwise SHOW SLAVE STATUS shows progress but all queries are
+# ignored, which has caught our customers), unless
+# --replicate-same-server-id.
+
+source include/master-slave.inc;
+connection slave;
+reset master;
+
+# replicate ourselves
+source include/stop_slave.inc;
+--replace_result $SLAVE_MYPORT SLAVE_PORT
+eval change master to master_port=$SLAVE_MYPORT;
+start slave;
+
+let $slave_param= Last_IO_Errno;                                          
+let $slave_param_value= 1593;
+source include/wait_for_slave_param.inc; 
+--echo *** must be having the replicate-same-server-id IO thread error ***
+let $last_io_errno= query_get_value("show slave status", Last_IO_Errno, 1);
+let $last_io_error= query_get_value("show slave status", Last_IO_Error, 1);
+echo Slave_IO_Errno= $last_io_errno;
+echo Slave_IO_Error= $last_io_error;
