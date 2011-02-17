@@ -4,7 +4,7 @@
 
 ##Features
 
-* Start / stop services globally 
+* Start / stop services global
 * Start / stop services individually
 * Open the default page MEPP
 * Set preferences - start  / stop global services

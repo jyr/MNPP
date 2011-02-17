@@ -1,0 +1,19 @@
+The principal author and maintainer of mcrypt is
+
+  Nikos Mavroyanopoulos <nmav@gnutls.org>
+
+
+Copyright holders in the mcrypt program are:
+
+- Timo Schulz <ts@winpt.org>
+  Own all of the OpenPGP related code (rfc2440.c)
+
+- Julianne Frances Haugh, Pavel Machek <pavel@ucw.cz>
+  Own the included getpass() functions (getpass.c)
+
+- Stefan Hetzl <shetzl@teleweb.at>
+  Owns the improved version of popen() used (popen.c)
+
+- Free Software Foundation
+  Owns the unix crypt code (ufc_crypt.c)
+
