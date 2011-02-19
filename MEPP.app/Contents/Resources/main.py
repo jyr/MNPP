@@ -18,6 +18,7 @@ sys.path.append("/Applications/MEPP/Library")
 
 # import modules containing classes required to start application and load MainMenu.nib
 import MEPPController
+import PreferencesController
 import MEPPAppDelegate
 
 

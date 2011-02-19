@@ -15,5 +15,5 @@ class MEPPAppDelegate(NSObject):
         NSLog("Application did finish launching.")
 
         self.meppController = MEPPController.alloc().init()
-        #self.meppController.showWindow_(self)
-        #self.meppController.checkSettings()
+        self.meppController.showWindow_(self)
+        self.meppController.checkSettings()

@@ -1,28 +1,32 @@
 #
 #   MEPPController.py
 #
-#   Created by Jair Gaxiola on 17/02/11.
+#   Created by Jair Gaxiola on 06/01/11.
 #   Copyright 2011 __MyCompanyName__. All rights reserved.
 #
 
 from Foundation import *
 from AppKit import *
 from Authorization import Authorization
+from PreferencesController import PreferencesController
+#from MEPPTasks import MEPPTasks
 
 import objc
+import os
+
 
 class MEPPController (NSWindowController):
-    preferences = objc.IBOutlet()
     startButton = objc.IBOutlet()
-    startMySQL = objc.IBOutlet()
-    startNginx = objc.IBOutlet()
-    startPHP = objc.IBOutlet()
     stopButton = objc.IBOutlet()
-    stopMySQL = objc.IBOutlet()
+    startNginx = objc.IBOutlet()
     stopNginx = objc.IBOutlet()
+    startMySQL = objc.IBOutlet()
+    stopMySQL = objc.IBOutlet()
+    startPHP = objc.IBOutlet()
     stopPHP = objc.IBOutlet()
+    preferences = objc.IBOutlet()
     window = objc.IBOutlet()
-
+	
     def init(self):
 		self = super(MEPPController, self).initWithWindowNibName_("MainMenu")
 		if self:
@@ -32,39 +36,42 @@ class MEPPController (NSWindowController):
 		return self
 		
     @objc.IBAction
-    def exit_(self, sender):
-		settings = NSUserDefaults.standardUserDefaults()
-		stopMEMP = settings.boolForKey_("stop")
-		
-		if stopMEMP:
-			self.stopServers_(self)
-
-		NSApp().terminate_(self)
-		
-    @objc.IBAction
-    def openPage_(self, sender):
-		urlMEPP = NSURL.URLWithString_("http://mepp.astrata.local/")
-		workspace = NSWorkspace.sharedWorkspace().openURL_(urlMEPP)
-		
-    @objc.IBAction
-    def preferences_(self, sender):
-		pass
-		
-    @objc.IBAction
-    def showPreferencesWindow_(self, sender):
-		self.preferencesController = PreferencesController.alloc().init()
-		self.preferencesController.showWindow_(self)
-		
-    @objc.IBAction
-    def startMySQL_(self, sender):
+    def startServers_(self, sender):
 		try:
-			startMySQL = self.path + "startMySQL"
-			self.auth.executeWithPrivileges(startMySQL)
+			startScript = self.path + "start"
+			self.auth.executeWithPrivileges(startScript)
+			self.startButton.setHidden_(YES)
+			self.stopButton.setHidden_(NO)
+			self.startNginx.setHidden_(YES)
+			self.stopNginx.setHidden_(NO)
 			self.startMySQL.setHidden_(YES)
 			self.stopMySQL.setHidden_(NO)
+			self.startPHP.setHidden_(YES)
+			self.stopPHP.setHidden_(NO)
 		except:
 			pass
-			
+		
+    @objc.IBAction
+    def stopServers_(self, sender):
+		try:
+			stopScript = self.path + "stop"
+			self.auth.executeWithPrivileges(stopScript)
+			self.startButton.setHidden_(NO)
+			self.stopButton.setHidden_(YES)
+			self.startNginx.setHidden_(NO)
+			self.stopNginx.setHidden_(YES)
+			self.startMySQL.setHidden_(NO)
+			self.stopMySQL.setHidden_(YES)
+			self.startPHP.setHidden_(NO)
+			self.stopPHP.setHidden_(YES)
+		except:
+			pass
+	
+    @objc.IBAction
+    def openPage_(self, sender):
+		urlMEPP = NSURL.URLWithString_("http://mepp.astrata.local")
+		workspace = NSWorkspace.sharedWorkspace().openURL_(urlMEPP)
+	
     @objc.IBAction
     def startNginx_(self, sender):
 		try:
@@ -74,6 +81,37 @@ class MEPPController (NSWindowController):
 			self.stopNginx.setHidden_(NO)
 		except:
 			pass
+	
+    @objc.IBAction
+    def stopNginx_(self, sender):
+		try:		
+			stopNginx = self.path + "stopNginx"
+			self.auth.executeWithPrivileges(stopNginx)
+			self.startNginx.setHidden_(NO)
+			self.stopNginx.setHidden_(YES)
+		except:
+			pass
+
+    @objc.IBAction
+    def startMySQL_(self, sender):
+		try:
+			startMySQL = self.path + "startMySQL"
+			self.auth.executeWithPrivileges(startMySQL)
+			self.startMySQL.setHidden_(YES)
+			self.stopMySQL.setHidden_(NO)
+		except:
+			pass
+	
+    @objc.IBAction
+    def stopMySQL_(self, sender):
+		try:
+			stopMySQL = self.path + "stopMySQL"
+			self.auth.executeWithPrivileges(stopMySQL)
+			self.startMySQL.setHidden_(NO)
+			self.stopMySQL.setHidden_(YES)
+		except:
+			pass
+
 			
     @objc.IBAction
     def startPHP_(self, sender):
@@ -84,37 +122,7 @@ class MEPPController (NSWindowController):
 			self.stopPHP.setHidden_(NO)
 		except:
 			pass
-			
-    @objc.IBAction
-    def startServers_(self, sender):
-		try:
-			startScript = self.path + "start"
-			self.auth.executeWithPrivileges(startScript)
-			self.startButton.setHidden_(YES)
-			self.stopButton.setHidden_(NO)
-		except:
-			pass
-			
-    @objc.IBAction
-    def stopMySQL_(self, sender):
-		try:
-			stopMySQL = self.path + "stopMySQL"
-			self.auth.executeWithPrivileges(stopMySQL)
-			self.startMySQL.setHidden_(NO)
-			self.stopMySQL.setHidden_(YES)
-		except:
-			pass
-			
-    @objc.IBAction
-    def stopNginx_(self, sender):
-		try:		
-			stopNginx = self.path + "stopNginx"
-			self.auth.executeWithPrivileges(stopNginx)
-			self.startNginx.setHidden_(NO)
-			self.stopNginx.setHidden_(YES)
-		except:
-			pass
-			
+	
     @objc.IBAction
     def stopPHP_(self, sender):
 		try:
@@ -124,13 +132,36 @@ class MEPPController (NSWindowController):
 			self.stopPHP.setHidden_(YES)
 		except:
 			pass
-			
+
     @objc.IBAction
-    def stopServers_(self, sender):
-		try:
-			stopScript = self.path + "stop"
-			self.auth.executeWithPrivileges(stopScript)
-			self.startButton.setHidden_(NO)
-			self.stopButton.setHidden_(YES)
-		except:
-			pass
+    def preferences_(self, sender):
+		PreferencesController.show()
+	
+    @objc.IBAction
+    def showPreferencesWindow_(self, sender):
+		self.preferencesController = PreferencesController.alloc().init()
+		self.preferencesController.showWindow_(self)
+
+    @objc.IBAction
+    def exit_(self, sender):
+		settings = NSUserDefaults.standardUserDefaults()
+		stopMEPP = settings.boolForKey_("stop")
+		
+		if stopMEPP:
+			self.stopServers_(self)
+
+		NSApp().terminate_(self)
+
+    def checkSettings(self):
+		#tasks = MEPPTasks()
+		#tasks.checkPorts()
+		#print tasks.services
+		settings = NSUserDefaults.standardUserDefaults()
+
+		startMEPP = settings.boolForKey_("start")
+		if startMEPP:
+			self.startServers_(self)
+		
+		openMEPP = settings.boolForKey_("open")
+		if openMEPP:
+			self.startServers_(self)
