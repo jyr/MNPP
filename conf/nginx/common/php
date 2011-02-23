@@ -1,5 +1,4 @@
 location ~ .php$ {
-    root           /Applications/MEPP/htdocs/mepp;
     fastcgi_pass   127.0.0.1:9000;
     fastcgi_index  index.php;
     include        /Applications/MEPP/conf/nginx/fastcgi_params;
