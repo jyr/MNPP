@@ -127,7 +127,7 @@
 /* #undef SIZEOF_CHAR */
 
 /* The number of bytes in a char *.  */
-/* #undef SIZEOF_CHAR_P */
+#define SIZEOF_CHAR_P 8
 
 /* The number of bytes in a int.  */
 #define SIZEOF_INT 4
@@ -187,7 +187,7 @@
 /* #undef HAVE_CRYPT_R */
 
 /* Define if you have the ctermid function.  */
-/* #undef HAVE_CTERMID */
+#define HAVE_CTERMID 1
 
 /* Define if you have the ctime_r function.  */
 #define HAVE_CTIME_R 1
@@ -229,13 +229,13 @@
 #define HAVE_GETCWD 1
 
 /* Define if you have the getgrgid_r function.  */
-/* #undef HAVE_GETGRGID_R */
+#define HAVE_GETGRGID_R 1
 
 /* Define if you have the getgrnam_r function.  */
 #define HAVE_GETGRNAM_R 1
 
 /* Define if you have the getgroups function.  */
-/* #undef HAVE_GETGROUPS */
+#define HAVE_GETGROUPS 1
 
 /* Define if you have the gethostname function.  */
 #define HAVE_GETHOSTNAME 1
@@ -250,7 +250,7 @@
 #define HAVE_GETOPT 1
 
 /* Define if you have the getpgid function.  */
-/* #undef HAVE_GETPGID */
+#define HAVE_GETPGID 1
 
 /* Define if you have the getpid function.  */
 #define HAVE_GETPID 1
@@ -271,7 +271,7 @@
 #define HAVE_GETPWUID_R 1
 
 /* Define if you have the getrlimit function.  */
-/* #undef HAVE_GETRLIMIT */
+#define HAVE_GETRLIMIT 1
 
 /* Define if you have the getrusage function.  */
 #define HAVE_GETRUSAGE 1
@@ -283,7 +283,7 @@
 #define HAVE_GETSERVBYPORT 1
 
 /* Define if you have the getsid function.  */
-/* #undef HAVE_GETSID */
+#define HAVE_GETSID 1
 
 /* Define if you have the gettimeofday function.  */
 #define HAVE_GETTIMEOFDAY 1
@@ -316,7 +316,7 @@
 #define HAVE_INET_PTON 1
 
 /* Define if you have the initgroups function.  */
-/* #undef HAVE_INITGROUPS */
+#define HAVE_INITGROUPS 1
 
 /* Define if you have the isascii function.  */
 #define HAVE_ISASCII 1
@@ -385,10 +385,10 @@
 /* #undef HAVE_MEMPCPY */
 
 /* Define if you have the mkfifo function.  */
-/* #undef HAVE_MKFIFO */
+#define HAVE_MKFIFO 1
 
 /* Define if you have the mknod function.  */
-/* #undef HAVE_MKNOD */
+#define HAVE_MKNOD 1
 
 /* Define if you have the mkstemp function.  */
 #define HAVE_MKSTEMP 1
@@ -400,19 +400,19 @@
 /* #undef HAVE_MREMAP */
 
 /* Define if you have the mysql_commit function.  */
-/* #undef HAVE_MYSQL_COMMIT */
+#define HAVE_MYSQL_COMMIT 1
 
 /* Define if you have the mysql_next_result function.  */
-/* #undef HAVE_MYSQL_NEXT_RESULT */
+#define HAVE_MYSQL_NEXT_RESULT 1
 
 /* Define if you have the mysql_sqlstate function.  */
-/* #undef HAVE_MYSQL_SQLSTATE */
+#define HAVE_MYSQL_SQLSTATE 1
 
 /* Define if you have the mysql_stmt_prepare function.  */
-/* #undef HAVE_MYSQL_STMT_PREPARE */
+#define HAVE_MYSQL_STMT_PREPARE 1
 
 /* Define if you have the nanosleep function.  */
-/* #undef HAVE_NANOSLEEP */
+#define HAVE_NANOSLEEP 1
 
 /* Define if you have the nice function.  */
 #define HAVE_NICE 1
@@ -448,13 +448,13 @@
 #define HAVE_SCANDIR 1
 
 /* Define if you have the setegid function.  */
-/* #undef HAVE_SETEGID */
+#define HAVE_SETEGID 1
 
 /* Define if you have the setenv function.  */
 #define HAVE_SETENV 1
 
 /* Define if you have the seteuid function.  */
-/* #undef HAVE_SETEUID */
+#define HAVE_SETEUID 1
 
 /* Define if you have the setitimer function.  */
 #define HAVE_SETITIMER 1
@@ -472,7 +472,7 @@
 /* #undef HAVE_SETPROCTITLE */
 
 /* Define if you have the setsid function.  */
-/* #undef HAVE_SETSID */
+#define HAVE_SETSID 1
 
 /* Define if you have the setsockopt function.  */
 #define HAVE_SETSOCKOPT 1
@@ -604,7 +604,7 @@
 #define HAVE_UTIME 1
 
 /* Define if you have the utimes function.  */
-/* #undef HAVE_UTIMES */
+#define HAVE_UTIMES 1
 
 /* Define if you have the vasprintf function.  */
 #define HAVE_VASPRINTF 1
@@ -823,7 +823,7 @@
 #define HAVE_TERMIOS_H 1
 
 /* Define if you have the <time.h> header file.  */
-/* #undef HAVE_TIME_H */
+#define HAVE_TIME_H 1
 
 /* Define if you have the <tuxmodule.h> header file.  */
 /* #undef HAVE_TUXMODULE_H */
@@ -1177,7 +1177,7 @@
 #define HAVE_SOCKADDR_SA_LEN 1
 
 /*   */
-/* #undef HAVE_NANOSLEEP */
+#define HAVE_NANOSLEEP 1
 
 /*   */
 /* #undef HAVE_LIBRT */
@@ -1315,7 +1315,7 @@
 /* #undef SQLITE_OMIT_LOAD_EXTENSION */
 
 /*   */
-/* #undef HAVE_SQLITE3 */
+#define HAVE_SQLITE3 1
 
 /* Whether to build sqlite3 as dynamic module */
 /* #undef COMPILE_DL_SQLITE3 */
@@ -1345,7 +1345,7 @@
 /* #undef COMPILE_DL_CALENDAR */
 
 /*   */
-/* #undef HAVE_CTYPE */
+#define HAVE_CTYPE 1
 
 /* Whether to build ctype as dynamic module */
 /* #undef COMPILE_DL_CTYPE */
@@ -1732,52 +1732,52 @@
 /* #undef COMPILE_DL_HASH */
 
 /*   */
-/* #undef HAVE_LIBICONV */
+#define HAVE_LIBICONV 1
 
 /*   */
 /* #undef HAVE_GICONV_H */
 
 /*   */
-/* #undef HAVE_LIBICONV */
+#define HAVE_LIBICONV 1
 
 /* iconv() is aliased to libiconv() in -liconv */
-/* #undef ICONV_ALIASED_LIBICONV */
+#define ICONV_ALIASED_LIBICONV 1
 
 /*   */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Which iconv implementation to use */
-/* #undef PHP_ICONV_IMPL */
+#define PHP_ICONV_IMPL "libiconv"
 
 /* Konstantin Chuguev's iconv implementation */
 /* #undef HAVE_BSD_ICONV */
 
 /* Which iconv implementation to use */
-/* #undef PHP_ICONV_IMPL */
+#define PHP_ICONV_IMPL "libiconv"
 
 /* glibc's iconv implementation */
 /* #undef HAVE_GLIBC_ICONV */
 
 /* Which iconv implementation to use */
-/* #undef PHP_ICONV_IMPL */
+#define PHP_ICONV_IMPL "libiconv"
 
 /* IBM iconv implementation */
 /* #undef HAVE_IBM_ICONV */
 
 /* Which iconv implementation to use */
-/* #undef PHP_ICONV_IMPL */
+#define PHP_ICONV_IMPL "libiconv"
 
 /* Whether iconv supports error no or not */
-/* #undef ICONV_SUPPORTS_ERRNO */
+#define ICONV_SUPPORTS_ERRNO 1
 
 /* Whether iconv supports error no or not */
-/* #undef ICONV_SUPPORTS_ERRNO */
+#define ICONV_SUPPORTS_ERRNO 1
 
 /* Whether iconv supports error no or not */
-/* #undef ICONV_SUPPORTS_ERRNO */
+#define ICONV_SUPPORTS_ERRNO 1
 
 /* Path to iconv.h */
-/* #undef PHP_ICONV_H_PATH */
+#define PHP_ICONV_H_PATH </Applications/MEPP/Library/libiconv/include/iconv.h>
 
 /* Whether to build iconv as dynamic module */
 /* #undef COMPILE_DL_ICONV */
@@ -1846,7 +1846,7 @@
 /* #undef COMPILE_DL_INTL */
 
 /* whether to enable JavaScript Object Serialization support */
-/* #undef HAVE_JSON */
+#define HAVE_JSON 1 
 
 /* Whether to build json as dynamic module */
 /* #undef COMPILE_DL_JSON */
@@ -1921,7 +1921,7 @@
 #define HAVE_LIBMCRYPT 1
 
 /* Whether to build mcrypt as dynamic module */
-#define COMPILE_DL_MCRYPT 1
+/* #undef COMPILE_DL_MCRYPT */
 
 /* Whether to build mssql as dynamic module */
 /* #undef COMPILE_DL_MSSQL */
@@ -2122,7 +2122,7 @@
 #define HAVE_MYSQL 1
 
 /*   */
-/* #undef PDO_MYSQL_UNIX_ADDR */
+#define PDO_MYSQL_UNIX_ADDR "/Applications/MEPP/tmp/mysql/mysql.sock"
 
 /* Whether to build pdo_mysql as dynamic module */
 /* #undef COMPILE_DL_PDO_MYSQL */
@@ -2344,19 +2344,19 @@
 /* #undef COMPILE_DL_PHAR */
 
 /*   */
-/* #undef PHAR_HASH_OK */
+#define PHAR_HASH_OK 1
 
 /*   */
-/* #undef PHAR_HAVE_OPENSSL */
+#define PHAR_HAVE_OPENSSL 1
 
 /* whether to include POSIX-like functions */
-/* #undef HAVE_POSIX */
+#define HAVE_POSIX 1
 
 /* Whether to build posix as dynamic module */
 /* #undef COMPILE_DL_POSIX */
 
 /* Whether you have a working ttyname_r */
-/* #undef HAVE_TTYNAME_R */
+#define HAVE_TTYNAME_R 1
 
 /* Wether struct utsname has domainname */
 /* #undef HAVE_UTSNAME_DOMAINNAME */
@@ -2395,13 +2395,13 @@
 /* #undef COMPILE_DL_REFLECTION */
 
 /*   */
-/* #undef HAVE_PWRITE */
+#define HAVE_PWRITE 1
 
 /* whether pwrite64 is default */
 /* #undef PHP_PWRITE_64 */
 
 /*   */
-/* #undef HAVE_PREAD */
+#define HAVE_PREAD 1
 
 /* whether pread64 is default */
 /* #undef PHP_PREAD_64 */
@@ -2410,7 +2410,7 @@
 /* #undef COMPILE_DL_SESSION */
 
 /*   */
-/* #undef HAVE_PHP_SESSION */
+#define HAVE_PHP_SESSION 1
 
 /* Whether you have libmm */
 /* #undef HAVE_LIBMM */
@@ -2425,7 +2425,7 @@
 #define HAVE_LIBXML 1
 
 /*   */
-/* #undef HAVE_SIMPLEXML */
+#define HAVE_SIMPLEXML 1
 
 /* Whether to build simplexml as dynamic module */
 /* #undef COMPILE_DL_SIMPLEXML */
@@ -2476,13 +2476,13 @@
 /* #undef COMPILE_DL_SPL */
 
 /* Have PDO */
-/* #undef PHP_SQLITE2_HAVE_PDO */
+#define PHP_SQLITE2_HAVE_PDO 1
 
 /* Whether to build sqlite as dynamic module */
 /* #undef COMPILE_DL_SQLITE */
 
 /* Size of a pointer */
-/* #undef SQLITE_PTR_SZ */
+#define SQLITE_PTR_SZ SIZEOF_CHAR_P
 
 /*   */
 /* #undef SQLITE_UTF8 */
@@ -2737,13 +2737,13 @@
 /* #undef COMPILE_DL_XML */
 
 /*   */
-/* #undef HAVE_XML */
+#define HAVE_XML 1
 
 /*   */
 #define HAVE_LIBXML 1
 
 /*   */
-/* #undef HAVE_XMLREADER */
+#define HAVE_XMLREADER 1
 
 /* Whether to build xmlreader as dynamic module */
 /* #undef COMPILE_DL_XMLREADER */
@@ -2758,19 +2758,19 @@
 /* #undef HAVE_LIBEXPAT */
 
 /*   */
-/* #undef HAVE_LIBICONV */
+#define HAVE_LIBICONV 1
 
 /*   */
 /* #undef HAVE_GICONV_H */
 
 /*   */
-/* #undef HAVE_LIBICONV */
+#define HAVE_LIBICONV 1
 
 /* iconv() is aliased to libiconv() in -liconv */
-/* #undef ICONV_ALIASED_LIBICONV */
+#define ICONV_ALIASED_LIBICONV 1
 
 /*   */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /*   */
 /* #undef UNDEF_THREADS_HACK */
@@ -2785,7 +2785,7 @@
 #define HAVE_LIBXML 1
 
 /*   */
-/* #undef HAVE_XMLWRITER */
+#define HAVE_XMLWRITER 1
 
 /* Whether to build xmlwriter as dynamic module */
 /* #undef COMPILE_DL_XMLWRITER */
@@ -2899,7 +2899,7 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-02-12"
+#define PHP_BUILD_DATE "2011-02-25"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"

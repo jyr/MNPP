@@ -1,0 +1,26 @@
+location / {
+    try_files $uri $uri/ /index.php?$args; 
+    expires 30d;
+}
+
+# set a nice expire for assets
+location ~* "^.+\.(jpe?g|gif|css|png|js|ico|pdf|zip|tar|t?gz|mp3|wav|swf)$" {
+    expires    max;
+    add_header Cache-Control public;
+}
+
+# the downloader has its own index.php that needs to be used
+location ~* ^(/downloader|/js|/404|/report)(.*) {
+    include        /Applications/MEPP/conf/nginx/fastcgi_params;
+    fastcgi_index index.php;
+    fastcgi_param  SCRIPT_FILENAME  $document_root$1/index.php$1;
+    fastcgi_read_timeout 600;
+    fastcgi_pass  127.0.0.1:9000;
+}
+
+location ~ \.php/ { ## Forward paths like /js/index.php/x.js to relevant handler
+    rewrite ^(.*\.php)/ $1 last;
+}
+
+include /Applications/MEPP/conf/nginx/common/php;
+

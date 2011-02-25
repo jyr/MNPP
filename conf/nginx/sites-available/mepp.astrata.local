@@ -1,6 +1,7 @@
 server {
     listen       80;
     server_name  mepp.astrata.local;
+    root   /Applications/MEPP/htdocs/mepp;
 
     #charset koi8-r;
 
@@ -8,7 +9,6 @@ server {
     error_log  /Applications/MEPP/logs/nginx/mepp.access.log;
     
     location / {
-        root   /Applications/MEPP/htdocs/mepp;
         index  index.html index.htm index.php;
     }
 
