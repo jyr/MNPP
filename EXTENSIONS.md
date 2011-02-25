@@ -16,4 +16,5 @@
 - gettext-0.18.1.1
 - libmcrypt-2.5.8
 - mcrypt-2.6.8
+- PDO_MYSQL-1.0.2
 

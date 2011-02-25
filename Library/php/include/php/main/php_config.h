@@ -400,16 +400,16 @@
 /* #undef HAVE_MREMAP */
 
 /* Define if you have the mysql_commit function.  */
-/* #undef HAVE_MYSQL_COMMIT */
+#define HAVE_MYSQL_COMMIT 1
 
 /* Define if you have the mysql_next_result function.  */
-/* #undef HAVE_MYSQL_NEXT_RESULT */
+#define HAVE_MYSQL_NEXT_RESULT 1
 
 /* Define if you have the mysql_sqlstate function.  */
-/* #undef HAVE_MYSQL_SQLSTATE */
+#define HAVE_MYSQL_SQLSTATE 1
 
 /* Define if you have the mysql_stmt_prepare function.  */
-/* #undef HAVE_MYSQL_STMT_PREPARE */
+#define HAVE_MYSQL_STMT_PREPARE 1
 
 /* Define if you have the nanosleep function.  */
 #define HAVE_NANOSLEEP 1
@@ -1921,7 +1921,7 @@
 #define HAVE_LIBMCRYPT 1
 
 /* Whether to build mcrypt as dynamic module */
-#define COMPILE_DL_MCRYPT 1
+/* #undef COMPILE_DL_MCRYPT */
 
 /* Whether to build mssql as dynamic module */
 /* #undef COMPILE_DL_MSSQL */
@@ -2122,7 +2122,7 @@
 #define HAVE_MYSQL 1
 
 /*   */
-/* #undef PDO_MYSQL_UNIX_ADDR */
+#define PDO_MYSQL_UNIX_ADDR "/Applications/MEPP/tmp/mysql/mysql.sock"
 
 /* Whether to build pdo_mysql as dynamic module */
 /* #undef COMPILE_DL_PDO_MYSQL */
@@ -2899,7 +2899,7 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-02-23"
+#define PHP_BUILD_DATE "2011-02-25"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
