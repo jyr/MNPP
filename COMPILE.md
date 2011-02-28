@@ -77,6 +77,7 @@ make
 make install
 
 PDO_MYSQL
+---
 cd PDO_MYSQL-1.0.2/
 phpize
 ./configure --with-pdo-mysql=shared,/Applications/MEPP/Library/mysql/

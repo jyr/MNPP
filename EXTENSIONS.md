@@ -2,6 +2,7 @@
 * Percona-Server-5.1.54-rel12.5
 * PHP 5.3.5
 * Nginx 0.8.54
+* phpMyAdmin-3.3.9.2
 
 
 #Installed libraries
