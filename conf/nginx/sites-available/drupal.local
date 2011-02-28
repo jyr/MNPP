@@ -1,0 +1,10 @@
+server {
+    listen       80;
+    server_name  drupal.local;
+    root   /Applications/MEPP/htdocs/drupal7;
+
+    access_log  /Applications/MEPP/logs/nginx/drupal7.access.log;
+    error_log  /Applications/MEPP/logs/nginx/drupal7.error.log;
+    
+    include /Applications/MEPP/conf/nginx/common/drupal; 
+}
