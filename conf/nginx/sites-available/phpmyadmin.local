@@ -1,0 +1,23 @@
+server {
+    listen       80;
+    server_name  phpmyadmin.local;
+    root   /Applications/MEPP/htdocs/phpmyadmin;
+
+    #charset koi8-r;
+
+    access_log  /Applications/MEPP/logs/nginx/phpmyadmin.access.log;
+    error_log  /Applications/MEPP/logs/nginx/phpmyadmin.error.log;
+    
+    location / {
+        index  index.html index.htm index.php;
+    }
+
+    #error_page  404              /404.html;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+    
+    include /Applications/MEPP/conf/nginx/common/php;
+}
