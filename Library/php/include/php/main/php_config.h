@@ -1921,7 +1921,7 @@
 #define HAVE_LIBMCRYPT 1
 
 /* Whether to build mcrypt as dynamic module */
-/* #undef COMPILE_DL_MCRYPT */
+#define COMPILE_DL_MCRYPT 1
 
 /* Whether to build mssql as dynamic module */
 /* #undef COMPILE_DL_MSSQL */
@@ -2899,7 +2899,7 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-02-25"
+#define PHP_BUILD_DATE "2011-03-05"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
