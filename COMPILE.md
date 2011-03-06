@@ -84,7 +84,22 @@ phpize
 make
 cp modules/pdo_mysql.so /Applications/MEPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626/
 
+Libevent
+---
+./configure --prefix=/Applications/MEPP/Library/libevent
+make
+make install
 
+MEMCACHED
+---
+./configure --prefix=/Applications/MEPP/Library/memcached --with-libevent=/Applications/MEPP/Library/libevent/
+make
+make install
+
+PHP-MEMCACHE http://pecl.php.net/package/memcache
+phpize && ./configure --enable-memcache && make
+cp modules/memcache.so /Applications/MEPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626
+add extension=memcache.so in php.ini
 
 PHP
 ---
