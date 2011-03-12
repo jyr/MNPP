@@ -18,4 +18,7 @@
 - libmcrypt-2.5.8
 - mcrypt-2.6.8
 - PDO_MYSQL-1.0.2
+- Libevent-2.0.10
+- Memcached-1.4.5
+- PHP-MEMCACHE-3.0.5
 
