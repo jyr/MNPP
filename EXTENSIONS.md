@@ -21,4 +21,4 @@
 - Libevent-2.0.10
 - Memcached-1.4.5
 - PHP-MEMCACHE-3.0.5
-
+- APC 3.1.7
