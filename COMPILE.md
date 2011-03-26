@@ -101,6 +101,17 @@ phpize && ./configure --enable-memcache && make
 cp modules/memcache.so /Applications/MEPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626
 add extension=memcache.so in php.ini
 
+APC
+---
+APC http://pecl.php.net/package/APC
+phpize
+
+MACOSX_DEPLOYMENT_TARGET=10.6 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --with-php-config=/Applications/MEPP/Library/php/bin/php-config
+make
+cp modules/apc.so /Applications/MEPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626
+add extension=memcache.so in php.ini
+
+
 PHP
 ---
 ./configure --prefix=/Applications/MEPP/Library/php --exec-prefix=/Applications/MEPP/Library/php --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl=/Applications/MEPP/Library/curl --with-gd=/Applications/MEPP/Library/gd --with-gettext=shared,/Applications/MEPP/Library/gettext --with-freetype-dir=/Applications/MEPP/Library/freetype --with-jpeg-dir=/Applications/MEPP/Library/jpeg --with-libxml-dir=/Applications/MEPP/Library/libxml --with-xsl=/Applications/MEPP/Library/libxslt --with-mcrypt=shared,/Applications/MEPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MEPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MEPP/Library/mysql/bin/mysql_config  --with-openssl --with-png-dir=/Applications/MEPP/Library/libpng --with-readline --with-xpm-dir=/Applications/MEPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MEPP/conf/php5 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MEPP/Library/libiconv --with-pdo-mysql=/Applications/MEPP/Library/mysql/bin/mysql_config
