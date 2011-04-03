@@ -32,7 +32,7 @@
 [client]
 #password	= [your_password]
 port		= 3306
-socket		= /Applications/MEPP/tmp/mysql/mysql.sock
+socket		= /Applications/MNPP/tmp/mysql/mysql.sock
 
 # *** Application-specific options follow here ***
 
@@ -43,7 +43,7 @@ socket		= /Applications/MEPP/tmp/mysql/mysql.sock
 
 # generic configuration options
 port		= 3306
-socket		= /Applications/MEPP/tmp/mysql/mysql.sock
+socket		= /Applications/MNPP/tmp/mysql/mysql.sock
 
 # back_log is the number of connections the operating system can keep in
 # the listen queue, before the MySQL connection manager thread has

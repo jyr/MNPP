@@ -32,4 +32,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Applications/MEMP/Library/mcrypt/lib'
+libdir='/Applications/MNPP/Library/mcrypt/lib'

@@ -36,7 +36,7 @@ location @rewrite {
         rewrite ^/(.*)$ /index.php?q=$1;
 }
 
-include /Applications/MEPP/conf/nginx/common/php;
+include /Applications/MNPP/conf/nginx/common/php;
 
 # Fighting with ImageCache? This little gem is amazing.
 location ~ ^/sites/.*/files/imagecache/ {

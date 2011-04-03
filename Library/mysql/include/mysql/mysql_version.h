@@ -16,7 +16,7 @@
 #define MYSQL_VERSION_ID		50154
 #define MYSQL_PORT			3306
 #define MYSQL_PORT_DEFAULT		0
-#define MYSQL_UNIX_ADDR			"/Applications/MEPP/tmp/mysql/mysql.sock"
+#define MYSQL_UNIX_ADDR			"/Applications/MNPP/tmp/mysql/mysql.sock"
 #define MYSQL_CONFIG_NAME		"my"
 #define MYSQL_COMPILATION_COMMENT	"Source distribution"
 

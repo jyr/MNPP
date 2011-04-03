@@ -1,12 +1,12 @@
 server {
     listen       80;
     server_name  phpmyadmin.local;
-    root   /Applications/MEPP/htdocs/phpmyadmin;
+    root   /Applications/MNPP/htdocs/phpmyadmin;
 
     #charset koi8-r;
 
-    access_log  /Applications/MEPP/logs/nginx/phpmyadmin.access.log;
-    error_log  /Applications/MEPP/logs/nginx/phpmyadmin.error.log;
+    access_log  /Applications/MNPP/logs/nginx/phpmyadmin.access.log;
+    error_log  /Applications/MNPP/logs/nginx/phpmyadmin.error.log;
     
     location / {
         index  index.html index.htm index.php;
@@ -19,5 +19,5 @@ server {
         root   html;
     }
     
-    include /Applications/MEPP/conf/nginx/common/php;
+    include /Applications/MNPP/conf/nginx/common/php;
 }

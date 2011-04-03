@@ -2,6 +2,6 @@
 
 int main()
 {
-    system("sh /Applications/MEPP/init/mysql.sh start");
+    system("sh /Applications/MNPP/init/mysql.sh start");
     return 0;
 }

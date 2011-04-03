@@ -1,6 +1,6 @@
 #! /bin/sh
 
-prefix=/Applications/MEPP/Library/libxslt
+prefix=/Applications/MNPP/Library/libxslt
 exec_prefix=${prefix}
 exec_prefix_set=no
 includedir=${prefix}/include
@@ -65,7 +65,7 @@ while test $# -gt 0; do
 	;;
 
     --plugins)
-	echo /Applications/MEPP/Library/libxslt/lib/libxslt-plugins
+	echo /Applications/MNPP/Library/libxslt/lib/libxslt-plugins
 	exit 0
 	;;
 

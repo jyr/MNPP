@@ -1,12 +1,18 @@
-#MEPP = Mac Nginx Percona PHP.
-* Authors: [Jair Gaxiola](https://github.com/jyr)
-* Contributors: [Astrata](http://astrata.mx)
+#MNPP  Mac + Nginx + Percona + PHP
+###A high performance web server in a one-click installer.
+
+## Contributors
+**This project is currently maintained by the following people:**    
+
+[Jair Gaxiola](https://github.com/jyr) (Core developer)    
+[César Salazar](http://cesarsalazar.mx/)    
+[Astrata Software](http://astrata.mx)
 
 ##Features
 
 * Start / stop services global
 * Start / stop services individually
-* Open the default page MEPP
+* Open the default page MNPP
 * Set preferences - start  / stop global services
 
 ##Arch
@@ -15,20 +21,20 @@
 
 ##Runs from console
 
-### MEPP
+### MNPP
 
-    sudo /Applications/MEPP/init/start
-    sudo /Applications/MEPP/init/stop
+    sudo /Applications/MNPP/init/start
+    sudo /Applications/MNPP/init/stop
 
 ### PHP
-    sudo /Applications/MEPP/init/startPHP
-    sudo /Applications/MEPP/init/stopPHP
+    sudo /Applications/MNPP/init/startPHP
+    sudo /Applications/MNPP/init/stopPHP
 
 ### NGINX
 
-    sudo /Applications/MEPP/init/startNginx
-    sudo /Applications/MEPP/init/stopNginx
+    sudo /Applications/MNPP/init/startNginx
+    sudo /Applications/MNPP/init/stopNginx
 
 ### MySQL
-    sudo /Applications/MEPP/init/startMySQL
-    sudo /Applications/MEPP/init/stopMySQL
+    sudo /Applications/MNPP/init/startMySQL
+    sudo /Applications/MNPP/init/stopMySQL

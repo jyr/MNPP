@@ -1,4 +1,4 @@
-prefix=/Applications/MEPP/Library/freetype
+prefix=/Applications/MNPP/Library/freetype
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

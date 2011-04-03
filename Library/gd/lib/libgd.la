@@ -32,4 +32,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Applications/MEPP/Library/gd/lib'
+libdir='/Applications/MNPP/Library/gd/lib'

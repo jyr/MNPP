@@ -2,6 +2,6 @@
 
 int main()
 {
-    system("sh /Applications/MEPP/init/nginx.sh start");
+    system("sh /Applications/MNPP/init/nginx.sh start");
     return 0;
 }

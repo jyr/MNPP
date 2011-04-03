@@ -1,10 +1,10 @@
 server {
     listen       80;
     server_name marianka.local;
-    root   /Applications/MEPP/htdocs/marianka;
+    root   /Applications/MNPP/htdocs/marianka;
     
-    access_log  /Applications/MEPP/logs/nginx/marianka.access.log;
-    error_log  /Applications/MEPP/logs/nginx/marianka.error.log;
+    access_log  /Applications/MNPP/logs/nginx/marianka.access.log;
+    error_log  /Applications/MNPP/logs/nginx/marianka.error.log;
 
     index  index.html index.htm index.php;
     
@@ -15,6 +15,6 @@ server {
         root   html;
     }
 
-    include /Applications/MEPP/conf/nginx/common/magento;
+    include /Applications/MNPP/conf/nginx/common/magento;
  
 }

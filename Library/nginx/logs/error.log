@@ -6,3 +6,39 @@
 2011/02/12 14:56:54 [notice] 3386#0: signal process started
 2011/02/12 14:59:49 [notice] 3535#0: signal process started
 2011/02/14 23:03:06 [notice] 12326#0: signal process started
+2011/04/02 21:33:53 [notice] 5039#0: signal process started
+2011/04/02 21:36:35 [notice] 5058#0: signal process started
+2011/04/02 21:36:35 [error] 5058#0: open() "/Applications/MEPP/run/nginx" failed (2: No such file or directory)
+2011/04/02 21:38:03 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:38:05 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:38:05 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:38:06 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:38:06 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:38:06 [error] 5109#0: *1 open() "/Applications/MEPP/Library/nginx/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "mnpp.astrata.local"
+2011/04/02 21:39:37 [notice] 5205#0: signal process started
+2011/04/02 21:55:31 [emerg] 5547#0: open() "/Applications/MEPP/conf/nginx/sites-enabled/mepp.astrata.local" failed (2: No such file or directory) in /Applications/MEPP/conf/nginx/nginx.conf:16
+2011/04/02 21:59:26 [emerg] 5586#0: open() "/Applications/MEPP/conf/nginx/sites-enabled/mepp.astrata.local" failed (2: No such file or directory) in /Applications/MEPP/conf/nginx/nginx.conf:16
+2011/04/02 22:06:12 [emerg] 5803#0: open() "/Applications/MEPP/conf/nginx/sites-enabled/mepp.astrata.local" failed (2: No such file or directory) in /Applications/MEPP/conf/nginx/nginx.conf:16
+2011/04/02 22:09:14 [emerg] 5867#0: open() "/Applications/MEPP/conf/nginx/sites-enabled/mepp.astrata.local" failed (2: No such file or directory) in /Applications/MEPP/conf/nginx/nginx.conf:16
+2011/04/02 22:17:19 [notice] 5982#0: signal process started
+2011/04/02 22:17:19 [alert] 5982#0: kill(5210, 15) failed (3: No such process)
+2011/04/02 23:04:08 [emerg] 6738#0: bind() to 0.0.0.0:80 failed (48: Address already in use)
+2011/04/02 23:04:08 [emerg] 6738#0: bind() to 0.0.0.0:80 failed (48: Address already in use)
+2011/04/02 23:04:08 [emerg] 6738#0: bind() to 0.0.0.0:80 failed (48: Address already in use)
+2011/04/02 23:04:08 [emerg] 6738#0: bind() to 0.0.0.0:80 failed (48: Address already in use)
+2011/04/02 23:04:08 [emerg] 6738#0: bind() to 0.0.0.0:80 failed (48: Address already in use)
+2011/04/02 23:04:08 [emerg] 6738#0: still could not bind()
+2011/04/02 23:04:39 [notice] 6785#0: signal process started
+2011/04/02 23:11:36 [notice] 6806#0: signal process started
+2011/04/02 23:11:36 [error] 6806#0: open() "/Applications/MEPP/run/nginx" failed (2: No such file or directory)
+2011/04/02 23:14:17 [error] 6917#0: *10 kevent() reported about an closed connection (61: Connection refused) while reading response header from upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:18 [error] 6917#0: *8 kevent() reported about an closed connection (61: Connection refused) while reading response header from upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:18 [error] 6917#0: *10 kevent() reported about an closed connection (61: Connection refused) while reading response header from upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:19 [error] 6917#0: *8 kevent() reported about an closed connection (61: Connection refused) while reading response header from upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:19 [error] 6917#0: *10 kevent() reported that connect() failed (61: Connection refused) while connecting to upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:19 [error] 6917#0: *8 kevent() reported that connect() failed (61: Connection refused) while connecting to upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:19 [error] 6917#0: *10 kevent() reported about an closed connection (61: Connection refused) while reading response header from upstream, client: 127.0.0.1, server: localhost, request: "GET /info.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "127.0.0.1", referrer: "http://mnpp.astrata.local/"
+2011/04/02 23:14:21 [notice] 6972#0: signal process started
+2011/04/02 23:34:48 [notice] 7414#0: signal process started
+2011/04/02 23:36:09 [notice] 7438#0: signal process started
+2011/04/03 01:26:39 [notice] 64645#0: signal process started

@@ -1,6 +1,6 @@
 #libevent pkg-config source file
 
-prefix=/Applications/MEPP/Library/libevent
+prefix=/Applications/MNPP/Library/libevent
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

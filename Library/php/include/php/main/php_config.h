@@ -1777,7 +1777,7 @@
 #define ICONV_SUPPORTS_ERRNO 1
 
 /* Path to iconv.h */
-#define PHP_ICONV_H_PATH </Applications/MEPP/Library/libiconv/include/iconv.h>
+#define PHP_ICONV_H_PATH </Applications/MNPP/Library/libiconv/include/iconv.h>
 
 /* Whether to build iconv as dynamic module */
 /* #undef COMPILE_DL_ICONV */
@@ -2122,7 +2122,7 @@
 #define HAVE_MYSQL 1
 
 /*   */
-#define PDO_MYSQL_UNIX_ADDR "/Applications/MEPP/tmp/mysql/mysql.sock"
+#define PDO_MYSQL_UNIX_ADDR "/Applications/MNPP/tmp/mysql/mysql.sock"
 
 /* Whether to build pdo_mysql as dynamic module */
 /* #undef COMPILE_DL_PDO_MYSQL */
@@ -2899,16 +2899,16 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-03-25"
+#define PHP_BUILD_DATE "2011-04-03"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
 
 /* hardcode for each of the cross compiler host */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.6.0 Darwin Kernel Version 10.6.0: Wed Nov 10 18:13:17 PST 2010; root:xnu-1504.9.26~3/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
 
 /* uname -a output */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.6.0 Darwin Kernel Version 10.6.0: Wed Nov 10 18:13:17 PST 2010; root:xnu-1504.9.26~3/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
 
 /* uname output */
 #define PHP_OS "Darwin"

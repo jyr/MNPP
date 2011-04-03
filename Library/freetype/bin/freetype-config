@@ -9,7 +9,7 @@
 # indicate that you have read the license and understand and accept it
 # fully.
 
-prefix=/Applications/MEPP/Library/freetype
+prefix=/Applications/MNPP/Library/freetype
 exec_prefix=${prefix}
 exec_prefix_set=no
 includedir=${prefix}/include

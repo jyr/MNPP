@@ -1,5 +1,5 @@
 location ~ .php$ {
     fastcgi_pass   127.0.0.1:9000;
     fastcgi_index  index.php;
-    include        /Applications/MEPP/conf/nginx/fastcgi_params;
+    include        /Applications/MNPP/conf/nginx/fastcgi_params;
 }

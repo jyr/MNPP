@@ -1,4 +1,4 @@
-prefix='/Applications/MEPP/Library/gettext'
+prefix='/Applications/MNPP/Library/gettext'
 exec_prefix="${prefix}"
 datarootdir="${prefix}/share"
 datadir="${datarootdir}"

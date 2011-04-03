@@ -1,4 +1,4 @@
-prefix=/Applications/MEPP/Library/libpng
+prefix=/Applications/MNPP/Library/libpng
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include/libpng15

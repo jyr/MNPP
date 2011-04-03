@@ -3,7 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;
 
 ; All relative paths in this configuration file are relative to PHP's install
-; prefix (/Applications/MEPP/Library/php). This prefix can be dynamicaly changed by using the
+; prefix (/Applications/MNPP/Library/php). This prefix can be dynamicaly changed by using the
 ; '-p' argument from the command line.
 
 ; Include one or more files. If glob(3) exists, it is used to include a bunch of
@@ -11,7 +11,7 @@
 ; file.
 ; Relative path can also be used. They will be prefixed by:
 ;  - the global prefix if it's been set (-p arguement)
-;  - /Applications/MEPP/Library/php otherwise
+;  - /Applications/MNPP/Library/php otherwise
 ;include=etc/fpm.d/*.conf
 
 ;;;;;;;;;;;;;;;;;;
@@ -20,12 +20,12 @@
 
 [global]
 ; Pid file
-; Note: the default prefix is /Applications/MEPP/Library/php/var
+; Note: the default prefix is /Applications/MNPP/Library/php/var
 ; Default Value: none
 ;pid = run/php-fpm.pid
 
 ; Error log file
-; Note: the default prefix is /Applications/MEPP/Library/php/var
+; Note: the default prefix is /Applications/MNPP/Library/php/var
 ; Default Value: log/php-fpm.log
 ;error_log = log/php-fpm.log
 
@@ -80,7 +80,7 @@
 ; - 'chdir'
 ; - 'php_values'
 ; - 'php_admin_values'
-; When not set, the global prefix (or /Applications/MEPP/Library/php) applies instead.
+; When not set, the global prefix (or /Applications/MNPP/Library/php) applies instead.
 ; Note: This directive can also be relative to the global prefix.
 ; Default Value: none
 ;prefix = /path/to/pools/$pool
@@ -297,7 +297,7 @@ pm.max_children = 50
 ; instead.
 
 ; Note: path INI options can be relative and will be expanded with the prefix
-; (pool, global or /Applications/MEPP/Library/php)
+; (pool, global or /Applications/MNPP/Library/php)
 
 ; Default Value: nothing is defined by default except the values in php.ini and
 ;                specified at startup with the -d argument

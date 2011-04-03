@@ -1243,7 +1243,7 @@
 #define STRUCT_RLIMIT struct rlimit
 
 /* Name of system, eg sun-solaris */
-#define SYSTEM_TYPE "apple-darwin10.6.0"
+#define SYSTEM_TYPE "apple-darwin10.7.0"
 
 /* Whether we build for Linux */
 /* #undef TARGET_OS_LINUX */

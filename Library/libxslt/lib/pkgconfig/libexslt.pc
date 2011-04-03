@@ -1,4 +1,4 @@
-prefix=/Applications/MEPP/Library/libxslt
+prefix=/Applications/MNPP/Library/libxslt
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

@@ -78,22 +78,22 @@ me=`get_full_path $0`
 
 basedir=`echo $me | sed -e 's;/bin/mysql_config;;'`
 
-ldata='/Applications/MEPP/Library/mysql/var'
-execdir='/Applications/MEPP/Library/mysql/libexec'
-bindir='/Applications/MEPP/Library/mysql/bin'
+ldata='/Applications/MNPP/Library/mysql/var'
+execdir='/Applications/MNPP/Library/mysql/libexec'
+bindir='/Applications/MNPP/Library/mysql/bin'
 
 # If installed, search for the compiled in directory first (might be "lib64")
-pkglibdir='/Applications/MEPP/Library/mysql/lib/mysql'
+pkglibdir='/Applications/MNPP/Library/mysql/lib/mysql'
 pkglibdir_rel=`echo $pkglibdir | sed -e "s;^$basedir/;;"`
 fix_path pkglibdir $pkglibdir_rel lib/mysql lib
 
-plugindir='/Applications/MEPP/Library/mysql/lib/mysql/plugin'
+plugindir='/Applications/MNPP/Library/mysql/lib/mysql/plugin'
 
-pkgincludedir='/Applications/MEPP/Library/mysql/include/mysql'
+pkgincludedir='/Applications/MNPP/Library/mysql/include/mysql'
 fix_path pkgincludedir include/mysql include
 
 version='5.1.54'
-socket='/Applications/MEPP/tmp/mysql/mysql.sock'
+socket='/Applications/MNPP/tmp/mysql/mysql.sock'
 ldflags=' '
 
 if [ 0 -eq 0 ]; then

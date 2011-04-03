@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Prerequisites for using ${exec_prefix}/lib and ${datarootdir}/locale.
-prefix="/Applications/MEPP/Library/gettext"
+prefix="/Applications/MNPP/Library/gettext"
 exec_prefix="${prefix}"
 datarootdir="${prefix}/share"
 datadir="${datarootdir}"

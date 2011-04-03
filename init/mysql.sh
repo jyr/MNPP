@@ -9,10 +9,10 @@ __show_usage( ) {
 
 case "${1}" in
     start)
-        /Applications/MEPP/Library/mysql/bin/mysqld_safe -u root --port=3306 --socket=/Applications/MEPP/tmp/mysql/mysql.sock --lower_case_table_names=0 --datadir=/Applications/MEPP/Library/mysql/var --pid-file=/Applications/MEPP/tmp/mysql/mysql.pid --log-error=/Applications/MEPP/logs/mysql_error_log --tmpdir=/Applications/MEPP/tmp/mysql &
+        /Applications/MNPP/Library/mysql/bin/mysqld_safe -u root --port=3306 --socket=/Applications/MNPP/tmp/mysql/mysql.sock --lower_case_table_names=0 --datadir=/Applications/MNPP/Library/mysql/var --pid-file=/Applications/MNPP/tmp/mysql/mysql.pid --log-error=/Applications/MNPP/logs/mysql_error_log --tmpdir=/Applications/MNPP/tmp/mysql &
         ;;
     stop)
-        /Applications/MEPP/Library/mysql/bin/mysqladmin -u root --socket=/Applications/MEPP/tmp/mysql/mysql.sock shutdown
+        /Applications/MNPP/Library/mysql/bin/mysqladmin -u root --socket=/Applications/MNPP/tmp/mysql/mysql.sock shutdown
         ;;
     *)
         __show_usage

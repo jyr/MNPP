@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Applications/MEPP/Library/jpeg/lib'
+libdir='/Applications/MNPP/Library/jpeg/lib'

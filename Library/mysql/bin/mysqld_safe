@@ -207,12 +207,12 @@ parse_arguments() {
 # First, try to find BASEDIR and ledir (where mysqld is)
 #
 
-if echo '/Applications/MEPP/Library/mysql/share/mysql' | grep '^/Applications/MEPP/Library/mysql' > /dev/null
+if echo '/Applications/MNPP/Library/mysql/share/mysql' | grep '^/Applications/MNPP/Library/mysql' > /dev/null
 then
-  relpkgdata=`echo '/Applications/MEPP/Library/mysql/share/mysql' | sed -e 's,^/Applications/MEPP/Library/mysql,,' -e 's,^/,,' -e 's,^,./,'`
+  relpkgdata=`echo '/Applications/MNPP/Library/mysql/share/mysql' | sed -e 's,^/Applications/MNPP/Library/mysql,,' -e 's,^/,,' -e 's,^,./,'`
 else
   # pkgdatadir is not relative to prefix
-  relpkgdata='/Applications/MEPP/Library/mysql/share/mysql'
+  relpkgdata='/Applications/MNPP/Library/mysql/share/mysql'
 fi
 
 MY_PWD=`pwd`
@@ -239,8 +239,8 @@ then
   ledir="$MY_PWD/libexec"		# Where mysqld is
 # Since we didn't find anything, used the compiled-in defaults
 else
-  MY_BASEDIR_VERSION='/Applications/MEPP/Library/mysql'
-  ledir='/Applications/MEPP/Library/mysql/libexec'
+  MY_BASEDIR_VERSION='/Applications/MNPP/Library/mysql'
+  ledir='/Applications/MNPP/Library/mysql/libexec'
 fi
 
 
@@ -262,7 +262,7 @@ then
   DATADIR=$MY_BASEDIR_VERSION/var
 # Or just give up and use our compiled-in default
 else
-  DATADIR=/Applications/MEPP/Library/mysql/var
+  DATADIR=/Applications/MNPP/Library/mysql/var
 fi
 
 if test -z "$MYSQL_HOME"
@@ -296,12 +296,12 @@ then
 elif test -x ./bin/my_print_defaults
 then
   print_defaults="./bin/my_print_defaults"
-elif test -x /Applications/MEPP/Library/mysql/bin/my_print_defaults
+elif test -x /Applications/MNPP/Library/mysql/bin/my_print_defaults
 then
-  print_defaults="/Applications/MEPP/Library/mysql/bin/my_print_defaults"
-elif test -x /Applications/MEPP/Library/mysql/bin/mysql_print_defaults
+  print_defaults="/Applications/MNPP/Library/mysql/bin/my_print_defaults"
+elif test -x /Applications/MNPP/Library/mysql/bin/mysql_print_defaults
 then
-  print_defaults="/Applications/MEPP/Library/mysql/bin/mysql_print_defaults"
+  print_defaults="/Applications/MNPP/Library/mysql/bin/mysql_print_defaults"
 else
   print_defaults="my_print_defaults"
 fi
@@ -406,7 +406,7 @@ then
   append_arg_to_args "--open-files-limit=$open_files"
 fi
 
-safe_mysql_unix_port=${mysql_unix_port:-${MYSQL_UNIX_PORT:-/Applications/MEPP/tmp/mysql/mysql.sock}}
+safe_mysql_unix_port=${mysql_unix_port:-${MYSQL_UNIX_PORT:-/Applications/MNPP/tmp/mysql/mysql.sock}}
 # Make sure that directory for $safe_mysql_unix_port exists
 mysql_unix_port_dir=`dirname $safe_mysql_unix_port`
 if [ ! -d $mysql_unix_port_dir ]

@@ -20,7 +20,7 @@
 
 basedir=""
 builddir=""
-ldata="/Applications/MEPP/Library/mysql/var"
+ldata="/Applications/MNPP/Library/mysql/var"
 langdir=""
 srcdir=""
 
@@ -230,7 +230,7 @@ then
     exit 1
   fi
 else
-  print_defaults="/Applications/MEPP/Library/mysql/bin/my_print_defaults"
+  print_defaults="/Applications/MNPP/Library/mysql/bin/my_print_defaults"
 fi
 
 if test ! -x "$print_defaults"
@@ -278,12 +278,12 @@ then
   fi
   scriptdir="$basedir/scripts"
 else
-  basedir="/Applications/MEPP/Library/mysql"
-  bindir="/Applications/MEPP/Library/mysql/bin"
+  basedir="/Applications/MNPP/Library/mysql"
+  bindir="/Applications/MNPP/Library/mysql/bin"
   extra_bindir="$bindir"
-  mysqld="/Applications/MEPP/Library/mysql/libexec/mysqld"
-  pkgdatadir="/Applications/MEPP/Library/mysql/share/mysql"
-  scriptdir="/Applications/MEPP/Library/mysql/bin"
+  mysqld="/Applications/MNPP/Library/mysql/libexec/mysqld"
+  pkgdatadir="/Applications/MNPP/Library/mysql/share/mysql"
+  scriptdir="/Applications/MNPP/Library/mysql/bin"
 fi
 
 # Set up paths to SQL scripts required for bootstrap

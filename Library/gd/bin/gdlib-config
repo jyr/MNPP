@@ -5,7 +5,7 @@
 # Modeled after pdflib-config
 
 # installation directories
-prefix=/Applications/MEPP/Library/gd
+prefix=/Applications/MNPP/Library/gd
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

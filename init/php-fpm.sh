@@ -8,12 +8,12 @@
 #              any size, especially busier sites.
 # processname: php-fpm
  
-prefix=/Applications/MEPP/Library/php
+prefix=/Applications/MNPP/Library/php
 exec_prefix=${prefix}
  
 php_fpm_BIN=${exec_prefix}/sbin/php-fpm
-php_fpm_CONF=/Applications/MEPP/conf/fpm/php-fpm.conf
-php_fpm_PID=/Applications/MEPP/run/php-fpm.pid
+php_fpm_CONF=/Applications/MNPP/conf/fpm/php-fpm.conf
+php_fpm_PID=/Applications/MNPP/run/php-fpm.pid
  
 php_opts="--fpm-config $php_fpm_CONF"
  
@@ -48,17 +48,17 @@ wait_for_pid () {
 
 __create_alias( ) {
     if [ ! -d "/usr/local/mysql" ]; then
-        ln -s /Applications/MEPP/Library/mysql /usr/local/mysql
+        ln -s /Applications/MNPP/Library/mysql /usr/local/mysql
     fi
 }
 
 __set_privilegies( ) {
    chown -R mysql:mysql /usr/local/mysql/
-   chown -R mysql:mysql /Applications/MEPP/tmp/mysql
+   chown -R mysql:mysql /Applications/MNPP/tmp/mysql
 }
 
 __export_library( ){
-    export DYLD_LIBRARY_PATH=/Applications/MEPP/Library/lib:$DYLD_LIBRARY_PATH
+    export DYLD_LIBRARY_PATH=/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
 }
 
 __show_usage( ) {

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(){
-    system("sh /Applications/MEPP/init/start.sh");
+    system("sh /Applications/MNPP/init/start.sh");
     return 0;
 }

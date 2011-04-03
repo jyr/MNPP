@@ -1,8 +1,8 @@
 #/bin/sh
  
-NGINX_BASE_DIR="/Applications/MEPP/Library/nginx"
+NGINX_BASE_DIR="/Applications/MNPP/Library/nginx"
 NGINX_DAEMON="${NGINX_BASE_DIR}/nginx"
-NGINX_CONF="/Applications/MEPP/conf/nginx/nginx.conf"
+NGINX_CONF="/Applications/MNPP/conf/nginx/nginx.conf"
 
 __launch_signal( ) {
  
