@@ -21,20 +21,16 @@
 
 ##Runs from console
 
-### MNPP
+Start    
+<pre><code>$ sudo mnpp --start</code></pre>
+Start only one service    
+<pre><code>$ sudo mnpp --start [service]</code></pre>
 
-    sudo /Applications/MNPP/init/start
-    sudo /Applications/MNPP/init/stop
+service: nginx | percona | php
 
-### PHP
-    sudo /Applications/MNPP/init/startPHP
-    sudo /Applications/MNPP/init/stopPHP
+Stop    
+<pre><code>$ sudo mnpp --stop</code></pre>
+Stop only one service    
+<pre><code>$ sudo mnpp --stop [service]</code></pre>
 
-### NGINX
-
-    sudo /Applications/MNPP/init/startNginx
-    sudo /Applications/MNPP/init/stopNginx
-
-### MySQL
-    sudo /Applications/MNPP/init/startMySQL
-    sudo /Applications/MNPP/init/stopMySQL
+service: nginx | percona | php
