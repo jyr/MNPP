@@ -2,6 +2,6 @@
 
 int main()
 {
-    system("sh /Applications/MNPP/init/mysql.sh stop");
+    system("sh /Applications/MNPP/init/percona.sh stop");
     return 0;
 }

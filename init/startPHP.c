@@ -2,6 +2,6 @@
 
 int main()
 {
-    system("sh /Applications/MNPP/init/php-fpm.sh start");
+    system("sh /Applications/MNPP/init/php.sh start");
     return 0;
 }
