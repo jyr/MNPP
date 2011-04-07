@@ -57,8 +57,13 @@ __set_privilegies( ) {
    chown -R mysql:mysql /Applications/MNPP/tmp/mysql
 }
 
+__hosts( ){
+  sh /Applications/MNPP/init/hosts.sh --add mnpp.astrata.local
+  sh /Applications/MNPP/init/hosts.sh --add phpmyadmin.local
+}
+
 __export_library( ){
-    export DYLD_LIBRARY_PATH=/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
+    export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
 }
 
 __show_usage( ) {
@@ -69,6 +74,7 @@ __show_usage( ) {
 
 __create_alias
 __set_privilegies
+__hosts
 __export_library
 
 case "$1" in
