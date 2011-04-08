@@ -5,7 +5,8 @@
 **This project is currently maintained by the following people:**    
 
 [Jair Gaxiola](https://github.com/jyr) (Core developer)    
-[César Salazar](http://cesarsalazar.mx/)    
+[César Salazar](http://cesarsalazar.mx/)
+[Iván Mayoral](http://flavors.me/van)    
 [Astrata Software](http://astrata.mx)
 
 ##Features
