@@ -1,0 +1,37 @@
+# rewrite rules for cakephp
+location / {
+  
+  index  index.php index.html;
+
+  if (-f $request_filename) { 
+   break; 
+  }
+  
+  if (!-f $request_filename) {
+    rewrite ^/(.+)$ /index.php?url=$1 last;
+    break;
+ }
+
+}
+
+# Static files.
+# Set expire headers, Turn off access log
+location ~* \favicon.ico$ {
+  access_log off;
+  expires 1d;
+  add_header Cache-Control public;
+}
+
+location ~ ^/(img|cjs|ccss)/ {
+  access_log off;
+  expires 7d;
+  add_header Cache-Control public;
+}
+
+# Deny access to .htaccess files,
+# git & svn repositories, etc
+location ~ /(\.ht|\.git|\.svn) {
+  deny  all;
+}
+
+include /Applications/MNPP/conf/nginx/common/php;
