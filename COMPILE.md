@@ -112,6 +112,14 @@ make
 cp modules/apc.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626    
 add extension=memcache.so in php.ini    
 
+MONGO
+---
+https://github.com/mongodb/mongo-php-driver    
+cd mongodb-mongo-php-driver-*    
+./configure    
+sudo make install    
+cp modules/mongo.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626/    
+add extension=mongo.so in php.ini    
 
 PHP
 ---
