@@ -1,0 +1,12 @@
+server {
+    listen       80;
+    server_name  wordpress.local;
+    #change this path to where you have your wordpress instalation
+    root   /Applications/MNPP/htdocs/wordpress;
+    index index.php;
+    
+    access_log  /Applications/MNPP/logs/nginx/wordpress.access.log;
+    error_log  /Applications/MNPP/logs/nginx/wordpress.error.log;
+
+    include /Applications/MNPP/conf/nginx/common/wordpress; 
+ }
