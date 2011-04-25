@@ -18,6 +18,8 @@ from PyObjCTools import AppHelper
 # import modules containing classes required to start application and load MainMenu.nib
 import MNPPController
 import PreferencesController
+import GeneralViewController
+import PhpViewController
 import MNPPAppDelegate
 
 # pass control to AppKit

@@ -37,7 +37,21 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def startServers_(self, sender):
 		try:
-			startScript = self.path + "start"
+			settings = NSUserDefaults.standardUserDefaults()
+			php53 = settings.boolForKey_("php53")
+			php52 = settings.boolForKey_("php52")
+			print "php53"
+			print php53
+			print "php52"
+			print php52
+
+			if php53:
+				phpVersion = "53"
+			else:
+				phpVersion = "52"
+			
+			startScript = self.path + "start " + phpVersion
+			print startScript
 			self.auth.executeWithPrivileges(startScript)
 			self.startButton.setHidden_(YES)
 			self.stopButton.setHidden_(NO)
@@ -53,7 +67,20 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def stopServers_(self, sender):
 		try:
-			stopScript = self.path + "stop"
+			settings = NSUserDefaults.standardUserDefaults()
+			php53 = settings.boolForKey_("php53")
+			php52 = settings.boolForKey_("php52")
+			print "php53"
+			print php53
+			print "php52"
+			print php52
+
+			if php53:
+				phpVersion = "53"
+			else:
+				phpVersion = "52"
+				
+			stopScript = self.path + "stop " + phpVersion
 			self.auth.executeWithPrivileges(stopScript)
 			self.startButton.setHidden_(NO)
 			self.stopButton.setHidden_(YES)
@@ -94,7 +121,7 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def startMySQL_(self, sender):
 		try:
-			startMySQL = self.path + "startMySQL"
+			startMySQL = self.path + "startMySQL 53"
 			self.auth.executeWithPrivileges(startMySQL)
 			self.startMySQL.setHidden_(YES)
 			self.stopMySQL.setHidden_(NO)
@@ -138,8 +165,9 @@ class MNPPController (NSWindowController):
 	
     @objc.IBAction
     def showPreferencesWindow_(self, sender):
-		self.preferencesController = PreferencesController.alloc().init()
-		self.preferencesController.showWindow_(self)
+		PreferencesController.show()
+		#self.preferencesController = PreferencesController.alloc().init()
+		#self.preferencesController.showWindow_(self)
 
     @objc.IBAction
     def exit_(self, sender):
