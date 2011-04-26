@@ -7,7 +7,7 @@
 
 from Foundation import *
 from AppKit import *
-from Authorization import Authorization
+from Authorization import Authorization, kAuthorizationFlagDestroyRights
 from PreferencesController import PreferencesController
 
 import objc
@@ -30,13 +30,14 @@ class MNPPController (NSWindowController):
 		self = super(MNPPController, self).initWithWindowNibName_("MainMenu")
 		if self:
 			self.path = "/Applications/MNPP/init/"
-			self.auth = Authorization()
+			self.auth = Authorization(destroyflags=(kAuthorizationFlagDestroyRights,))
 
 		return self
 		
     @objc.IBAction
     def startServers_(self, sender):
 		try:
+			
 			settings = NSUserDefaults.standardUserDefaults()
 			php53 = settings.boolForKey_("php53")
 			php52 = settings.boolForKey_("php52")
@@ -50,9 +51,11 @@ class MNPPController (NSWindowController):
 			else:
 				phpVersion = "52"
 			
-			startScript = self.path + "start " + phpVersion
+			startScript = self.path + "start" + phpVersion
+			#startScript = "ls"
 			print startScript
 			self.auth.executeWithPrivileges(startScript)
+			#self.auth.external(startScript)
 			self.startButton.setHidden_(YES)
 			self.stopButton.setHidden_(NO)
 			self.startNginx.setHidden_(YES)
@@ -67,6 +70,7 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def stopServers_(self, sender):
 		try:
+			
 			settings = NSUserDefaults.standardUserDefaults()
 			php53 = settings.boolForKey_("php53")
 			php52 = settings.boolForKey_("php52")
@@ -79,8 +83,8 @@ class MNPPController (NSWindowController):
 				phpVersion = "53"
 			else:
 				phpVersion = "52"
-				
-			stopScript = self.path + "stop " + phpVersion
+			
+			stopScript = self.path + "stop" + phpVersion
 			self.auth.executeWithPrivileges(stopScript)
 			self.startButton.setHidden_(NO)
 			self.stopButton.setHidden_(YES)
