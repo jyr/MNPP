@@ -1,0 +1,30 @@
+#this configuration was taken from http://wiki.nginx.org/Wordpress
+location = /favicon.ico {
+  log_not_found off;
+  access_log off;
+}
+
+location = /robots.txt {
+  allow all;
+  log_not_found off;
+  access_log off;
+}
+
+
+location / {
+  # This is cool because no php is touched for static content
+  try_files $uri $uri/ /index.php;
+}
+  
+location ~ \.php$ {
+  fastcgi_split_path_info ^(.+\.php)(/.+)$;
+  #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+  include        /Applications/MNPP/conf/nginx/fastcgi_params;
+  fastcgi_intercept_errors on;
+  fastcgi_pass   127.0.0.1:9000;
+}
+ 
+location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+  expires max;
+  log_not_found off;
+}
