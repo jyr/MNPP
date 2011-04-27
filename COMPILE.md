@@ -96,21 +96,32 @@ MEMCACHED
 make    
 make install
 
-PHP-MEMCACHE http://pecl.php.net/package/memcache 
+PHP-MEMCACHE
+---
+http://pecl.php.net/package/memcache 
 cd memcache-3.0.5   
 phpize && ./configure --enable-memcache && make    
 cp modules/memcache.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626    
 add extension=memcache.so in php.ini
 
+PHP-MEMCACHE FOR PHP52
+---
+/Applications/MNPP/Library/php52/bin/phpize && ./configure --with-php-config=/Applications/MNPP/Library/php52/bin/php-config
+cp modules/memcache.so /Applications/MNPP/Library/php52/lib/php/extensions/no-debug-non-zts-20060613/
+
 APC
 ---
 APC http://pecl.php.net/package/APC    
-phpize    
+/Applications/MNPP/Library/php{version}/bin/phpize    
 
-MACOSX_DEPLOYMENT_TARGET=10.6 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --with-php-config=/Applications/MNPP/Library/php/bin/php-config    
+MACOSX_DEPLOYMENT_TARGET=10.6 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --with-php-config=/Applications/MNPP/Library/php{VERSION}/bin/php-config    
 make    
-cp modules/apc.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626    
-add extension=memcache.so in php.ini    
+cp modules/apc.so /Applications/MNPP/Library/php/lib/php{VERSION}/extensions/no-debug-non-zts-20090626    
+add extension=apc.so in php.ini    
+
+APC FOR PHP52
+---
+/Applications/MNPP/Library/php52/bin/phpize && MACOSX_DEPLOYMENT_TARGET=10.6 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --with-php-config=/Applications/MNPP/Library/php52/bin/php-config && make && make install
 
 MONGO
 ---
@@ -131,7 +142,7 @@ $ wget -c http://php-fpm.org/downloads/php-5.2.17-fpm-0.5.14.diff.gz
 $ gunzip php-5.2.17-fpm-0.5.14.diff.gz
 $ patch -p1 < php-5.2.17-fpm-0.5.14.diff
 
-./configure --prefix=/Applications/MNPP/Library/php52 --exec-prefix=/Applications/MNPP/Library/php52 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl=/Applications/MNPP/Library/curl --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config --with-openssl --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-ttf --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php52 --enable-fastcgi --enable-fpm --enable-force-cgi-redirect --with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm --with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log --with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid --with-libedit --enable-libxml --enable-dom --with-ncurses=/usr/lib --disable-all
+./configure --prefix=/Applications/MNPP/Library/php52 --exec-prefix=/Applications/MNPP/Library/php52 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl=/Applications/MNPP/Library/curl --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config --with-openssl --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-ttf --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php52 --enable-fastcgi --enable-fpm --enable-force-cgi-redirect --with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm --with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log --with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid --with-libedit --enable-libxml --enable-dom --with-ncurses=/usr/lib  --enable-pdo --with-pcre-regex --disable-all
     
 make    
 make install    

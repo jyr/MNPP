@@ -388,16 +388,16 @@
 /* #undef HAVE_MREMAP */
 
 /* Define if you have the mysql_commit function.  */
-#define HAVE_MYSQL_COMMIT 1
+/* #undef HAVE_MYSQL_COMMIT */
 
 /* Define if you have the mysql_next_result function.  */
-#define HAVE_MYSQL_NEXT_RESULT 1
+/* #undef HAVE_MYSQL_NEXT_RESULT */
 
 /* Define if you have the mysql_sqlstate function.  */
-#define HAVE_MYSQL_SQLSTATE 1
+/* #undef HAVE_MYSQL_SQLSTATE */
 
 /* Define if you have the mysql_stmt_prepare function.  */
-#define HAVE_MYSQL_STMT_PREPARE 1
+/* #undef HAVE_MYSQL_STMT_PREPARE */
 
 /* Define if you have the nanosleep function.  */
 /* #undef HAVE_NANOSLEEP */
@@ -1273,7 +1273,7 @@
 /* #undef COMPILE_DL_PCRE */
 
 /*   */
-/* #undef HAVE_BUNDLED_PCRE */
+#define HAVE_BUNDLED_PCRE 1
 
 /*   */
 /* #undef HAVE_PCRE */
@@ -2194,7 +2194,7 @@
 #define HAVE_MYSQL 1
 
 /*   */
-#define PDO_MYSQL_UNIX_ADDR "/Applications/MNPP/tmp/mysql/mysql.sock"
+/* #undef PDO_MYSQL_UNIX_ADDR */
 
 /* Whether to build pdo_mysql as dynamic module */
 /* #undef COMPILE_DL_PDO_MYSQL */
