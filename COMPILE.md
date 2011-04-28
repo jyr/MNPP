@@ -106,8 +106,7 @@ add extension=memcache.so in php.ini
 
 PHP-MEMCACHE FOR PHP52
 ---
-/Applications/MNPP/Library/php52/bin/phpize && ./configure --with-php-config=/Applications/MNPP/Library/php52/bin/php-config
-cp modules/memcache.so /Applications/MNPP/Library/php52/lib/php/extensions/no-debug-non-zts-20060613/
+/Applications/MNPP/Library/php52/bin/phpize && ./configure --with-php-config=/Applications/MNPP/Library/php52/bin/php-config --disable-memcache-session  && make && make install
 
 APC
 ---

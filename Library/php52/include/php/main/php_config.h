@@ -2488,13 +2488,13 @@
 /* #undef COMPILE_DL_REFLECTION */
 
 /*   */
-/* #undef HAVE_PWRITE */
+#define HAVE_PWRITE 1
 
 /* whether pwrite64 is default */
 /* #undef PHP_PWRITE_64 */
 
 /*   */
-/* #undef HAVE_PREAD */
+#define HAVE_PREAD 1
 
 /* whether pread64 is default */
 /* #undef PHP_PREAD_64 */
@@ -2503,7 +2503,7 @@
 /* #undef COMPILE_DL_SESSION */
 
 /*   */
-/* #undef HAVE_PHP_SESSION */
+#define HAVE_PHP_SESSION 1
 
 /* Whether you have libmm */
 /* #undef HAVE_LIBMM */
