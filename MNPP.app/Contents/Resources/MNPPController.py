@@ -7,7 +7,7 @@
 
 from Foundation import *
 from AppKit import *
-from Authorization import Authorization
+from Authorization import Authorization, kAuthorizationFlagDestroyRights
 from PreferencesController import PreferencesController
 
 import objc
@@ -28,16 +28,19 @@ class MNPPController (NSWindowController):
 	
     def init(self):
 		self = super(MNPPController, self).initWithWindowNibName_("MainMenu")
+		self.phpVersion = ""
 		if self:
 			self.path = "/Applications/MNPP/init/"
-			self.auth = Authorization()
+			self.auth = Authorization(destroyflags=(kAuthorizationFlagDestroyRights,))
 
 		return self
 		
     @objc.IBAction
     def startServers_(self, sender):
 		try:
-			startScript = self.path + "start"
+			self.checkPhpVersion()
+			startScript = self.path + "start" + self.phpVersion
+			
 			self.auth.executeWithPrivileges(startScript)
 			self.startButton.setHidden_(YES)
 			self.stopButton.setHidden_(NO)
@@ -53,7 +56,9 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def stopServers_(self, sender):
 		try:
-			stopScript = self.path + "stop"
+			self.checkPhpVersion()
+			stopScript = self.path + "stop" + self.phpVersion
+			
 			self.auth.executeWithPrivileges(stopScript)
 			self.startButton.setHidden_(NO)
 			self.stopButton.setHidden_(YES)
@@ -68,7 +73,7 @@ class MNPPController (NSWindowController):
 	
     @objc.IBAction
     def openPage_(self, sender):
-		urlMNPP = NSURL.URLWithString_("http://mnpp.astrata.local")
+		urlMNPP = NSURL.URLWithString_("http://mnpp.local")
 		workspace = NSWorkspace.sharedWorkspace().openURL_(urlMNPP)
 	
     @objc.IBAction
@@ -95,6 +100,7 @@ class MNPPController (NSWindowController):
     def startMySQL_(self, sender):
 		try:
 			startMySQL = self.path + "startMySQL"
+			print startMySQL
 			self.auth.executeWithPrivileges(startMySQL)
 			self.startMySQL.setHidden_(YES)
 			self.stopMySQL.setHidden_(NO)
@@ -114,8 +120,10 @@ class MNPPController (NSWindowController):
 			
     @objc.IBAction
     def startPHP_(self, sender):
-		try:		
-			startPHP = self.path + "startPHP"
+		try:
+			self.checkPhpVersion()
+			startPHP = self.path + "startPHP" + self.phpVersion
+			print startPHP
 			self.auth.executeWithPrivileges(startPHP)
 			self.startPHP.setHidden_(YES)
 			self.stopPHP.setHidden_(NO)
@@ -125,7 +133,8 @@ class MNPPController (NSWindowController):
     @objc.IBAction
     def stopPHP_(self, sender):
 		try:
-			stopPHP = self.path + "stopPHP"
+			stopPHP = self.path + "stopPHP" + self.phpVersion
+			print stopPHP
 			self.auth.executeWithPrivileges(stopPHP)
 			self.startPHP.setHidden_(NO)
 			self.stopPHP.setHidden_(YES)
@@ -138,8 +147,9 @@ class MNPPController (NSWindowController):
 	
     @objc.IBAction
     def showPreferencesWindow_(self, sender):
-		self.preferencesController = PreferencesController.alloc().init()
-		self.preferencesController.showWindow_(self)
+		PreferencesController.show()
+		#self.preferencesController = PreferencesController.alloc().init()
+		#self.preferencesController.showWindow_(self)
 
     @objc.IBAction
     def exit_(self, sender):
@@ -161,3 +171,14 @@ class MNPPController (NSWindowController):
 		openMNPP = settings.boolForKey_("open")
 		if openMNPP:
 			self.startServers_(self)
+
+    def checkPhpVersion(self):
+		settings = NSUserDefaults.standardUserDefaults()
+		php53 = settings.boolForKey_("php53")
+		php52 = settings.boolForKey_("php52")
+
+		if php53:
+			self.phpVersion = "53"
+		else:
+			self.phpVersion = "52"
+		

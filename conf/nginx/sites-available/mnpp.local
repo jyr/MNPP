@@ -1,0 +1,23 @@
+server {
+    listen       80;
+    server_name  mnpp.local;
+    root   /Applications/MNPP/htdocs/mnpp;
+
+    #charset koi8-r;
+
+    access_log  /Applications/MNPP/logs/nginx/mnpp.access.log;
+    error_log  /Applications/MNPP/logs/nginx/mnpp.access.log;
+    
+    location / {
+        index  index.html index.htm index.php;
+    }
+
+    #error_page  404              /404.html;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+    
+    include /Applications/MNPP/conf/nginx/common/php;
+}

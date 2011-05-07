@@ -7,12 +7,16 @@
 #              implementation with some additional features useful for sites of \
 #              any size, especially busier sites.
 # processname: php-fpm
- 
-prefix=/Applications/MNPP/Library/php
-exec_prefix=${prefix}
- 
+
+if [ $1 == 53 ];then
+  php_fpm_CONF=/Applications/MNPP/conf/fpm/php-fpm.conf
+else
+  php_fpm_CONF=/Applications/MNPP/conf/php52/php-fmp
+fi
+
+prefix=/Applications/MNPP/Library/php$1
+exec_prefix=${prefix} 
 php_fpm_BIN=${exec_prefix}/sbin/php-fpm
-php_fpm_CONF=/Applications/MNPP/conf/fpm/php-fpm.conf
 php_fpm_PID=/Applications/MNPP/run/php-fpm.pid
  
 php_opts="--fpm-config $php_fpm_CONF"
@@ -58,7 +62,7 @@ __set_privilegies( ) {
 }
 
 __hosts( ){
-  sh /Applications/MNPP/init/hosts.sh --add mnpp.astrata.local
+  sh /Applications/MNPP/init/hosts.sh --add mnpp.local
   sh /Applications/MNPP/init/hosts.sh --add phpmyadmin.local
 }
 
@@ -68,8 +72,8 @@ __export_library( ){
 
 __show_usage( ) {
  
-  echo "Usage: ${0} {start|stop|quit|restart|reload|logrotate}"
-  exit 3
+  echo "Usage: ${0} {53|52} {start|stop|quit|restart|reload|logrotate}"
+  exit 1
 }
 
 __create_alias
@@ -77,89 +81,99 @@ __set_privilegies
 __hosts
 __export_library
 
-case "$1" in
-    start)
-        echo -n "Starting php-fpm "
- 
-        $php_fpm_BIN $php_opts
- 
-        if [ "$?" != 0 ] ; then
-            echo " failed"
-            exit 1
-        fi
- 
-        wait_for_pid created $php_fpm_PID
- 
-        if [ -n "$try" ] ; then
-            echo " failed"
-            exit 1
-        else
-            echo " done"
-        fi
-    ;;
- 
-    stop)
-        echo -n "Gracefully shutting down php-fpm "
- 
-        if [ ! -r $php_fpm_PID ] ; then
-            echo "warning, no pid file found - php-fpm is not running ?"
-            exit 1
-        fi
- 
-        kill -QUIT `cat $php_fpm_PID`
- 
-        wait_for_pid removed $php_fpm_PID
- 
-        if [ -n "$try" ] ; then
-            echo " failed. Use force-exit"
-            exit 1
-        else
-            echo " done"
-        fi
-    ;;
- 
-    force-quit)
-        echo -n "Terminating php-fpm "
- 
-        if [ ! -r $php_fpm_PID ] ; then
-            echo "warning, no pid file found - php-fpm is not running ?"
-            exit 1
-        fi
- 
-        kill -TERM `cat $php_fpm_PID`
- 
-        wait_for_pid removed $php_fpm_PID
- 
-        if [ -n "$try" ] ; then
-            echo " failed"
-            exit 1
-        else
-            echo " done"
-        fi
-    ;;
- 
-    restart)
-        $0 stop
-        $0 start
-    ;;
- 
-    reload)
- 
-        echo -n "Reload service php-fpm "
- 
-        if [ ! -r $php_fpm_PID ] ; then
-            echo "warning, no pid file found - php-fpm is not running ?"
-            exit 1
-        fi
- 
-        kill -USR2 `cat $php_fpm_PID`
- 
-        echo " done"
-    ;;
- 
-    *)
-        echo "Usage: $0 {start|stop|force-quit|restart|reload}"
-        exit 1
-    ;;
- 
-esac
+if [ $1 == 53 ];then
+  case "$2" in
+      start)
+          echo -n "Starting php-fpm "
+
+          $php_fpm_BIN $php_opts
+
+          if [ "$?" != 0 ] ; then
+              echo " failed"
+              exit 1
+          fi
+
+          wait_for_pid created $php_fpm_PID
+
+          if [ -n "$try" ] ; then
+              echo " failed"
+              exit 1
+          else
+              echo " done"
+          fi
+      ;;
+
+      stop)
+          echo -n "Gracefully shutting down php-fpm "
+
+          if [ ! -r $php_fpm_PID ] ; then
+              echo "warning, no pid file found - php-fpm is not running ?"
+              exit 1
+          fi
+
+          kill -QUIT `cat $php_fpm_PID`
+
+          wait_for_pid removed $php_fpm_PID
+
+          if [ -n "$try" ] ; then
+              echo " failed. Use force-exit"
+              exit 1
+          else
+              echo " done"
+          fi
+      ;;
+
+      force-quit)
+          echo -n "Terminating php-fpm "
+
+          if [ ! -r $php_fpm_PID ] ; then
+              echo "warning, no pid file found - php-fpm is not running ?"
+              exit 1
+          fi
+
+          kill -TERM `cat $php_fpm_PID`
+
+          wait_for_pid removed $php_fpm_PID
+
+          if [ -n "$try" ] ; then
+              echo " failed"
+              exit 1
+          else
+              echo " done"
+          fi
+      ;;
+
+      restart)
+          $0 stop
+          $0 start
+      ;;
+
+      reload)
+
+          echo -n "Reload service php-fpm "
+
+          if [ ! -r $php_fpm_PID ] ; then
+              echo "warning, no pid file found - php-fpm is not running ?"
+              exit 1
+          fi
+
+          kill -USR2 `cat $php_fpm_PID`
+
+          echo " done"
+      ;;
+
+      *)
+          __show_usage
+      ;;
+
+  esac
+else
+  case "${2}" in
+      start|stop|quit|restart|reload|logrotate)
+          /Applications/MNPP/Library/php52/sbin/php-fpm ${2}
+          ;;
+      *)
+        __show_usage
+        ;;
+  esac
+fi

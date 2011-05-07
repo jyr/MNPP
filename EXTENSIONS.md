@@ -1,6 +1,7 @@
 #Versions
 * Percona-Server-5.1.54-rel12.5
 * PHP 5.3.5
+* PHP 5.2.17
 * Nginx 1.0.0
 * phpMyAdmin-3.3.9.2
 

@@ -1,8 +1,10 @@
 #include <stdio.h>
 
-int main(){
-    system("sh /Applications/MNPP/init/php.sh stop");
-    system("sh /Applications/MNPP/init/percona.sh stop");
-    system("sh /Applications/MNPP/init/nginx.sh stop");
-    return 0;
+int main(int argc, char *argv[]){
+  char command[50];
+
+  sprintf(command, "sh /Applications/MNPP/init/stop.sh %s", argv[1]);
+  system(command);
+
+  return 0;
 }

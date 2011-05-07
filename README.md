@@ -23,15 +23,20 @@
 ##Runs from console
 
 Start    
-<pre><code>$ sudo mnpp --start</code></pre>
+<pre><code>$ sudo mnpp --php[Version] --start</code></pre>
 Start only one service    
 <pre><code>$ sudo mnpp --start [service]</code></pre>
-
-service: nginx | percona | php
+For php    
+<pre><code>$ sudo mnpp --start php[Version]</code></pre>
+version: 52 | 53    
+service: nginx | percona
 
 Stop    
-<pre><code>$ sudo mnpp --stop</code></pre>
+<pre><code>$ sudo mnpp --php[Version] --stop</code></pre>
 Stop only one service    
 <pre><code>$ sudo mnpp --stop [service]</code></pre>
+For php    
+<pre><code>$ sudo mnpp --stop php[Version]</code></pre>
 
-service: nginx | percona | php
+version: 52 | 53    
+service: nginx | percona
