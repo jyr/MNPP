@@ -62,7 +62,7 @@ __set_privilegies( ) {
 }
 
 __hosts( ){
-  sh /Applications/MNPP/init/hosts.sh --add mnpp.astrata.local
+  sh /Applications/MNPP/init/hosts.sh --add mnpp.local
   sh /Applications/MNPP/init/hosts.sh --add phpmyadmin.local
 }
 
