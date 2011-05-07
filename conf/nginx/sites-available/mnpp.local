@@ -1,6 +1,6 @@
 server {
     listen       80;
-    server_name  mnpp.astrata.local;
+    server_name  mnpp.local;
     root   /Applications/MNPP/htdocs/mnpp;
 
     #charset koi8-r;
