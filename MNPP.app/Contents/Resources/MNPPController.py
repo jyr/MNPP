@@ -15,6 +15,7 @@ import os
 
 
 class MNPPController (NSWindowController):
+    statusMenu = objc.IBOutlet()
     startButton = objc.IBOutlet()
     stopButton = objc.IBOutlet()
     startNginx = objc.IBOutlet()
@@ -33,6 +34,7 @@ class MNPPController (NSWindowController):
 			self.path = "/Applications/MNPP/init/"
 			self.auth = Authorization(destroyflags=(kAuthorizationFlagDestroyRights,))
 
+		self.appDelegate = NSApp.delegate()
 		return self
 		
     @objc.IBAction
@@ -42,14 +44,24 @@ class MNPPController (NSWindowController):
 			startScript = self.path + "start" + self.phpVersion
 			
 			self.auth.executeWithPrivileges(startScript)
-			self.startButton.setHidden_(YES)
-			self.stopButton.setHidden_(NO)
+			self.changeStatusStartButtonALL()
+
 			self.startNginx.setHidden_(YES)
 			self.stopNginx.setHidden_(NO)
 			self.startMySQL.setHidden_(YES)
 			self.stopMySQL.setHidden_(NO)
 			self.startPHP.setHidden_(YES)
 			self.stopPHP.setHidden_(NO)
+			
+			self.appDelegate.changeStatusStartMenuALL()
+			
+			self.appDelegate.startNginx.setHidden_(YES)
+			self.appDelegate.stopNginx.setHidden_(NO)
+			self.appDelegate.startMySQL.setHidden_(YES)
+			self.appDelegate.stopMySQL.setHidden_(NO)
+			self.appDelegate.startPHP.setHidden_(YES)
+			self.appDelegate.stopPHP.setHidden_(NO)
+
 		except:
 			pass
 		
@@ -60,14 +72,23 @@ class MNPPController (NSWindowController):
 			stopScript = self.path + "stop" + self.phpVersion
 			
 			self.auth.executeWithPrivileges(stopScript)
-			self.startButton.setHidden_(NO)
-			self.stopButton.setHidden_(YES)
+
+			self.changeStatusStopButtonALL()			
 			self.startNginx.setHidden_(NO)
 			self.stopNginx.setHidden_(YES)
 			self.startMySQL.setHidden_(NO)
 			self.stopMySQL.setHidden_(YES)
 			self.startPHP.setHidden_(NO)
 			self.stopPHP.setHidden_(YES)
+
+			self.appDelegate.changeStatusStopMenuALL()
+			self.appDelegate.stopNginx.setHidden_(YES)
+			self.appDelegate.startNginx.setHidden_(NO)
+			self.appDelegate.stopMySQL.setHidden_(YES)
+			self.appDelegate.startMySQL.setHidden_(NO)	
+			self.appDelegate.stopPHP.setHidden_(YES)
+			self.appDelegate.startPHP.setHidden_(NO)	
+			
 		except:
 			pass
 	
@@ -81,8 +102,18 @@ class MNPPController (NSWindowController):
 		try:
 			startNginx = self.path + "startNginx"
 			self.auth.executeWithPrivileges(startNginx)
+			self.changeStatusStartButtonALL()
 			self.startNginx.setHidden_(YES)
 			self.stopNginx.setHidden_(NO)
+			
+			"""
+			Menu status bar options
+			"""
+			self.appDelegate.changeStatusStartMenuALL()
+			#self.appDelegate.startNginx_(self)
+			self.appDelegate.startNginx.setHidden_(YES)
+			self.appDelegate.stopNginx.setHidden_(NO)
+			
 		except:
 			pass
 	
@@ -91,8 +122,18 @@ class MNPPController (NSWindowController):
 		try:		
 			stopNginx = self.path + "stopNginx"
 			self.auth.executeWithPrivileges(stopNginx)
+			self.changeStatusStopButtonALL()
 			self.startNginx.setHidden_(NO)
 			self.stopNginx.setHidden_(YES)
+
+			"""
+			Menu status bar options
+			"""
+			self.appDelegate.changeStatusStopMenuALL()
+			#self.appDelegate.stopNginx_(self)
+			self.appDelegate.stopNginx.setHidden_(YES)
+			self.appDelegate.startNginx.setHidden_(NO)
+
 		except:
 			pass
 
@@ -100,10 +141,19 @@ class MNPPController (NSWindowController):
     def startMySQL_(self, sender):
 		try:
 			startMySQL = self.path + "startMySQL"
-			print startMySQL
 			self.auth.executeWithPrivileges(startMySQL)
+			self.changeStatusStartButtonALL()
 			self.startMySQL.setHidden_(YES)
 			self.stopMySQL.setHidden_(NO)
+			
+			"""
+			Menu options
+			"""
+			self.appDelegate.changeStatusStartMenuALL()
+			self.appDelegate.startMySQL.setHidden_(YES)
+			self.appDelegate.stopMySQL.setHidden_(NO)
+
+
 		except:
 			pass
 	
@@ -112,8 +162,16 @@ class MNPPController (NSWindowController):
 		try:
 			stopMySQL = self.path + "stopMySQL"
 			self.auth.executeWithPrivileges(stopMySQL)
+			self.changeStatusStopButtonALL()
 			self.startMySQL.setHidden_(NO)
 			self.stopMySQL.setHidden_(YES)
+			
+			"""
+			Menu options
+			"""
+			self.appDelegate.changeStatusStopMenuALL()
+			self.appDelegate.stopMySQL.setHidden_(YES)
+			self.appDelegate.startMySQL.setHidden_(NO)			
 		except:
 			pass
 
@@ -123,10 +181,20 @@ class MNPPController (NSWindowController):
 		try:
 			self.checkPhpVersion()
 			startPHP = self.path + "startPHP" + self.phpVersion
-			print startPHP
+
 			self.auth.executeWithPrivileges(startPHP)
+			self.changeStatusStartButtonALL()
 			self.startPHP.setHidden_(YES)
 			self.stopPHP.setHidden_(NO)
+			
+			"""
+			Menu options
+			"""
+			self.appDelegate.changeStatusStartMenuALL()
+			self.appDelegate.startPHP.setHidden_(YES)
+			self.appDelegate.stopPHP.setHidden_(NO)
+
+			
 		except:
 			pass
 	
@@ -134,10 +202,17 @@ class MNPPController (NSWindowController):
     def stopPHP_(self, sender):
 		try:
 			stopPHP = self.path + "stopPHP" + self.phpVersion
-			print stopPHP
 			self.auth.executeWithPrivileges(stopPHP)
+			self.changeStatusStopButtonALL()
 			self.startPHP.setHidden_(NO)
 			self.stopPHP.setHidden_(YES)
+
+			"""
+			Menu options
+			"""
+			self.appDelegate.changeStatusStopMenuALL()
+			self.appDelegate.stopPHP.setHidden_(YES)
+			self.appDelegate.startPHP.setHidden_(NO)			
 		except:
 			pass
 
@@ -181,4 +256,11 @@ class MNPPController (NSWindowController):
 			self.phpVersion = "53"
 		else:
 			self.phpVersion = "52"
-		
+
+    def changeStatusStartButtonALL(self):
+		self.startButton.setHidden_(YES)
+		self.stopButton.setHidden_(NO)
+
+    def changeStatusStopButtonALL(self):
+		self.startButton.setHidden_(NO)
+		self.stopButton.setHidden_(YES)

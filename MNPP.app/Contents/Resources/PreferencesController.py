@@ -36,6 +36,7 @@ class PreferencesController (NSWindowController):
 		self.PhpController = PhpViewController.alloc().initWithNibName_bundle_("Php", None)
 
 		self.setSettings(self)
+		print dir(self.PreferencesController)
 		
 	show = classmethod(show)	
 	
