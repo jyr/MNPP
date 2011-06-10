@@ -1,6 +1,10 @@
 #!/bin/sh
 NAME=uwsgi
 
+DYLD_LIBRARY_PATH=/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
+launchctl setenv DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH
+
 case "$1" in
   start)
         echo "Starting $NAME: "
