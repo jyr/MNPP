@@ -44,6 +44,7 @@ class MNPPController (NSWindowController):
 			startScript = self.path + "start" + self.phpVersion
 			
 			self.auth.executeWithPrivileges(startScript)
+			self.enableUwsgi()
 			self.changeStatusStartButtonALL()
 
 			self.startNginx.setHidden_(YES)
@@ -70,7 +71,7 @@ class MNPPController (NSWindowController):
 		try:
 			self.checkPhpVersion()
 			stopScript = self.path + "stop" + self.phpVersion
-			
+			self.disableUwsgi()
 			self.auth.executeWithPrivileges(stopScript)
 
 			self.changeStatusStopButtonALL()			
@@ -102,6 +103,8 @@ class MNPPController (NSWindowController):
 		try:
 			startNginx = self.path + "startNginx"
 			self.auth.executeWithPrivileges(startNginx)
+			self.enableUwsgi()
+			
 			self.changeStatusStartButtonALL()
 			self.startNginx.setHidden_(YES)
 			self.stopNginx.setHidden_(NO)
@@ -122,6 +125,8 @@ class MNPPController (NSWindowController):
 		try:		
 			stopNginx = self.path + "stopNginx"
 			self.auth.executeWithPrivileges(stopNginx)
+			self.disableUwsgi()
+			
 			self.changeStatusStopButtonALL()
 			self.startNginx.setHidden_(NO)
 			self.stopNginx.setHidden_(YES)
@@ -130,7 +135,6 @@ class MNPPController (NSWindowController):
 			Menu status bar options
 			"""
 			self.appDelegate.changeStatusStopMenuALL()
-			#self.appDelegate.stopNginx_(self)
 			self.appDelegate.stopNginx.setHidden_(YES)
 			self.appDelegate.startNginx.setHidden_(NO)
 
@@ -264,3 +268,21 @@ class MNPPController (NSWindowController):
     def changeStatusStopButtonALL(self):
 		self.startButton.setHidden_(NO)
 		self.stopButton.setHidden_(YES)
+		
+    def enableUwsgi(self):
+		settings = NSUserDefaults.standardUserDefaults()
+		uwsgi = settings.boolForKey_("uwsgi")
+		
+		if uwsgi:
+			enableUwsgi = self.path + "enableUwsgi"
+			print enableUwsgi
+			self.auth.executeWithPrivileges(enableUwsgi)
+
+    def disableUwsgi(self):
+		settings = NSUserDefaults.standardUserDefaults()
+		uwsgi = settings.boolForKey_("uwsgi")
+		
+		if uwsgi:
+			disableUwsgi = self.path + "disableUwsgi"
+			print disableUwsgi
+			self.auth.executeWithPrivileges(disableUwsgi)
