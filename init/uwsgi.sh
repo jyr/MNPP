@@ -1,6 +1,5 @@
 #!/bin/sh
 NAME=uwsgi
-
 DYLD_LIBRARY_PATH=/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH
 launchctl setenv DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH
@@ -15,17 +14,19 @@ case "$1" in
         echo "Done."
         ;;
   stop)
-        echo "Stopping $NAME: "
         
-        launchctl stop it.unbit.uwsgi 
-        launchctl unload /Applications/MNPP/Library/LaunchAgents/it.unbit.uwsgi.plist 
-        
-        echo "Done."
+        found=`ps -ef | grep "/Applications/MNPP/Library/uwsgi/bin/uwsgi" | wc -l`
+        if [ $found -gt 1 ] ; then
+          echo "Stopping $NAME: "
+          launchctl stop it.unbit.uwsgi 
+          launchctl unload /Applications/MNPP/Library/LaunchAgents/it.unbit.uwsgi.plist 
+          echo "Done."
+        fi        
         ;;
-      *)  
-            N=/Applications/MNPP/init/$NAME.sh
-            echo "Usage: $N {start|stop}" >&2
-            exit 1
-            ;;
-    esac
-    exit 0
+     *)  
+        N=/Applications/MNPP/init/$NAME.sh
+        echo "Usage: $N {start|stop}" >&2
+        exit 1
+        ;;
+esac
+exit 0
