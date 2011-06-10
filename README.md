@@ -29,7 +29,7 @@ Start only one service
 For php    
 <pre><code>$ sudo mnpp --start php[Version]</code></pre>
 version: 52 | 53    
-service: nginx | percona
+service: nginx | percona | uwsgi
 
 Stop    
 <pre><code>$ sudo mnpp --php[Version] --stop</code></pre>
@@ -39,4 +39,4 @@ For php
 <pre><code>$ sudo mnpp --stop php[Version]</code></pre>
 
 version: 52 | 53    
-service: nginx | percona
+service: nginx | percona | uwsgi
