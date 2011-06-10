@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="{{=T.accepted_language or 'en'}}" class="no-js"><!-- no-js need it for modernzr -->
+  <head>
+    
+    <meta charset="utf-8" />	  	
+    <!-- www.phpied.com/conditional-comments-block-downloads/ -->
+    <!--[if IE]><![endif]-->    
+    <!-- Always force latest IE rendering engine 
+	 (even in intranet) & Chrome Frame 
+	 Remove this if you use the .htaccess -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>{{=response.title or request.application}}</title>
+    
+    <!-- http://dev.w3.org/html5/markup/meta.name.html -->
+    <meta name="application-name" content="{{=request.application}}" />	
+    
+    <!-- Speaking of Google, don't forget to set your site up: 
+	 http://google.com/webmasters -->
+    <meta name="google-site-verification" content="" />
+    
+    <!--  Mobile Viewport Fix
+	  j.mp/mobileviewport & davidbcalhoun.com/2010/viewport-metatag 
+	  device-width: Occupy full width of the screen in its current orientation
+	  initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
+	  maximum-scale = 1.0 retains dimensions instead of zooming in if page width < device width
+      -->
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+    
+    <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
+    <link rel="shortcut icon" href="{{=URL('static','favicon.ico')}}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{=URL('static','favicon.png')}}">
+
+    <!-- For the less-enabled mobile browsers like Opera Mini -->
+    <link rel="stylesheet" media="handheld" href="{{=URL('static','css/handheld.css')}}">
+    
+    <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
+    <script src="{{=URL('static','js/modernizr-1.7.min.js')}}"></script>
+    
+    {{#------  require CSS and JS files for this page (read info in base.css) ------}}
+    {{response.files.append(URL('static','css/base.css'))}}
+    {{response.files.append(URL('static','css/superfish.css'))}}
+    {{response.files.append(URL('static','js/superfish.js'))}}
+    {{#------ include web2py specific js code (jquery, calendar, form stuff) ------}}
+    {{include 'web2py_ajax.html'}}
+
+    {{
+    #using sidebars need to know what sidebar you want to use
+    #prior of using it, because of static width size of content, you can use
+    #left_sidebar, right_sidebar, both or none (False left and right)    
+    left_sidebar_enabled = globals().get('left_sidebar_enabled',False)
+    right_sidebar_enabled = globals().get('right_sidebar_enabled',False)
+    if left_sidebar_enabled and right_sidebar_enabled: width_content='63%'
+    elif left_sidebar_enabled != right_sidebar_enabled: width_content='740px'
+    else: width_content='100%'
+    if left_sidebar_enabled: left_sidebar_style = 'style="display: block;"'
+    else: left_sidebar_style = 'style="display: none;"'
+    if right_sidebar_enabled: right_sidebar_style = 'style="display: block;"'
+    else: right_sidebar_style = 'style="display: none;"'
+    style_content = 'style="width: %s"' % width_content
+    }}
+  </head>
+  
+  <!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->	
+  <!--[if lt IE 7 ]> <body class="ie6"> <![endif]-->
+  <!--[if IE 7 ]>    <body class="ie7"> <![endif]-->
+  <!--[if IE 8 ]>    <body class="ie8"> <![endif]-->
+  <!--[if IE 9 ]>    <body class="ie9"> <![endif]-->
+  <!--[if (gt IE 9)|!(IE)]><!--> <body> <!--<![endif]-->
+    
+    <div class="flash">{{=response.flash or ''}}</div> <!-- notification div -->
+    
+    <div id="container">	      		      	
+      
+      <div id="wrapper">		
+	
+	<div id="header"> <!-- header and login nav -->
+	  {{block header}} <!-- this is default header -->
+	  {{try:}}{{=auth.navbar(action=URL('default','user'))}}{{except:pass}}		          
+	  <h1><span id="appname">{{=request.application.capitalize()}}</span>App</h1>
+	  <div style="clear: both;"></div><!-- Clear the divs -->
+	  {{end}}				  					  
+	</div><!-- header  -->
+	
+	<div id="statusbar"><!-- statusbar is menu zone -->
+	  {{block statusbar}} <!-- this is default statusbar -->
+	  {{#------ superfish menu ------}}
+	  {{=MENU(response.menu,_class='sf-menu')}}
+	  <script type="text/javascript">
+	    jQuery(document).ready(function(){
+	    jQuery('ul.sf-menu').superfish();});
+	  </script>
+	  <div style="clear: both;"></div><!-- Clear the divs -->	
+	  {{end}}				
+	</div><!-- statusbar -->
+	
+	<div id="page"> <!-- Here my central body -->	  
+
+	  {{if left_sidebar_enabled:}}
+          <div id="left_sidebar" {{=XML(left_sidebar_style)}} >
+            <div style="padding: 4px;">
+	      {{block left_sidebar}}Content Left Sidebar{{end}}		  
+            </div>
+          </div><!-- left_sidebar -->
+	  {{pass}}
+
+	  <!-- content -->
+	  <div id="content" {{=XML(style_content)}} >
+	    {{include}}	
+	  </div>
+	  <!-- content -->
+
+	  {{if right_sidebar_enabled:}}
+          <div id="right_sidebar" {{=XML(right_sidebar_style)}} >
+            <div style="padding: 4px;">
+              {{block right_sidebar}}Content Right Sidebar{{end}}
+            </div>
+	  </div><!-- right_sidebar -->
+          {{pass}}
+
+
+	  <div style="clear: both;"></div><!-- Clear the divs -->
+	  
+	</div><!-- page -->							
+	
+	<div id="footer">
+	  {{block footer}} <!-- this is default footer -->
+	  <a href="http://www.web2py.com/" style="float: left; padding-right: 6px;">
+	    <img src="{{=URL('static','images/poweredby.png')}}"/>
+	  </a>
+	  {{=T('Copyright')}} &#169; 2010				
+	  <div style="clear: both;"></div><!-- Clear the divs -->
+	  {{end}}
+
+	</div><!-- footer -->			
+      </div><!-- wrapper -->
+    </div><!-- container -->		
+    
+    <!--[if lt IE 7 ]>
+	<script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
+	<script> DD_belatedPNG.fix('img, .png_bg'); //fix any <img> or .png_bg background-images </script>
+	<![endif]-->
+    
+    <!-- asynchronous google analytics: mathiasbynens.be/notes/async-analytics-snippet 
+	 change the UA-XXXXX-X to be your site's ID -->
+    <!--   
+	   <script>
+	     var _gaq = [['_setAccount', 'UA-XXXXX-X'], ['_trackPageview']];
+	     (function(d, t) {
+	     var g = d.createElement(t),
+	     s = d.getElementsByTagName(t)[0];
+	     g.async = true;
+	     g.src = '//www.google-analytics.com/ga.js';
+	     s.parentNode.insertBefore(g, s);
+	     })(document, 'script');
+	   </script>
+	   -->    
+  </body>
+</html>

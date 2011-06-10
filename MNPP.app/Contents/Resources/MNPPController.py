@@ -275,14 +275,11 @@ class MNPPController (NSWindowController):
 		
 		if uwsgi:
 			enableUwsgi = self.path + "enableUwsgi"
-			print enableUwsgi
 			self.auth.executeWithPrivileges(enableUwsgi)
 
     def disableUwsgi(self):
 		settings = NSUserDefaults.standardUserDefaults()
 		uwsgi = settings.boolForKey_("uwsgi")
 		
-		if uwsgi:
-			disableUwsgi = self.path + "disableUwsgi"
-			print disableUwsgi
-			self.auth.executeWithPrivileges(disableUwsgi)
+		disableUwsgi = self.path + "disableUwsgi"
+		self.auth.executeWithPrivileges(disableUwsgi)

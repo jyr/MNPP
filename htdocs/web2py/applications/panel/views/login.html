@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>{{=response.title}}</title>
+    {{
+    response.files = []
+    response.files.append(URL('static','css/reset.css'))
+    response.files.append(URL('static','css/styles.css'))
+    response.files.append(URL('static','css/web2py.css'))
+    response.files.append(URL('static','js/jquery.js'))
+    response.files.append(URL('static','js/web2py.js'))
+
+    }}
+    {{include 'header.html'}}
+  </head>
+  <body>
+    <div id="login" class="container"> 
+      <div class="box">
+        <div class="header">
+          <h2>{{=response.title}}</h2>
+        </div>
+        <div class="flash">{{=response.flash or ''}}</div>
+        <div class="content">
+            {{include}}
+        </div>
+      </div>
+    </body>
+  </html>

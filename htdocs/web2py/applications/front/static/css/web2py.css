@@ -1,0 +1,28 @@
+div.flash {
+    font-weight: bold;
+    display: none;
+    position: fixed;    
+    padding: 10px;
+    top: 40px;
+    right: 10px;
+    min-width: 280px;
+    opacity: 0.85;
+    margin: 0px 0px 10px 10px;    
+    color: #fff;    
+    vertical-align: middle;
+    cursor: pointer;
+    background: #000;
+    border: 2px solid #eaeaea
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    z-index: 2;
+}
+div.error {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    opacity: 0.75;
+}

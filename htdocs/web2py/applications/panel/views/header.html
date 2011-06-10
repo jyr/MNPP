@@ -1,0 +1,11 @@
+    {{for _item in response.meta or []:}}
+    <meta name="{{=_item}}" content="{{=response.meta[_item]}}" />{{pass}}
+    {{for _k,_file in enumerate(response.files or []):
+      if _file in response.files[:_k]:
+        continue
+        _file0=_file.lower().split('?')[0]
+      if _file0.endswith('.css'):
+    }}
+    <link href="{{=_file}}" rel="stylesheet" type="text/css" />{{elif _file0.endswith('.js'):}}
+    <script src="{{=_file}}" type="text/javascript"></script>{{pass
+    pass}}
