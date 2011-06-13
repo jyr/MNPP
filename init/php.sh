@@ -82,6 +82,12 @@ __hosts
 __export_library
 
 if [ $1 == 53 ];then
+  
+  found=`ps -ef | grep "/Applications/MNPP/Library/php52/bin/php-cgi" | wc -l`
+  if [ $found -gt 1 ] ; then
+    killall php-cgi
+  fi
+  
   case "$2" in
       start)
           echo -n "Starting php-fpm "
@@ -168,6 +174,12 @@ if [ $1 == 53 ];then
 
   esac
 else
+  
+  found=`ps -ef | grep "/Applications/MNPP/Library/php53/sbin/php-fpm" | wc -l`
+  if [ $found -gt 1 ] ; then
+    killall php-fpm
+  fi
+  
   case "${2}" in
       start|stop|quit|restart|reload|logrotate)
           /Applications/MNPP/Library/php52/sbin/php-fpm ${2}
