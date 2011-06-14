@@ -1,0 +1,164 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	/*list-style: none;*/
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+.clear
+{
+	clear:both;
+}
+.right {
+ float: right !important;
+}
+.left {
+	float: left !important;
+}
+.clearfix:after {
+	content: "";
+	display: block;
+	clear: both;
+	visibility: hidden;
+}
+
+ 
+html[xmlns] .clearfix {
+	display: block;
+}
+ 
+* html .clearfix {
+	height: 1%;
+}
+
+input,button
+{
+	border:none;
+	outline: none;
+}
+
+
+/*Typography*/
+
+p img.left,
+img.alignleft {
+    margin: 0.5em 1.5em 1.5em 0;
+    float: left;
+}
+p img.right,
+img.alignright {
+    margin: 0.5em 0 1.5em 1.5em;
+    float: right;
+}
+blockquote {
+    padding: 1.5em 1.5em 0px 3em;
+    margin: 0 0 1.5em;
+    border-left: outset 5px;
+    display: inline-block;
+}
+strong { font-weight: 800 }
+em,
+dfn { font-style: italic }
+dfn { font-weight: bold }
+del { text-decoration: line-through }
+abbr,
+acronym {
+    border-bottom: 1px dotted;
+    cursor: help;
+}
+address {
+    margin: 0 0 1.5em;
+    font-style: italic;
+}
+pre {
+    margin: 1.5em 0;
+    white-space: pre;
+}
+big {
+	font-size: larger;
+}
+small {
+	font-size: smaller;
+}
+pre,
+var,
+code,
+tt,
+input { font: 1em/1.5em Consolas, Lucida Console , 'andale mono' , Courier , Monospace; }
+li ul,
+li ol { margin: 0 1.5em; }
+ul { list-style-type: square; }
+ol { list-style-type: decimal; }
+dl { margin: 0 0 1.5em 0; }
+dl dt { font-weight: bold; }
+dd { margin-left: 1.5em; }
+table {
+    width: 100%;
+}
+th { font-weight: bold; }
+th,
+td,
+caption { padding: 4px 10px 4px 5px; }
+tfoot { font-style: italic; }
+sup { vertical-align: top; }
+sub { vertical-align: bottom; }
+sub,
+sup {
+    font-size: .8em;
+    margin-bottom: 1.875em;
+    line-height: 1.66em;
+}
+ul.empty,
+ol.empty {
+    list-style-type: none;
+    list-style-position: outside;
+}
+ul.square { list-style-type: square; }
+ul.circle { list-style-type: circle; }
+ul.disc { list-style-type: disc; }
+ol.cjk { list-style-type: cjk-ideographic; }
+ol.hebrew { list-style-type: hebrew; }
+ol.hiragana { list-style-type: hiragana; }
+ol.katakana { list-style-type: katakana; }
+ol.greek { list-style-type: lower-greek; }
+ol.latin { list-style-type: lower-latin; }
+ol.roman { list-style-type: lower-roman; }
+ol.Latin { list-style-type: upper-latin; }
+ol.Roman { list-style-type: upper-roman; }
+ol.zero { list-style-type: decimal-leading-zero; }
+cite:before { content: "“"; }
+cite:after { content: "”"; }

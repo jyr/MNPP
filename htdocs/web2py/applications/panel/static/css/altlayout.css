@@ -1,0 +1,177 @@
+/*
+-------------------------------
+    Alternate Layout Styles
+-------------------------------
+*/
+body {
+ background-image: url(../images/sidebarbg.png);
+ background-repeat: repeat-y;
+ background-color: #f0f0f0;
+}
+/*
+-----------------------
+    Header
+-----------------------
+*/
+#header {
+ background-position: -100px 0px;
+ width: 270px;
+ height: 100%;
+ position: fixed;
+ left: 0;
+ top: 0;
+}
+#header .container {
+ width: auto;
+}
+/*Logo*/
+#logo {
+ float: none;
+ padding-left: 20px;
+ margin-bottom: 30px;
+}
+/*
+-----------------------
+       Menu
+-----------------------
+*/
+#menu {
+ width: 250px;
+ float: none;
+ margin: 0px 100px 0px 16px;
+ padding: 0px;
+}
+/*
+-----------------------
+      Navigation
+-----------------------
+*/
+#navigation {
+ margin-top: 30px;
+}
+#navigation li {
+ margin-right: 0px;
+ padding: 0px;
+ float: none;
+ position: relative;
+ background-image: ;
+ background: url(../images/bg_sep.png) repeat-x top center;
+}
+#navigation li a {
+ padding: 12px 20px 10px;
+ display: block;
+}
+#navigation li.current {
+background: url(../images/bg_active.png) repeat-x; top center;
+}
+#navigation li a.current {
+ background: url(../images/active.png) no-repeat right center;
+}
+/*Notification*/
+#navigation li .notification {
+ display: inline;
+ position: relative;
+ top: -2px;
+ left: 0;
+ margin-left: 10px;
+}
+/*Child*/
+#navigation li ul {
+ display: none;
+ position: relative;
+ list-style: disc;
+ top: 0;
+ left: 0;
+ background: none;
+ width: auto;
+ padding: 0px 0px 10px 0px;
+ -webkit-border-radius: 0px;
+ -moz-border-radius: 0px;
+ border-radius: 0px;
+ border: 0px solid #3c3d3f;
+ box-shadow: 0px 0px 0px #282828;
+ -webkit-box-shadow: 0px 0px 0px #282828;
+ -moz-box-shadow: 0px 0px 0px #282828;
+ z-index: 50;
+ margin: 0px; 
+ background: url(../images/bg_activenav.png) !important;
+}
+#navigation li ul li {
+ background: none; 
+}
+#navigation li ul li a {
+	padding: 0px 20px 0px 40px !important;
+	color: #A3A5A8;
+}
+#navigation li ul li:first-child {
+	background: url(../images/bg_sep.png) repeat-x center top;
+	padding-top: 10px;
+}
+#navigation li ul:before,
+#navigation li ul:after
+{
+ content: "";
+ z-index: 1000;
+ top: 0;
+ left: 0;
+ margin-left: 0px; 
+ border-top: 0;
+ border-left: 0px solid transparent;
+ border-right: 0px solid transparent;
+ border-bottom: 0px solid #f3f3f3;
+}
+/*Toggle*/
+#navigation li.toggle {
+
+}
+#navigation li.toggle a {
+ background: url(../images/toggle_menu.png) no-repeat center center;
+	cursor: pointer;
+	height:21px;
+	padding-top: 15px;
+}
+#navigation li.toggle a:hover {
+	background-image: url(../images/toggle_menu_hover.png);
+}
+/*
+-----------------------
+    Container
+-----------------------
+*/
+.container {
+ width: auto;
+ margin: 0px auto 0px auto;
+}
+#content {
+ padding: 40px 30px 10px 30px;
+ margin-left: 270px;
+}
+.container.static {
+ width: 960px;
+ margin: 0px;
+}
+/*
+-----------------------
+    Box Container
+-----------------------
+*/
+.box {
+ box-shadow: 0px 0px 4px #8e8e8e;
+ -webkit-box-shadow: 0px 0px 4px #8e8e8e;
+ -moz-box-shadow: 0px 0px 4px #8e8e8e;
+ margin-top: 30px;
+}
+.box .content {
+ background-color: #F7F7F7;
+}
+.box .content form {
+ padding: 30px;
+}
+/*
+-----------------------
+      Footer
+-----------------------
+*/
+#footer.separator {
+ background: url(../images/separator.png) repeat-x top center;
+}

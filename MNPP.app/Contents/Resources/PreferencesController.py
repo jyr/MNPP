@@ -10,6 +10,7 @@ from AppKit import *
 from Authorization import Authorization
 from GeneralViewController import GeneralViewController
 from PhpViewController import PhpViewController
+from PythonViewController import PythonViewController
 
 import objc
 
@@ -34,8 +35,11 @@ class PreferencesController (NSWindowController):
 		self.preferencesView.addSubview_(self.generalView)
 		
 		self.PhpController = PhpViewController.alloc().initWithNibName_bundle_("Php", None)
-
+		
+		self.PythonController = PythonViewController.alloc().initWithNibName_bundle_("Python", None)
+		
 		self.setSettings(self)
+		
 		
 	show = classmethod(show)	
 	
@@ -80,7 +84,20 @@ class PreferencesController (NSWindowController):
 				self.PhpController.php53.setState_(NSOffState)
 			except:
 				pass
+
+		uwsgi = settings.boolForKey_("uwsgi")
 		
+		if uwsgi:
+			try:
+				self.PythonController.uwsgi.setState_(NSOnState)
+			except:
+				pass
+		else:
+			try:
+				self.PythonController.uwsgi.setState_(NSOffState)
+			except:
+				pass
+			
 		"""
 		nginxPort = settings.stringForKey_("nginxPort")
 
@@ -115,5 +132,13 @@ class PreferencesController (NSWindowController):
 		self.resetSubviews()
 		self.phpView = self.PhpController.view()
 		self.preferencesView.addSubview_(self.phpView)
+		
+		self.setSettings()
+
+	@objc.IBAction
+	def python_(self, sender):
+		self.resetSubviews()
+		self.pythonView = self.PythonController.view()
+		self.preferencesView.addSubview_(self.pythonView)
 		
 		self.setSettings()

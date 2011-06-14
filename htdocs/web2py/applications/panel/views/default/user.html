@@ -1,0 +1,21 @@
+{{extend 'login.html'}}
+<div style="margin: 20px;">
+  <h3>{{=T( request.args(0).replace('_',' ').capitalize() )}}</h3>
+  <div id="user_form">
+    {{=form}}
+    {{if request.args(0)=='login':}}
+    {{if not 'register' in auth.settings.actions_disabled:}}
+    <br/><a href="{{=URL(r=request,args='register')}}">register</a>
+    {{pass}}
+    {{if not 'request_reset_password' in auth.settings.actions_disabled:}}
+    <br/><a href="{{=URL(r=request,args='request_reset_password')}}">lost password</a>
+    {{pass}}
+    {{pass}}
+  </div>
+
+  <script language="javascript">
+    <!--
+    $("#user_form input:visible:enabled:first").focus();
+    //-->
+  </script> 
+</div>

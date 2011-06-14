@@ -20,7 +20,7 @@ class GeneralViewController (NSViewController):
 	@objc.IBAction
 	def savePreferences_(self, sender):
 		settings = NSUserDefaults.standardUserDefaults()
-		print "General savePreferences"
+
 		if self.start.state():
 			settings.setObject_forKey_(1, 'start')
 		else:

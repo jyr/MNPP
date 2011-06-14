@@ -6,13 +6,15 @@ int main(int argc, char *argv[]) {
   if(argc == 1 || argc == 2 || argc > 3) {
     usage();
   }else if ( (strcmp(argv[1], "--php52") == 0) || (strcmp(argv[1], "--php53") == 0) ){
+    /* init php versions */
     if((strcmp(argv[2], "--start") == 0) || (strcmp(argv[2], "--stop") == 0)){
       mnpp(argv[1], argv[2], "");
     }else{
       usage();
     }
   } else if( (strcmp(argv[1], "--start") == 0) || (strcmp(argv[1], "--stop") == 0) ){
-    if((strcmp(argv[2], "php52") == 0) || (strcmp(argv[2], "php53") == 0) || (strcmp(argv[2], "percona") == 0) || (strcmp(argv[2], "nginx") == 0)){
+    /* init individual services */
+    if((strcmp(argv[2], "php52") == 0) || (strcmp(argv[2], "php53") == 0) || (strcmp(argv[2], "percona") == 0) || (strcmp(argv[2], "nginx") == 0) || (strcmp(argv[2], "uwsgi") == 0)){
       mnpp("", argv[1], argv[2]);
     }else{
       usage();
@@ -33,11 +35,13 @@ int mnpp(char phpVersion[], char proccess[], char service[]) {
   }
 
   if ((strcmp(phpVersion, "") == 0)) {
+    /* init php versions */
     if (strcmp(proccess,"--start") == 0) {
 
       if((strcmp(service, "php52") == 0) || (strcmp(service, "php53") == 0)) {
         sprintf(command, "sh /Applications/MNPP/init/php.sh %i start", version);
       }else {
+        /* init start individual services */
         sprintf(command, "sh /Applications/MNPP/init/%s.sh start", service);
       }
       system(command);
@@ -47,11 +51,13 @@ int mnpp(char phpVersion[], char proccess[], char service[]) {
       if((strcmp(service, "php52") == 0) || (strcmp(service, "php53") == 0)) {
         sprintf(command, "sh /Applications/MNPP/init/php.sh %i stop", version);
       }else{
+        /* init stop individual services */
         sprintf(command, "sh /Applications/MNPP/init/%s.sh stop", service);
       }
       system(command);
     }
   } else {
+    /* init all services */
     if (strcmp(proccess,"--start") == 0) {      
       sprintf(command, "sh /Applications/MNPP/init/start.sh %i", version);
       system(command);
@@ -81,5 +87,5 @@ int usage() {
   printf("\n\t For php");
   printf("\n\t\t sudo mnpp --stop php[Version]");
   printf("\nVersion: \n\t 52 | 53 \n");
-  printf("\nService: \n\t nginx | percona | php \n");
+  printf("\nService: \n\t nginx | percona | uwsgi \n");
 }
