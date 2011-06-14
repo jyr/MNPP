@@ -1,4 +1,4 @@
-#MNPP  Mac + Nginx + Percona + PHP
+#MNPP  Mac + Nginx + Percona + PHP or Python
 ###A high performance web server in a one-click installer.
 
 ## Contributors
@@ -6,7 +6,6 @@
 
 [Jair Gaxiola](https://github.com/jyr) (Core developer)    
 [César Salazar](http://cesarsalazar.mx/)    
-[Iván Mayoral](http://flavors.me/van)    
 [Astrata Software](http://astrata.mx)
 
 ##Features
@@ -40,3 +39,7 @@ For php
 
 version: 52 | 53    
 service: nginx | percona | uwsgi
+
+##Percona account
+
+User is root without password the same for phpmyadmin

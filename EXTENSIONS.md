@@ -4,9 +4,11 @@
 * PHP 5.2.17
 * Nginx 1.0.0
 * phpMyAdmin-3.3.9.2
+* Python 2.6.7
+* uwsgi 0.9.8
 
 
-#Installed libraries
+#Installed libraries for php
 
 - freetype-2.4.4
 - curl-7.21.3
@@ -24,3 +26,7 @@
 - PHP-MEMCACHE-3.0.5
 - APC 3.1.7
 - mongodb-mongo-php-driver-1.1.4-49
+
+#Python apps
+- django 1.3
+- web2py
