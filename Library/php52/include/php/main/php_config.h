@@ -2542,7 +2542,7 @@
 #define HAVE_LIBXML 1
 
 /*   */
-/* #undef HAVE_SOAP */
+#define HAVE_SOAP 1
 
 /* Whether to build soap as dynamic module */
 /* #undef COMPILE_DL_SOAP */
@@ -2923,7 +2923,7 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-06-23"
+#define PHP_BUILD_DATE "2011-06-24"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
