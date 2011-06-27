@@ -1,0 +1,23 @@
+server {
+    listen       80;
+    server_name  playvc.dev;
+    root   /Applications/MNPP/htdocs/playvc;
+
+    #charset koi8-r;
+
+    access_log  /Applications/MNPP/logs/nginx/playvc.access.log;
+    error_log  /Applications/MNPP/logs/nginx/playvc.access.log;
+    
+    location / {
+        index  index.html index.htm index.php;
+    }
+
+    #error_page  404              /404.html;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+    
+    include /Applications/MNPP/conf/nginx/common/codeigniter;
+}
