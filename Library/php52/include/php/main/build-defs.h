@@ -18,7 +18,7 @@
 
 /* $Id: build-defs.h.in 292156 2009-12-15 11:17:47Z jani $ */
 
-#define CONFIGURE_COMMAND " './configure'  '--prefix=/Applications/MNPP/Library/php52' '--exec-prefix=/Applications/MNPP/Library/php52' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl=/Applications/MNPP/Library/curl' '--with-gd=/Applications/MNPP/Library/gd' '--with-gettext=shared,/Applications/MNPP/Library/gettext' '--with-freetype-dir=/Applications/MNPP/Library/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/libxml' '--with-xsl=/Applications/MNPP/Library/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config' '--with-openssl' '--with-png-dir=/Applications/MNPP/Library/libpng' '--with-readline' '--with-ttf' '--with-xpm-dir=/Applications/MNPP/Library/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php52' '--enable-fastcgi' '--enable-fpm' '--enable-force-cgi-redirect' '--with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm' '--with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log' '--with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid' '--with-libedit' '--enable-libxml' '--enable-dom' '--with-ncurses=/usr/lib' '--enable-pdo' '--with-pcre-regex' '--enable-session' '--disable-all'"
+#define CONFIGURE_COMMAND " './configure'  '--prefix=/Applications/MNPP/Library/php52' '--exec-prefix=/Applications/MNPP/Library/php52' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl=/Applications/MNPP/Library/curl' '--with-gd=/Applications/MNPP/Library/gd' '--with-gettext=shared,/Applications/MNPP/Library/gettext' '--with-freetype-dir=/Applications/MNPP/Library/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/libxml' '--with-xsl=/Applications/MNPP/Library/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config' '--with-openssl' '--with-png-dir=/Applications/MNPP/Library/libpng' '--with-readline' '--with-ttf' '--with-xpm-dir=/Applications/MNPP/Library/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php52' '--enable-fastcgi' '--enable-fpm' '--enable-force-cgi-redirect' '--with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm' '--with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log' '--with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid' '--with-libedit' '--enable-libxml' '--enable-dom' '--with-ncurses=/usr/lib' '--enable-pdo' '--with-pcre-regex' '--enable-hash' '--enable-session' '--enable-json' '--enable-spl' '--enable-filter' '--enable-simplexml' '--enable-xml' '--with-iconv=/Applications/MNPP/Library/libiconv' '--enable-soap'"
 #define PHP_ADA_INCLUDE		""
 #define PHP_ADA_LFLAGS		""
 #define PHP_ADA_LIBS		""
@@ -75,8 +75,8 @@
 #define PHP_LDAP_LIBS		""
 #define PHP_BIRDSTEP_INCLUDE     ""
 #define PHP_BIRDSTEP_LIBS        ""
-#define PEAR_INSTALLDIR         ""
-#define PHP_INCLUDE_PATH	".:"
+#define PEAR_INSTALLDIR         "/Applications/MNPP/Library/php52/lib/php"
+#define PHP_INCLUDE_PATH	".:/Applications/MNPP/Library/php52/lib/php"
 #define PHP_EXTENSION_DIR       "/Applications/MNPP/Library/php52/lib/php/extensions/no-debug-non-zts-20060613"
 #define PHP_PREFIX              "/Applications/MNPP/Library/php52"
 #define PHP_BINDIR              "/Applications/MNPP/Library/php52/bin"
