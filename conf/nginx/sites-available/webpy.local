@@ -1,0 +1,16 @@
+server {
+    listen       80;
+    server_name  webpy.local;
+    
+    location / {
+        include uwsgi_params;
+        uwsgi_pass uwsgiapps;
+        uwsgi_param UWSGI_CHDIR /Applications/MNPP/htdocs/webpy;
+        uwsgi_param UWSGI_PYHOME /Applications/MNPP/Library/python26;
+        uwsgi_param UWSGI_SCRIPT index;
+      }
+    
+    access_log  /Applications/MNPP/logs/nginx/webpy.local.access.log;
+    error_log  /Applications/MNPP/logs/nginx/webpy.local.error.log;
+    
+}
