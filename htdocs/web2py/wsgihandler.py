@@ -33,11 +33,11 @@ sys.stdout=sys.stderr
 import gluon.main
 
 if LOGGING:
-    application = gluon.main.appfactory(wsgiapp=gluon.main.wsgibase,
+    app = gluon.main.appfactory(wsgiapp=gluon.main.wsgibase,
                                         logfilename='httpserver.log',
                                         profilerfilename=None)
 else:
-    application = gluon.main.wsgibase
+    app = gluon.main.wsgibase
 
 if SOFTCRON:
     from gluon.settings import global_settings
