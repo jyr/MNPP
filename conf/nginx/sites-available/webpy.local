@@ -1,6 +1,7 @@
 server {
     listen       80;
     server_name  webpy.local;
+    #root   /Applications/MNPP/htdocs/webpy;
     
     location / {
         include uwsgi_params;
