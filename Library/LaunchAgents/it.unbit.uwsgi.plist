@@ -20,6 +20,8 @@
                 <string>/Applications/MNPP/Library/python26/lib/python2.6/lib-dynload/</string>
                 <string>--pythonpath</string>
                 <string>/Applications/MNPP/Library/python26/lib/python2.6/site-packages/</string>
+                <string>--callable</string>
+                <string>app</string>
                 <string>--die-on-term</string>
         </array>
 </dict>

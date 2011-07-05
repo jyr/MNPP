@@ -6,8 +6,8 @@ app = Flask(__name__)
 def hello_world():
   return "Hello World from flask!"
 
-def application(environ, start_response):
-  return app(environ, start_response)
+#def application(environ, start_response):
+#  return app(environ, start_response)
 
 
 #if __name__ == '__main__':

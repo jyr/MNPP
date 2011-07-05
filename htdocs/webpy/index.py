@@ -11,5 +11,5 @@ class index:
 #if __name__ == "__main__":
 #    app.run()
 
-application = app.wsgifunc()
+app = app.wsgifunc()
 
