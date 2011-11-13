@@ -10,7 +10,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Config.php 287554 2009-08-21 21:16:25Z dufuz $
+ * @version    CVS: $Id: Config.php 313024 2011-07-06 19:51:24Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 0.1
  */
@@ -29,7 +29,7 @@ require_once 'PEAR/Command/Common.php';
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 0.1
  */
@@ -205,12 +205,13 @@ and uninstall).
                 return $this->raiseError("config-get expects 1 or 2 parameters");
         }
 
-        $channel = isset($options['channel']) ? $options['channel'] : $this->config->get('default_channel');
         $reg = &$this->config->getRegistry();
+        $channel = isset($options['channel']) ? $options['channel'] : $this->config->get('default_channel');
         if (!$reg->channelExists($channel)) {
             return $this->raiseError('Channel "' . $channel . '" does not exist');
         }
 
+        $channel = $reg->channelName($channel);
         $this->ui->outputData($this->config->get($config_key, $layer, $channel), $command);
         return true;
     }

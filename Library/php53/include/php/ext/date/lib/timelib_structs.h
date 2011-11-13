@@ -16,7 +16,7 @@
    +----------------------------------------------------------------------+
  */
 
-/* $Id: timelib_structs.h 293036 2010-01-03 09:23:27Z sebastian $ */
+/* $Id: timelib_structs.h 307038 2011-01-03 19:24:04Z scottmac $ */
 
 #ifndef __TIMELIB_STRUCTS_H__
 #define __TIMELIB_STRUCTS_H__
@@ -218,6 +218,6 @@ typedef struct _timelib_tzdb {
 
 #define timelib_is_leap(y) ((y) % 4 == 0 && ((y) % 100 != 0 || (y) % 400 == 0))
 
-#define DEBUG(s)  if (0) { s }
+#define TIMELIB_DEBUG(s)  if (0) { s }
 
 #endif

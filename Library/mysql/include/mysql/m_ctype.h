@@ -1,4 +1,5 @@
-/* Copyright (C) 2000 MySQL AB
+/*
+   Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -11,7 +12,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 /*
   A better inplementation of the UNIX ctype(3) library.
@@ -464,6 +466,8 @@ extern my_bool my_parse_charset_xml(const char *bug, size_t len,
 				    int (*add)(CHARSET_INFO *cs));
 extern char *my_strchr(CHARSET_INFO *cs, const char *str, const char *end,
                        pchar c);
+extern size_t my_strcspn(CHARSET_INFO *cs, const char *str, const char *end,
+                         const char *accept);
 
 my_bool my_propagate_simple(CHARSET_INFO *cs, const uchar *str, size_t len);
 my_bool my_propagate_complex(CHARSET_INFO *cs, const uchar *str, size_t len);

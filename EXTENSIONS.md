@@ -11,7 +11,7 @@
 #Installed libraries for php
 
 - freetype-2.4.4
-- curl-7.21.3
+- curl-7.22.0
 - jpegsrc.v8b
 - libpng-1.5.1
 - gd-2.0.35
@@ -26,6 +26,8 @@
 - PHP-MEMCACHE-3.0.5
 - APC 3.1.7
 - mongodb-mongo-php-driver-1.1.4-49
+- libiconv-1.14
+- openssl-0.9.8r
 
 #Python apps
 - django 1.3

@@ -10,7 +10,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: CLI.php 296938 2010-03-27 16:16:25Z dufuz $
+ * @version    CVS: $Id: CLI.php 313023 2011-07-06 19:17:11Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 0.1
  */
@@ -27,7 +27,7 @@ require_once 'PEAR/Frontend.php';
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 0.1
  */
@@ -396,7 +396,7 @@ class PEAR_Frontend_CLI extends PEAR_Frontend
             case 'install':
             case 'upgrade':
             case 'upgrade-all':
-                if (isset($data['release_warnings'])) {
+                if (is_array($data) && isset($data['release_warnings'])) {
                     $this->_displayLine('');
                     $this->_startTable(array(
                         'border' => false,
@@ -407,7 +407,7 @@ class PEAR_Frontend_CLI extends PEAR_Frontend
                     $this->_displayLine('');
                 }
 
-                $this->_displayLine($data['data']);
+                $this->_displayLine(is_array($data) ? $data['data'] : $data);
                 break;
             case 'search':
                 $this->_startTable($data);
@@ -415,10 +415,17 @@ class PEAR_Frontend_CLI extends PEAR_Frontend
                     $this->_tableRow($data['headline'], array('bold' => true), array(1 => array('wrap' => 55)));
                 }
 
+                $packages = array();
                 foreach($data['data'] as $category) {
-                    foreach($category as $pkg) {
-                        $this->_tableRow($pkg, null, array(1 => array('wrap' => 55)));
+                    foreach($category as $name => $pkg) {
+                        $packages[$pkg[0]] = $pkg;
                     }
+                }
+
+                $p = array_keys($packages);
+                natcasesort($p);
+                foreach ($p as $name) {
+                    $this->_tableRow($packages[$name], null, array(1 => array('wrap' => 55)));
                 }
 
                 $this->_endTable();
@@ -434,11 +441,19 @@ class PEAR_Frontend_CLI extends PEAR_Frontend
                     $this->_tableRow($data['headline'], array('bold' => true), array(1 => array('wrap' => 55)));
                 }
 
+                $packages = array();
                 foreach($data['data'] as $category) {
-                    foreach($category as $pkg) {
-                        unset($pkg[4], $pkg[5]);
-                        $this->_tableRow($pkg, null, array(1 => array('wrap' => 55)));
+                    foreach($category as $name => $pkg) {
+                        $packages[$pkg[0]] = $pkg;
                     }
+                }
+
+                $p = array_keys($packages);
+                natcasesort($p);
+                foreach ($p as $name) {
+                    $pkg = $packages[$name];
+                    unset($pkg[4], $pkg[5]);
+                    $this->_tableRow($pkg, null, array(1 => array('wrap' => 55)));
                 }
 
                 $this->_endTable();

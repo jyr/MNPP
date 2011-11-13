@@ -9,7 +9,7 @@
  * @author     Alexander Merz <alexmerz@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Mirror.php 276383 2009-02-24 23:39:37Z dufuz $
+ * @version    CVS: $Id: Mirror.php 313023 2011-07-06 19:17:11Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 1.2.0
  */
@@ -27,7 +27,7 @@ require_once 'PEAR/Command/Common.php';
  * @author     Alexander Merz <alexmerz@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 1.2.0
  */

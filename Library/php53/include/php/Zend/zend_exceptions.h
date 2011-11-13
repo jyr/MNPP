@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2010 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2011 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        | 
@@ -19,7 +19,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: zend_exceptions.h 293155 2010-01-05 20:46:53Z sebastian $ */
+/* $Id: zend_exceptions.h 306939 2011-01-01 02:19:59Z felipe $ */
 
 #ifndef ZEND_EXCEPTIONS_H
 #define ZEND_EXCEPTIONS_H

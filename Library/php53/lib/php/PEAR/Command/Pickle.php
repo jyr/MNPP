@@ -9,7 +9,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  2005-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Pickle.php 276383 2009-02-24 23:39:37Z dufuz $
+ * @version    CVS: $Id: Pickle.php 313023 2011-07-06 19:17:11Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 1.4.1
  */
@@ -27,7 +27,7 @@ require_once 'PEAR/Command/Common.php';
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  2005-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 1.4.1
  */
@@ -104,7 +104,7 @@ generate both package.xml.
      * @param string|null $tmpdir
      * @return PEAR_PackageFile
      */
-    function &getPackageFile($config, $debug = false, $tmpdir = null)
+    function &getPackageFile($config, $debug = false)
     {
         if (!class_exists('PEAR_Common')) {
             require_once 'PEAR/Common.php';
@@ -114,7 +114,7 @@ generate both package.xml.
             require_once 'PEAR/PackageFile.php';
         }
 
-        $a = &new PEAR_PackageFile($config, $debug, $tmpdir);
+        $a = &new PEAR_PackageFile($config, $debug);
         $common = new PEAR_Common;
         $common->ui = $this->ui;
         $a->setLogger($common);

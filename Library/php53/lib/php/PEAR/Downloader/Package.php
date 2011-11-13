@@ -9,7 +9,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Package.php 287560 2009-08-21 22:36:18Z dufuz $
+ * @version    CVS: $Id: Package.php 313023 2011-07-06 19:17:11Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 1.4.0a1
  */
@@ -50,7 +50,7 @@ define('PEAR_DOWNLOADER_PACKAGE_PHPVERSION', -1004);
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 1.4.0a1
  */
@@ -1376,6 +1376,8 @@ class PEAR_Downloader_Package
                     continue;
                 }
 
+                // FIXME do symlink check
+
                 fwrite($fp, $filecontents, strlen($filecontents));
                 fclose($fp);
                 if ($s = $params[$i]->explicitState()) {
@@ -1497,12 +1499,11 @@ class PEAR_Downloader_Package
      * @param int
      * @param string
      */
-    function &getPackagefileObject(&$c, $d, $t = false)
+    function &getPackagefileObject(&$c, $d)
     {
-        $a = &new PEAR_PackageFile($c, $d, $t);
+        $a = &new PEAR_PackageFile($c, $d);
         return $a;
     }
-
 
     /**
      * This will retrieve from a local file if possible, and parse out
@@ -1527,16 +1528,7 @@ class PEAR_Downloader_Package
             if (@is_file($param)) {
                 $this->_type = 'local';
                 $options = $this->_downloader->getOptions();
-                if (isset($options['downloadonly'])) {
-                    $pkg = &$this->getPackagefileObject($this->_config,
-                        $this->_downloader->_debug);
-                } else {
-                    if (PEAR::isError($dir = $this->_downloader->getDownloadDir())) {
-                        return $dir;
-                    }
-                    $pkg = &$this->getPackagefileObject($this->_config,
-                        $this->_downloader->_debug, $dir);
-                }
+                $pkg = &$this->getPackagefileObject($this->_config, $this->_downloader->_debug);
                 PEAR::pushErrorHandling(PEAR_ERROR_RETURN);
                 $pf = &$pkg->fromAnyFile($param, PEAR_VALIDATE_INSTALLING);
                 PEAR::popErrorHandling();
@@ -1608,15 +1600,7 @@ class PEAR_Downloader_Package
             }
 
             // whew, download worked!
-            if (isset($options['downloadonly'])) {
-                $pkg = &$this->getPackagefileObject($this->_config, $this->_downloader->debug);
-            } else {
-                $dir = $this->_downloader->getDownloadDir();
-                if (PEAR::isError($dir)) {
-                    return $dir;
-                }
-                $pkg = &$this->getPackagefileObject($this->_config, $this->_downloader->debug, $dir);
-            }
+            $pkg = &$this->getPackagefileObject($this->_config, $this->_downloader->debug);
 
             PEAR::pushErrorHandling(PEAR_ERROR_RETURN);
             $pf = &$pkg->fromAnyFile($file, PEAR_VALIDATE_INSTALLING);

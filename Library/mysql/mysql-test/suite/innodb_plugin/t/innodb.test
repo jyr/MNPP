@@ -15,6 +15,12 @@
 
 -- source include/have_innodb_plugin.inc
 
+# Suppress the error log message occuring on duplicate key error
+# during ALTER TABLE when using fast index creation
+--disable_query_log
+call mtr.add_suppression("Cannot find index v_2 in InnoDB index translation table.");
+--enable_query_log
+
 let $MYSQLD_DATADIR= `select @@datadir`;
 
 # Save the original values of some variables in order to be able to
@@ -42,6 +48,15 @@ SET @innodb_row_lock_time_avg_orig = (SELECT variable_value FROM information_sch
 drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 --enable_warnings
+
+# Bug#58912 InnoDB unnecessarily avoids update-in-place on column prefixes
+CREATE TABLE bug58912 (a BLOB, b TEXT, PRIMARY KEY(a(1))) ENGINE=InnoDB;
+INSERT INTO bug58912 VALUES(REPEAT('a',8000),REPEAT('b',8000));
+UPDATE bug58912 SET a=REPEAT('a',7999);
+# The above statements used to trigger a failure during purge when
+# Bug#55284 was fixed while Bug#58912 was not. Defer the DROP TABLE,
+# so that purge gets a chance to run (and a double free of the
+# off-page column can be detected, if one is to occur.)
 
 #
 # Small basic test with ignore
@@ -2540,6 +2555,9 @@ CONNECTION default;
 SET GLOBAL innodb_thread_concurrency = @innodb_thread_concurrency_orig;
 
 -- enable_query_log
+
+# Clean up after the Bug#55284/Bug#58912 test case.
+DROP TABLE bug58912;
 
 #######################################################################
 #                                                                     #

@@ -1,9 +1,9 @@
-/* $Id: php_crypt_r.h 293036 2010-01-03 09:23:27Z sebastian $ */
+/* $Id: php_crypt_r.h 313406 2011-07-18 21:26:29Z pajoye $ */
 /*
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2010 The PHP Group                                |
+   | Copyright (c) 1997-2011 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -46,9 +46,9 @@ PHPAPI char *php_crypt_r (const char *__key, const char *__salt, struct php_cryp
 
 #define MD5_HASH_MAX_LEN 120
 
+#include "crypt_blowfish.h"
+
 extern char * php_md5_crypt_r(const char *pw, const char *salt, char *out);
-extern char * php_crypt_blowfish_rn(__CONST char *key, __CONST char *setting,
-	char *output, int size);
 extern char * php_sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen);
 extern char * php_sha256_crypt_r (const char *key, const char *salt, char *buffer, int buflen);
 

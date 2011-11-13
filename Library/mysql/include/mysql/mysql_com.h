@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 MySQL AB
+/* Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -128,10 +128,10 @@ enum enum_server_command
 #define REFRESH_FAST		32768	/* Intern flag */
 
 /* RESET (remove all queries) from query cache */
-#define REFRESH_QUERY_CACHE	     65536
-#define REFRESH_QUERY_CACHE_FREE    0x20000L /* pack query cache */
-#define REFRESH_DES_KEY_FILE	     0x40000L
-#define REFRESH_USER_RESOURCES	     0x80000L
+#define REFRESH_QUERY_CACHE	65536
+#define REFRESH_QUERY_CACHE_FREE 0x20000L /* pack query cache */
+#define REFRESH_DES_KEY_FILE	0x40000L
+#define REFRESH_USER_RESOURCES	0x80000L
 #define REFRESH_QUERY_RESPONSE_TIME 0x100000L /* response time distibution */
 
 #define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
