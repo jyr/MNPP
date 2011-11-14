@@ -19,5 +19,4 @@ class PythonViewController (NSViewController):
 			settings.setObject_forKey_(1, 'uwsgi')
 		else:
 			settings.setObject_forKey_(0, 'uwsgi')
-		print "python preferences"
 
