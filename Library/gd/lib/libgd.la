@@ -14,7 +14,7 @@ library_names='libgd.2.0.0.dylib libgd.2.dylib libgd.dylib'
 old_library='libgd.a'
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/opt/local/lib -L/usr/X11/lib -lXpm /opt/local/lib/libX11.la /opt/local/lib/libxcb.la /opt/local/lib/libXau.la /opt/local/lib/libXdmcp.la /opt/local/lib/libjpeg.la /opt/local/lib/libfontconfig.la /opt/local/lib/libiconv.la /opt/local/lib/libexpat.la /opt/local/lib/libfreetype.la /opt/local/lib/libpng12.la -lz'
+dependency_libs=' -L/usr/X11/lib -L/Applications/MNPP/Library/jpeg/lib -liconv -lXpm -lX11 /Applications/MNPP/Library/jpeg/lib/libjpeg.la -lfontconfig -lfreetype -lpng -lz'
 
 # Version information for libgd.
 current=2

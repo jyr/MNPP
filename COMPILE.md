@@ -24,7 +24,7 @@ make install
 
 JPEG
 ---
-./configure --prefix=/Applications/MNPP/Library/jpeg    
+./configure --prefix=/Applications/MNPP/Library/jpeg --enable-shared --enable-static    
 make    
 make install
 
@@ -36,7 +36,7 @@ make install
 
 GD
 ---
-./configure --prefix=/Applications/MNPP/Library/gd    
+MACOSX_DEPLOYMENT_TARGET=10.7 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --prefix=/Applications/MNPP/Library/gd --with-jpeg=/Applications/MNPP/Library/jpeg    
 make    
 make install
 
@@ -152,7 +152,7 @@ brew install pkg-config
 brew install curl
 brew install openssl
 
-./configure --prefix=/Applications/MNPP/Library/php53 --exec-prefix=/Applications/MNPP/Library/php53 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config  --with-openssl --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php53 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/libiconv --with-pdo-mysql=/Applications/MNPP/Library/mysql/bin/mysql_config --enable-soap    
+./configure --prefix=/Applications/MNPP/Library/php53 --exec-prefix=/Applications/MNPP/Library/php53 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config  --with-openssl --with-zlib-dir=/Applications/MNPP/Library/zlib --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php53 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/libiconv --with-pdo-mysql=/Applications/MNPP/Library/mysql/bin/mysql_config --enable-soap    
 export EXTRA_CFLAGS=-lresolv    
 make    
 make install    

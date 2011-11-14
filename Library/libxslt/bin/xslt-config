@@ -89,7 +89,7 @@ while test $# -gt 0; do
     shift
 done
 
-the_libs="-L${libdir} -lxslt  -L/opt/local/lib -lxml2 -lz -lpthread -liconv -lm "
+the_libs="-L${libdir} -lxslt  -lxml2 -lz -lpthread -licucore -lm "
 if test "$includedir" != "/usr/include"; then
     the_flags="$the_flags -I$includedir `xml2-config --cflags`"
 else

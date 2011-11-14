@@ -14,7 +14,7 @@
 - curl-7.22.0
 - jpegsrc.v8b
 - libpng-1.5.1
-- gd-2.0.35
+- gd-2.0.34
 - libxml2-2.7.8
 - libxslt-1.1.26
 - gettext-0.18.1.1
