@@ -17,7 +17,7 @@ old_library='libexslt.a'
 inherited_linker_flags=' '
 
 # Libraries that this one depends upon.
-dependency_libs=' /Applications/MNPP/Library/libxslt/lib/libxslt.la -L/opt/local/lib /opt/local/lib/libxml2.la -lz -lpthread /opt/local/lib/libiconv.la -lm'
+dependency_libs=' /Applications/MNPP/Library/libxslt/lib/libxslt.la -lxml2 -lz -lpthread -licucore -lm'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''

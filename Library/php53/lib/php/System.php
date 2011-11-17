@@ -9,7 +9,7 @@
  * @author     Tomas V.V.Cox <cox@idecnet.com>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: System.php 276386 2009-02-24 23:52:56Z dufuz $
+ * @version    CVS: $Id: System.php 313024 2011-07-06 19:51:24Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 0.1
  */
@@ -51,7 +51,7 @@ $GLOBALS['_System_temp_files'] = array();
 * @author     Tomas V.V. Cox <cox@idecnet.com>
 * @copyright  1997-2006 The PHP Group
 * @license    http://opensource.org/licenses/bsd-license.php New BSD License
-* @version    Release: 1.9.1
+* @version    Release: 1.9.4
 * @link       http://pear.php.net/package/PEAR
 * @since      Class available since Release 0.1
 * @static
@@ -71,9 +71,17 @@ class System
     function _parseArgs($argv, $short_options, $long_options = null)
     {
         if (!is_array($argv) && $argv !== null) {
-            $argv = preg_split('/\s+/', $argv, -1, PREG_SPLIT_NO_EMPTY);
+            // Find all items, quoted or otherwise
+            preg_match_all("/(?:[\"'])(.*?)(?:['\"])|([^\s]+)/", $argv, $av);
+            $argv = $av[1];
+            foreach ($av[2] as $k => $a) {
+                if (empty($a)) {
+                    continue;
+                }
+                $argv[$k] = trim($a) ;
+            }
         }
-        return Console_Getopt::getopt2($argv, $short_options);
+        return Console_Getopt::getopt2($argv, $short_options, $long_options);
     }
 
     /**

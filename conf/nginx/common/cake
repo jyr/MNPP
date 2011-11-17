@@ -1,16 +1,14 @@
-# rewrite rules for cakephp
 location / {
-  
   index  index.php index.html;
-
-  if (-f $request_filename) { 
-   break; 
-  }
   
-  if (!-f $request_filename) {
-    rewrite ^/(.+)$ /index.php?url=$1 last;
-    break;
- }
+  index index.php index.html index.htm;
+  if (-f $request_filename) {
+  break;
+  }
+  if (-d $request_filename) {
+  break;
+  }
+  rewrite ^(.+)$ /index.php?q=$1 last;
 
 }
 
@@ -34,4 +32,9 @@ location ~ /(\.ht|\.git|\.svn) {
   deny  all;
 }
 
-include /Applications/MNPP/conf/nginx/common/php;
+location ~ .php?$ {
+  include /Applications/MNPP/conf/nginx/fastcgi.conf;
+  fastcgi_pass 127.0.0.1:9000;
+  fastcgi_index index.php;
+  fastcgi_param SCRIPT_FILENAME /Applications/MNPP/htdocs/playvc_api/webroot/$fastcgi_script_name;
+}

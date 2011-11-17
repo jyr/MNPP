@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2010 The PHP Group                                |
+  | Copyright (c) 1997-2011 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -17,7 +17,7 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id: xml_common.h 293036 2010-01-03 09:23:27Z sebastian $ */
+/* $Id: xml_common.h 314493 2011-08-08 12:29:32Z iliaa $ */
 
 #ifndef PHP_XML_COMMON_H
 #define PHP_XML_COMMON_H
@@ -78,11 +78,13 @@ PHP_DOM_EXPORT xmlNodePtr dom_object_get_node(dom_object *obj);
 	} \
 }
 
-#define DOM_RET_OBJ(zval, obj, ret, domobject) \
-	if (NULL == (zval = php_dom_create_object(obj, ret, zval, return_value, domobject TSRMLS_CC))) { \
+#define DOM_RET_OBJ_EX(obj, ret, domobject) \
+	if (!php_dom_create_object(obj, ret, NULL, return_value, domobject TSRMLS_CC)) { \
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create required DOM object"); \
 		RETURN_FALSE; \
 	}
+
+#define DOM_RET_OBJ(zval, obj, ret, domobject) DOM_RET_OBJ_EX(obj, ret, domobject)
 
 #define DOM_GET_THIS(zval) \
 	if (NULL == (zval = getThis())) { \

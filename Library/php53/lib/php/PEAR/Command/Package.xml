@@ -120,7 +120,7 @@ of a specific release.
  Sets a SVN tag on all files in a package.  Use this command after you have
  packaged a distribution tarball with the &quot;package&quot; command to tag what
  revisions of what files were in that release.  If need to fix something
- after running cvstag once, but before the tarball is released to the public,
+ after running svntag once, but before the tarball is released to the public,
  use the &quot;slide&quot; option to move the release tag.
 
  to include files (such as a second package.xml, or tests not included in the

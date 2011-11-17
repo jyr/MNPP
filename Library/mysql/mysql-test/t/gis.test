@@ -358,7 +358,7 @@ t1 where object_id=85998;
 
 # Expected result is 36.3310176346905, but IA64 returns 36.3310176346904
 # due to fused multiply-add instructions.
---replace_result 36.3310176346904 36.3310176346905
+--replace_result 36.3310176346904 36.3310176346905 -114.87787186923326 -114.87787186923313 36.33101763469053 36.33101763469059 36.33101763469043 36.33101763469059
 select object_id, geometrytype(geo), ISSIMPLE(GEO), ASTEXT(centroid(geo)) from
 t1 where object_id=85984;
 
@@ -743,5 +743,73 @@ SET @a=POLYFROMWKB(@a);
 SET @a=0x00000000030000000000000000000000000000000000144000000000000014400000000000001840000000000000184000000000000014400000000000001440;
 SET @a=POLYFROMWKB(@a);
 
+
+#
+# Bug #57321    crashes and valgrind errors from spatial types
+#
+
+create table t1(a polygon NOT NULL)engine=myisam;
+insert into t1 values (geomfromtext("point(0 1)"));
+insert into t1 values (geomfromtext("point(1 0)"));
+select * from (select polygon(t1.a) as p from t1 order by t1.a) d;
+drop table t1;
+
+
+--echo #
+--echo # Test for bug #59888 "debug assertion when attempt to create spatial index
+--echo #                      on char > 31 bytes".
+--echo #
+create table t1(a char(32) not null) engine=myisam;
+--error ER_WRONG_ARGUMENTS
+create spatial index i on t1 (a);
+drop table t1;
+
+
+#
+# Bug#11767480 - SPATIAL INDEXES ON NON-SPATIAL COLUMNS CAUSE CRASHES.
+#
+CREATE TABLE t0 (a BINARY(32) NOT NULL);
+--error ER_WRONG_ARGUMENTS
+CREATE SPATIAL INDEX i on t0 (a);
+INSERT INTO t0 VALUES (1);
+
+--error ER_WRONG_ARGUMENTS
+CREATE TABLE t1(
+  col0 BINARY NOT NULL,
+  col2 TIMESTAMP,
+  SPATIAL INDEX i1 (col0)
+) ENGINE=MyISAM;
+
+# Test other ways to add indices
+CREATE TABLE t1 (
+  col0 BINARY NOT NULL,
+  col2 TIMESTAMP
+) ENGINE=MyISAM;
+
+--error ER_WRONG_ARGUMENTS
+CREATE SPATIAL INDEX idx0 ON t1(col0);
+
+--error ER_WRONG_ARGUMENTS
+ALTER TABLE t1 ADD SPATIAL INDEX i1 (col0);
+
+CREATE TABLE t2 (
+  col0 INTEGER NOT NULL,
+  col1 POINT,
+  col2 POINT
+);
+
+--error ER_WRONG_ARGUMENTS
+CREATE SPATIAL INDEX idx0 ON t2 (col1, col2);
+
+--error ER_WRONG_ARGUMENTS
+CREATE TABLE t3 (
+  col0 INTEGER NOT NULL,
+  col1 POINT,
+  col2 LINESTRING,
+  SPATIAL INDEX i1 (col1, col2)
+);
+
+# cleanup
+DROP TABLE t0, t1, t2;
 
 --echo End of 5.1 tests

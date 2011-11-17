@@ -9,7 +9,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: PackageFile.php 286670 2009-08-02 14:16:06Z dufuz $
+ * @version    CVS: $Id: PackageFile.php 313024 2011-07-06 19:51:24Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 1.4.0a1
  */
@@ -35,7 +35,7 @@ define('PEAR_PACKAGEFILE_ERROR_INVALID_PACKAGEVERSION', 2);
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 1.4.0a1
  */
@@ -46,16 +46,19 @@ class PEAR_PackageFile
      */
     var $_config;
     var $_debug;
-    /**
-     * Temp directory for uncompressing tgz files.
-     * @var string|false
-     */
-    var $_tmpdir;
+
     var $_logger = false;
     /**
      * @var boolean
      */
     var $_rawReturn = false;
+
+    /**
+     * helper for extracting Archive_Tar errors
+     * @var array
+     * @access private
+     */
+    var $_extractErrors = array();
 
     /**
      *
@@ -64,11 +67,10 @@ class PEAR_PackageFile
      * @param   string @tmpdir Optional temporary directory for uncompressing
      *          files
      */
-    function PEAR_PackageFile(&$config, $debug = false, $tmpdir = false)
+    function PEAR_PackageFile(&$config, $debug = false)
     {
         $this->_config = $config;
         $this->_debug = $debug;
-        $this->_tmpdir = $tmpdir;
     }
 
     /**
@@ -184,7 +186,7 @@ class PEAR_PackageFile
      */
     function &fromXmlString($data, $state, $file, $archive = false)
     {
-        if (preg_match('/<package[^>]+version="([0-9]+\.[0-9]+)"/', $data, $packageversion)) {
+        if (preg_match('/<package[^>]+version=[\'"]([0-9]+\.[0-9]+)[\'"]/', $data, $packageversion)) {
             if (!in_array($packageversion[1], array('1.0', '2.0', '2.1'))) {
                 return PEAR::raiseError('package.xml version "' . $packageversion[1] .
                     '" is not supported, only 1.0, 2.0, and 2.1 are supported.');
@@ -230,7 +232,7 @@ class PEAR_PackageFile
             }
 
             return $pf;
-        } elseif (preg_match('/<package[^>]+version="([^"]+)"/', $data, $packageversion)) {
+        } elseif (preg_match('/<package[^>]+version=[\'"]([^"\']+)[\'"]/', $data, $packageversion)) {
             $a = PEAR::raiseError('package.xml file "' . $file .
                 '" has unsupported package.xml <package> version "' . $packageversion[1] . '"');
             return $a;
@@ -349,20 +351,17 @@ class PEAR_PackageFile
             }
         }
 
-        if ($this->_tmpdir) {
-            $tmpdir = $this->_tmpdir;
-        } else {
-            $tmpdir = System::mkTemp(array('-t', $this->_config->get('temp_dir'), '-d', 'pear'));
-            if ($tmpdir === false) {
-                $ret = PEAR::raiseError("there was a problem with getting the configured temp directory");
-                return $ret;
-            }
-
-            PEAR_PackageFile::addTempFile($tmpdir);
+        $tmpdir = System::mktemp('-t "' . $this->_config->get('temp_dir') . '" -d pear');
+        if ($tmpdir === false) {
+            $ret = PEAR::raiseError("there was a problem with getting the configured temp directory");
+            return $ret;
         }
+
+        PEAR_PackageFile::addTempFile($tmpdir);
 
         $this->_extractErrors();
         PEAR::staticPushErrorHandling(PEAR_ERROR_CALLBACK, array($this, '_extractErrors'));
+
         if (!$xml || !$tar->extractList(array($xml), $tmpdir)) {
             $extra = implode("\n", $this->_extractErrors());
             if ($extra) {
@@ -379,13 +378,6 @@ class PEAR_PackageFile
         $ret = &PEAR_PackageFile::fromPackageFile("$tmpdir/$xml", $state, $origfile);
         return $ret;
     }
-
-    /**
-     * helper for extracting Archive_Tar errors
-     * @var array
-     * @access private
-     */
-    var $_extractErrors = array();
 
     /**
      * helper callback for extracting Archive_Tar errors
@@ -437,7 +429,6 @@ class PEAR_PackageFile
         $ret = &PEAR_PackageFile::fromXmlString($data, $state, $descfile, $archive);
         return $ret;
     }
-
 
     /**
      * Create a PEAR_PackageFile_v* from a .tgz archive or package.xml file.

@@ -1,4 +1,5 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/*
+   Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -11,7 +12,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 /* This is the include file that should be included 'first' in every C file. */
 
@@ -359,7 +361,7 @@ C_MODE_END
 #define ulonglong2double(A) my_ulonglong2double(A)
 #define my_off_t2double(A)  my_ulonglong2double(A)
 C_MODE_START
-double my_ulonglong2double(unsigned long long A);
+inline double my_ulonglong2double(unsigned long long A) { return (double) A; }
 C_MODE_END
 #endif /* _AIX */
 
@@ -758,6 +760,7 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 #ifndef FN_LIBCHAR
 #define FN_LIBCHAR	'/'
+#define FN_DIRSEP       "/"     /* Valid directory separators */
 #define FN_ROOTDIR	"/"
 #endif
 #define MY_NFILE	64	/* This is only used to save filenames */

@@ -10,7 +10,7 @@
  * @author     Stephan Schmidt (original XML_Unserializer code)
  * @copyright  1997-2009 The Authors
  * @license   http://opensource.org/licenses/bsd-license New BSD License
- * @version    CVS: $Id: XMLParser.php 282970 2009-06-28 23:10:07Z dufuz $
+ * @version    CVS: $Id: XMLParser.php 313023 2011-07-06 19:17:11Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 1.4.0a1
  */
@@ -23,7 +23,7 @@
  * @author    Stephan Schmidt (original XML_Unserializer code)
  * @copyright 1997-2009 The Authors
  * @license   http://opensource.org/licenses/bsd-license New BSD License
- * @version   Release: 1.9.1
+ * @version   Release: 1.9.4
  * @link      http://pear.php.net/package/PEAR
  * @since     Class available since Release 1.4.0a1
  */

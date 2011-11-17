@@ -1,11 +1,11 @@
 /* main/php_config.h.  Generated automatically by configure.  */
-/* main/php_config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* main/php_config.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
 /* Leave this file alone */
 /*
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2010 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2011 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -20,7 +20,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: acconfig.h 293155 2010-01-05 20:46:53Z sebastian $ */
+/* $Id: acconfig.h 306939 2011-01-01 02:19:59Z felipe $ */
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 # define ZEND_API __attribute__ ((visibility("default")))
@@ -63,7 +63,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if your system has a working fnmatch function.  */
-#define HAVE_FNMATCH 1
+/* #undef HAVE_FNMATCH */
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
@@ -127,7 +127,7 @@
 /* #undef SIZEOF_CHAR */
 
 /* The number of bytes in a char *.  */
-#define SIZEOF_CHAR_P 8
+#define SIZEOF_CHAR_P 0
 
 /* The number of bytes in a int.  */
 #define SIZEOF_INT 4
@@ -145,7 +145,7 @@
 #define SIZEOF_LONG_LONG_INT 8
 
 /* The number of bytes in a short.  */
-#define SIZEOF_SHORT 2
+#define SIZEOF_SHORT 0
 
 /* The number of bytes in a size_t.  */
 #define SIZEOF_SIZE_T 8
@@ -547,10 +547,10 @@
 #define HAVE_STRLCPY 1
 
 /* Define if you have the strndup function.  */
-/* #undef HAVE_STRNDUP */
+#define HAVE_STRNDUP 1
 
 /* Define if you have the strnlen function.  */
-/* #undef HAVE_STRNLEN */
+#define HAVE_STRNLEN 1
 
 /* Define if you have the strpbrk function.  */
 /* #undef HAVE_STRPBRK */
@@ -984,6 +984,12 @@
 /* do we have SO_LISTENQxxx? */
 /* #undef HAVE_LQ_SO_LISTENQ */
 
+/* do we have sysconf? */
+#define HAVE_SYSCONF 1
+
+/* do we have times? */
+#define HAVE_TIMES 1
+
 /* fpm user name */
 #define PHP_FPM_USER "www-data"
 
@@ -1291,7 +1297,10 @@
 /* #undef COMPILE_DL_OPENSSL */
 
 /* OpenSSL 0.9.7 or later */
-/* #undef HAVE_DSA_DEFAULT_METHOD */
+#define HAVE_DSA_DEFAULT_METHOD 1
+
+/* OpenSSL 0.9.7 or later */
+#define HAVE_DSA_DEFAULT_METHOD 1
 
 /*   */
 #define HAVE_OPENSSL_EXT 1
@@ -1702,16 +1711,16 @@
 #define COMPILE_DL_GETTEXT 1
 
 /*   */
-#define HAVE_NGETTEXT 1
+/* #undef HAVE_NGETTEXT */
 
 /*   */
-#define HAVE_DNGETTEXT 1
+/* #undef HAVE_DNGETTEXT */
 
 /*   */
-#define HAVE_DCNGETTEXT 1
+/* #undef HAVE_DCNGETTEXT */
 
 /*   */
-#define HAVE_BIND_TEXTDOMAIN_CODESET 1
+/* #undef HAVE_BIND_TEXTDOMAIN_CODESET */
 
 /* Whether to build gmp as dynamic module */
 /* #undef COMPILE_DL_GMP */
@@ -2395,13 +2404,13 @@
 /* #undef COMPILE_DL_REFLECTION */
 
 /*   */
-#define HAVE_PWRITE 1
+/* #undef HAVE_PWRITE */
 
 /* whether pwrite64 is default */
 /* #undef PHP_PWRITE_64 */
 
 /*   */
-#define HAVE_PREAD 1
+/* #undef HAVE_PREAD */
 
 /* whether pread64 is default */
 /* #undef PHP_PREAD_64 */
@@ -2653,16 +2662,16 @@
 /* #undef HAVE_LIBSOCKET */
 
 /* whether atof() accepts NAN */
-#define HAVE_ATOF_ACCEPTS_NAN 1
+/* #undef HAVE_ATOF_ACCEPTS_NAN */
 
 /* whether atof() accepts INF */
-#define HAVE_ATOF_ACCEPTS_INF 1
+/* #undef HAVE_ATOF_ACCEPTS_INF */
 
 /* whether HUGE_VAL == INF */
-#define HAVE_HUGE_VAL_INF 1
+/* #undef HAVE_HUGE_VAL_INF */
 
 /* whether HUGE_VAL + -HUGEVAL == NAN */
-#define HAVE_HUGE_VAL_NAN 1
+/* #undef HAVE_HUGE_VAL_NAN */
 
 /* whether strptime() declaration fails */
 #define HAVE_STRPTIME_DECL_FAILS 1
@@ -2805,14 +2814,14 @@
 /* Whether to build zip as dynamic module */
 /* #undef COMPILE_DL_ZIP */
 
-/* Whether to build mysqlnd as dynamic module */
-/* #undef COMPILE_DL_MYSQLND */
-
 /* Enable compressed protocol support */
-/* #undef MYSQLND_COMPRESSION_ENABLED */
+/* #undef MYSQLND_COMPRESSION_WANTED */
 
 /* Enable SSL support */
 /* #undef MYSQLND_SSL_SUPPORTED */
+
+/* Whether to build mysqlnd as dynamic module */
+/* #undef COMPILE_DL_MYSQLND */
 
 /* Define if int32_t type is present.  */
 #define HAVE_INT32_T 1
@@ -2899,16 +2908,16 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-06-24"
+#define PHP_BUILD_DATE "2011-11-13"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
 
 /* hardcode for each of the cross compiler host */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin Jairs-MacBook-Pro.local 11.2.0 Darwin Kernel Version 11.2.0: Tue Aug 9 20:54:00 PDT 2011; root:xnu-1699.24.8~1/RELEASE_X86_64 x86_64"
 
 /* uname -a output */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin Jairs-MacBook-Pro.local 11.2.0 Darwin Kernel Version 11.2.0: Tue Aug 9 20:54:00 PDT 2011; root:xnu-1699.24.8~1/RELEASE_X86_64 x86_64"
 
 /* uname output */
 #define PHP_OS "Darwin"

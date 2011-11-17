@@ -28,7 +28,7 @@ class MNPPAppDelegate(NSObject):
         NSLog("Application did finish launching.")
 
         self.mnppController = MNPPController.alloc().init()
-        self.mnppController.showWindow_(self)
+        #self.mnppController.showWindow_(self)
         self.mnppController.checkSettings()
 
     #def awakeFromNib(self):		

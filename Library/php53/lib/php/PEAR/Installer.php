@@ -12,7 +12,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Installer.php 287446 2009-08-18 11:45:05Z dufuz $
+ * @version    CVS: $Id: Installer.php 313024 2011-07-06 19:51:24Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 0.1
  */
@@ -36,7 +36,7 @@ define('PEAR_INSTALLER_NOBINARY', -240);
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since Release 0.1
  */
@@ -754,11 +754,9 @@ class PEAR_Installer extends PEAR_Downloader
 
     function commitFileTransaction()
     {
-        $n = count($this->file_operations);
-        $this->log(2, "about to commit $n file operations");
         // {{{ first, check permissions and such manually
         $errors = array();
-        foreach ($this->file_operations as $tr) {
+        foreach ($this->file_operations as $key => $tr) {
             list($type, $data) = $tr;
             switch ($type) {
                 case 'rename':
@@ -795,12 +793,34 @@ class PEAR_Installer extends PEAR_Downloader
                                 fclose($fp);
                             }
                         }
+
+                        /* Verify we are not deleting a file owned by another package
+                         * This can happen when a file moves from package A to B in
+                         * an upgrade ala http://pear.php.net/17986
+                         */
+                        $info = array(
+                            'package' => strtolower($this->pkginfo->getName()),
+                            'channel' => strtolower($this->pkginfo->getChannel()),
+                        );
+                        $result = $this->_registry->checkFileMap($data[0], $info, '1.1');
+                        if (is_array($result)) {
+                            $res = array_diff($result, $info);
+                            if (!empty($res)) {
+                                $new = $this->_registry->getPackage($result[1], $result[0]);
+                                $this->file_operations[$key] = false;
+                                $this->log(3, "file $data[0] was scheduled for removal from {$this->pkginfo->getName()} but is owned by {$new->getChannel()}/{$new->getName()}, removal has been cancelled.");
+                            }
+                        }
                     }
                     break;
             }
 
         }
         // }}}
+
+        $n = count($this->file_operations);
+        $this->log(2, "about to commit $n file operations for " . $this->pkginfo->getName());
+
         $m = count($errors);
         if ($m > 0) {
             foreach ($errors as $error) {
@@ -1036,25 +1056,10 @@ class PEAR_Installer extends PEAR_Downloader
     // }}}
     // {{{ _parsePackageXml()
 
-    function _parsePackageXml(&$descfile, &$tmpdir)
+    function _parsePackageXml(&$descfile)
     {
-        if (substr($descfile, -4) == '.xml') {
-            $tmpdir = false;
-        } else {
-            // {{{ Decompress pack in tmp dir -------------------------------------
-
-            // To allow relative package file names
-            $descfile = realpath($descfile);
-
-            if (PEAR::isError($tmpdir = System::mktemp('-d'))) {
-                return $tmpdir;
-            }
-            $this->log(3, '+ tmp dir created at ' . $tmpdir);
-            // }}}
-        }
-
         // Parse xml file -----------------------------------------------
-        $pkg = new PEAR_PackageFile($this->config, $this->debug, $tmpdir);
+        $pkg = new PEAR_PackageFile($this->config, $this->debug);
         PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);
         $p = &$pkg->fromAnyFile($descfile, PEAR_VALIDATE_INSTALLING);
         PEAR::staticPopErrorHandling();
@@ -1135,17 +1140,20 @@ class PEAR_Installer extends PEAR_Downloader
             $pkg      = $pkgfile->getPackageFile();
             $pkgfile  = $pkg->getArchiveFile();
             $descfile = $pkg->getPackageFile();
-            $tmpdir   = dirname($descfile);
         } else {
             $descfile = $pkgfile;
-            $tmpdir   = '';
-            $pkg      = $this->_parsePackageXml($descfile, $tmpdir);
+            $pkg      = $this->_parsePackageXml($descfile);
             if (PEAR::isError($pkg)) {
                 return $pkg;
             }
         }
 
+        $tmpdir = dirname($descfile);
         if (realpath($descfile) != realpath($pkgfile)) {
+            // Use the temp_dir since $descfile can contain the download dir path
+            $tmpdir = $this->config->get('temp_dir', null, 'pear.php.net');
+            $tmpdir = System::mktemp('-d -t "' . $tmpdir . '"');
+
             $tar = new Archive_Tar($pkgfile);
             if (!$tar->extract($tmpdir)) {
                 return $this->raiseError("unable to unpack $pkgfile");
@@ -1307,32 +1315,24 @@ class PEAR_Installer extends PEAR_Downloader
 
         $this->startFileTransaction();
 
+        $usechannel = $channel;
+        if ($channel == 'pecl.php.net') {
+            $test = $installregistry->packageExists($pkgname, $channel);
+            if (!$test) {
+                $test = $installregistry->packageExists($pkgname, 'pear.php.net');
+                $usechannel = 'pear.php.net';
+            }
+        } else {
+            $test = $installregistry->packageExists($pkgname, $channel);
+        }
+
         if (empty($options['upgrade']) && empty($options['soft'])) {
             // checks to do only when installing new packages
-            if ($channel == 'pecl.php.net') {
-                $test = $installregistry->packageExists($pkgname, $channel);
-                if (!$test) {
-                    $test = $installregistry->packageExists($pkgname, 'pear.php.net');
-                }
-            } else {
-                $test = $installregistry->packageExists($pkgname, $channel);
-            }
-
             if (empty($options['force']) && $test) {
                 return $this->raiseError("$channel/$pkgname is already installed");
             }
         } else {
-            $usechannel = $channel;
-            if ($channel == 'pecl.php.net') {
-                $test = $installregistry->packageExists($pkgname, $channel);
-                if (!$test) {
-                    $test = $installregistry->packageExists($pkgname, 'pear.php.net');
-                    $usechannel = 'pear.php.net';
-                }
-            } else {
-                $test = $installregistry->packageExists($pkgname, $channel);
-            }
-
+            // Upgrade
             if ($test) {
                 $v1 = $installregistry->packageInfo($pkgname, 'version', $usechannel);
                 $v2 = $pkg->getVersion();
@@ -1340,22 +1340,23 @@ class PEAR_Installer extends PEAR_Downloader
                 if (empty($options['force']) && !version_compare("$v2", "$v1", 'gt')) {
                     return $this->raiseError("upgrade to a newer version ($v2 is not newer than $v1)");
                 }
+            }
+        }
 
-                if (empty($options['register-only'])) {
-                    // when upgrading, remove old release's files first:
-                    if (PEAR::isError($err = $this->_deletePackageFiles($pkgname, $usechannel,
-                          true))) {
-                        if (!isset($options['ignore-errors'])) {
-                            return $this->raiseError($err);
-                        }
-
-                        if (!isset($options['soft'])) {
-                            $this->log(0, 'WARNING: ' . $err->getMessage());
-                        }
-                    } else {
-                        $backedup = $err;
-                    }
+        // Do cleanups for upgrade and install, remove old release's files first
+        if ($test && empty($options['register-only'])) {
+            // when upgrading, remove old release's files first:
+            if (PEAR::isError($err = $this->_deletePackageFiles($pkgname, $usechannel,
+                  true))) {
+                if (!isset($options['ignore-errors'])) {
+                    return $this->raiseError($err);
                 }
+
+                if (!isset($options['soft'])) {
+                    $this->log(0, 'WARNING: ' . $err->getMessage());
+                }
+            } else {
+                $backedup = $err;
             }
         }
 
@@ -1373,9 +1374,8 @@ class PEAR_Installer extends PEAR_Downloader
             }
         }
 
-        $tmp_path = dirname($descfile);
         if (substr($pkgfile, -4) != '.xml') {
-            $tmp_path .= DIRECTORY_SEPARATOR . $pkgname . '-' . $pkg->getVersion();
+            $tmpdir .= DIRECTORY_SEPARATOR . $pkgname . '-' . $pkg->getVersion();
         }
 
         $this->configSet('default_channel', $channel);
@@ -1401,9 +1401,9 @@ class PEAR_Installer extends PEAR_Downloader
         foreach ($filelist as $file => $atts) {
             $this->expectError(PEAR_INSTALLER_FAILED);
             if ($pkg->getPackagexmlVersion() == '1.0') {
-                $res = $this->_installFile($file, $atts, $tmp_path, $options);
+                $res = $this->_installFile($file, $atts, $tmpdir, $options);
             } else {
-                $res = $this->_installFile2($pkg, $file, $atts, $tmp_path, $options);
+                $res = $this->_installFile2($pkg, $file, $atts, $tmpdir, $options);
             }
             $this->popExpect();
 

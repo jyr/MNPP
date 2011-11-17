@@ -23,8 +23,8 @@ dependency_libs=' -lz'
 weak_library_names=''
 
 # Version information for libpng15.
-current=16
-age=1
+current=21
+age=6
 revision=0
 
 # Is this an already installed library?

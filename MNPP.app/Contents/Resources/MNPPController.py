@@ -242,7 +242,13 @@ class MNPPController (NSWindowController):
 
     def checkSettings(self):
 		settings = NSUserDefaults.standardUserDefaults()
-
+		php53 = settings.boolForKey_("php53")
+		php52 = settings.boolForKey_("php52")
+        
+		if not php53 and not php52:
+			settings.setObject_forKey_("1", 'php53')
+			settings.setObject_forKey_("0", 'php52')
+                
 		startMNPP = settings.boolForKey_("start")
 		if startMNPP:
 			self.startServers_(self)
@@ -250,6 +256,7 @@ class MNPPController (NSWindowController):
 		openMNPP = settings.boolForKey_("open")
 		if openMNPP:
 			self.startServers_(self)
+            
 
     def checkPhpVersion(self):
 		settings = NSUserDefaults.standardUserDefaults()

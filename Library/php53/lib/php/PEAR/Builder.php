@@ -10,7 +10,7 @@
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    CVS: $Id: Builder.php 276383 2009-02-24 23:39:37Z dufuz $
+ * @version    CVS: $Id: Builder.php 313024 2011-07-06 19:51:24Z dufuz $
  * @link       http://pear.php.net/package/PEAR
  * @since      File available since Release 0.1
  *
@@ -33,7 +33,7 @@ require_once 'PEAR/PackageFile.php';
  * @author     Greg Beaver <cellog@php.net>
  * @copyright  1997-2009 The Authors
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
- * @version    Release: 1.9.1
+ * @version    Release: 1.9.4
  * @link       http://pear.php.net/package/PEAR
  * @since      Class available since PHP 4.0.2
  * @see        http://pear.php.net/manual/en/core.ppm.pear-builder.php
@@ -220,7 +220,7 @@ class PEAR_Builder extends PEAR_Common
     /**
      * Build an extension from source.  Runs "phpize" in the source
      * directory, but compiles in a temporary directory
-     * (/var/tmp/pear-build-USER/PACKAGE-VERSION).
+     * (TMPDIR/pear-build-USER/PACKAGE-VERSION).
      *
      * @param string|PEAR_PackageFile_v* $descfile path to XML package description file, or
      *               a PEAR_PackageFile object
@@ -250,6 +250,7 @@ class PEAR_Builder extends PEAR_Common
                            ' appears to have a prefix ' . $matches[2] . ', but' .
                            ' config variable php_prefix does not match');
             }
+
             if (isset($matches[3]) && strlen($matches[3]) &&
                 trim($matches[3]) != trim($this->config->get('php_suffix'))) {
                 $this->log(0, 'WARNING: php_bin ' . $this->config->get('php_bin') .
@@ -258,14 +259,15 @@ class PEAR_Builder extends PEAR_Common
             }
         }
 
-
         $this->current_callback = $callback;
         if (PEAR_OS == "Windows") {
             return $this->_build_win32($descfile, $callback);
         }
+
         if (PEAR_OS != 'Unix') {
             return $this->raiseError("building extensions not supported on this platform");
         }
+
         if (is_object($descfile)) {
             $pkg = $descfile;
             $descfile = $pkg->getPackageFile();
@@ -284,14 +286,25 @@ class PEAR_Builder extends PEAR_Common
             }
             $dir = dirname($descfile);
         }
+
+        // Find config. outside of normal path - e.g. config.m4
+        foreach (array_keys($pkg->getInstallationFileList()) as $item) {
+          if (stristr(basename($item), 'config.m4') && dirname($item) != '.') {
+            $dir .= DIRECTORY_SEPARATOR . dirname($item);
+            break;
+          }
+        }
+
         $old_cwd = getcwd();
         if (!file_exists($dir) || !is_dir($dir) || !chdir($dir)) {
             return $this->raiseError("could not chdir to $dir");
         }
+
         $vdir = $pkg->getPackage() . '-' . $pkg->getVersion();
         if (is_dir($vdir)) {
             chdir($vdir);
         }
+
         $dir = getcwd();
         $this->log(2, "building in $dir");
         putenv('PATH=' . $this->config->get('bin_dir') . ':' . getenv('PATH'));
@@ -302,6 +315,7 @@ class PEAR_Builder extends PEAR_Common
         if (PEAR::isError($err)) {
             return $err;
         }
+
         if (!$err) {
             return $this->raiseError("`phpize' failed");
         }
@@ -327,30 +341,31 @@ class PEAR_Builder extends PEAR_Common
         // }}} end of interactive part
 
         // FIXME make configurable
-        if(!$user=getenv('USER')){
+        if (!$user=getenv('USER')) {
             $user='defaultuser';
         }
-        $build_basedir = "/var/tmp/pear-build-$user";
+
+        $tmpdir = $this->config->get('temp_dir');
+        $build_basedir = System::mktemp(' -t "' . $tmpdir . '" -d "pear-build-' . $user . '"');
         $build_dir = "$build_basedir/$vdir";
         $inst_dir = "$build_basedir/install-$vdir";
         $this->log(1, "building in $build_dir");
         if (is_dir($build_dir)) {
             System::rm(array('-rf', $build_dir));
         }
+
         if (!System::mkDir(array('-p', $build_dir))) {
             return $this->raiseError("could not create build dir: $build_dir");
         }
+
         $this->addTempFile($build_dir);
         if (!System::mkDir(array('-p', $inst_dir))) {
             return $this->raiseError("could not create temporary install dir: $inst_dir");
         }
         $this->addTempFile($inst_dir);
 
-        if (getenv('MAKE')) {
-            $make_command = getenv('MAKE');
-        } else {
-            $make_command = 'make';
-        }
+        $make_command = getenv('MAKE') ? getenv('MAKE') : 'make';
+
         $to_run = array(
             $configure_command,
             $make_command,
@@ -360,7 +375,7 @@ class PEAR_Builder extends PEAR_Common
         if (!file_exists($build_dir) || !is_dir($build_dir) || !chdir($build_dir)) {
             return $this->raiseError("could not chdir to $build_dir");
         }
-        putenv('PHP_PEAR_VERSION=1.9.1');
+        putenv('PHP_PEAR_VERSION=1.9.4');
         foreach ($to_run as $cmd) {
             $err = $this->_runCommand($cmd, $callback);
             if (PEAR::isError($err)) {

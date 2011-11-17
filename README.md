@@ -6,7 +6,7 @@
 
 [Jair Gaxiola](https://github.com/jyr) (Core developer)    
 [César Salazar](http://cesarsalazar.mx/)    
-[Astrata Software](http://astrata.mx)
+[HackerHub](http://www.hackerhub.com)
 
 ##Features
 

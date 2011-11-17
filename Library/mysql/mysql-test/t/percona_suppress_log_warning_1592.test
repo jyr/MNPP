@@ -43,4 +43,7 @@ perl;
   my $count = () = grep(/suppress_1592/g,<FILE>);
   print "Occurrences: $count\n";
   close(FILE);
+  # Clean error log file
+  open(FILE, '>', "$log_error");
+  close(FILE);
 EOF

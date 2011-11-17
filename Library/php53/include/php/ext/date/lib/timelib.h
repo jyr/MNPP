@@ -16,7 +16,7 @@
    +----------------------------------------------------------------------+
  */
 
-/* $Id: timelib.h 302887 2010-08-30 15:32:09Z derick $ */
+/* $Id: timelib.h 309055 2011-03-09 20:06:52Z scottmac $ */
 
 #ifndef __TIMELIB_H__
 #define __TIMELIB_H__
@@ -25,6 +25,8 @@
 #if HAVE_LIMITS_H
 #include <limits.h>
 #endif
+
+#define TIMELIB_VERSION 201101
 
 #define TIMELIB_NONE             0x00
 #define TIMELIB_OVERRIDE_TIME    0x01

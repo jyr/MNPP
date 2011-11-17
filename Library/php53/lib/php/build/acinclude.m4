@@ -1,5 +1,5 @@
 dnl
-dnl $Id: acinclude.m4 305553 2010-11-19 08:26:47Z jani $
+dnl $Id: acinclude.m4 311223 2011-05-19 05:43:48Z scottmac $
 dnl
 dnl This file contains local autoconf functions.
 dnl
@@ -2228,6 +2228,7 @@ AC_DEFUN([PHP_SETUP_ICU],[
       AC_MSG_ERROR([ICU version 3.4 or later is required])
     fi
 
+    ICU_VERSION=$icu_version
     ICU_INCS=`$ICU_CONFIG --cppflags-searchpath`
     ICU_LIBS=`$ICU_CONFIG --ldflags --ldflags-icuio`
     PHP_EVAL_INCLINE($ICU_INCS)
@@ -2397,6 +2398,7 @@ AC_DEFUN([PHP_SETUP_OPENSSL],[
     ])
     LIBS=$old_LIBS
     PHP_ADD_LIBRARY(ssl,,$1)
+    PHP_ADD_LIBRARY(crypto,,$1)
 
     PHP_ADD_LIBPATH($OPENSSL_LIBDIR, $1)
   fi
@@ -2590,7 +2592,7 @@ dnl This macro is used to get a comparable
 dnl version for apache1/2.
 dnl
 AC_DEFUN([PHP_AP_EXTRACT_VERSION],[
-  ac_output=`$1 -v 2>&1 | grep version`
+  ac_output=`$1 -v 2>&1 | grep version | $SED -e 's/Oracle-HTTP-//'`
   ac_IFS=$IFS
 IFS="- /.
 "
