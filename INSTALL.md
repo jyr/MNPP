@@ -1,3 +1,2 @@
-
 * Project Clone in /Applications
-* Run MEPP.app
+* Run MNPP.app
