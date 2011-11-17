@@ -1,8 +1,8 @@
 #Versions
-* Percona-Server-5.1.54-rel12.5
-* PHP 5.3.5
+* Percona-Server-5.1.59
+* PHP 5.3.8
 * PHP 5.2.17
-* Nginx 1.0.0
+* Nginx 1.0.9
 * phpMyAdmin-3.3.9.2
 * Python 2.6.7
 * uwsgi 0.9.8
@@ -28,6 +28,7 @@
 - mongodb-mongo-php-driver-1.1.4-49
 - libiconv-1.14
 - openssl-0.9.8r
+- zlib-1.2.5
 
 #Python apps
 - django 1.3
