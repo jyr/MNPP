@@ -1,4 +1,5 @@
 location ~ .php$ {
+	try_files $uri =404;
     fastcgi_pass   127.0.0.1:9000;
     fastcgi_index  index.php;
     include        /Applications/MNPP/conf/nginx/fastcgi_params;

@@ -29,6 +29,7 @@
 - libiconv-1.14
 - openssl-0.9.8r
 - zlib-1.2.5
+- tidy-1.2
 
 #Python apps
 - django 1.3

@@ -2713,13 +2713,13 @@
 /* #undef COMPILE_DL_SYSVSHM */
 
 /*   */
-/* #undef HAVE_TIDYOPTGETDOC */
+#define HAVE_TIDYOPTGETDOC 1
 
 /* Whether to build tidy as dynamic module */
 /* #undef COMPILE_DL_TIDY */
 
 /*   */
-/* #undef HAVE_TIDY */
+#define HAVE_TIDY 1
 
 /* Whether to build tokenizer as dynamic module */
 /* #undef COMPILE_DL_TOKENIZER */
@@ -2908,7 +2908,7 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-11-13"
+#define PHP_BUILD_DATE "2011-12-03"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
