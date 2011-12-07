@@ -73,7 +73,7 @@ __export_library( ){
 
   	if [ $found = 0 ] ; then
 		echo "alias drush='/Applications/MNPP/Library/php53/bin/php /Applications/MNPP/Library/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
-		echo "export PATH=/Applications/MNPP/Library/init:/Applications/MNPP/Library/php53/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
+		echo "export PATH=/Applications/MNPP/init:/Applications/MNPP/Library/php53/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
   	fi
 }
 
