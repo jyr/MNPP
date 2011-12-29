@@ -19,6 +19,11 @@
 
 * x86_64
 
+##Set environment
+
+<pre><code>$ sudo sh /Applications/MNPP/init/environment.sh</code></pre>
+<pre><code>$ source /Users/youruser/.bash_profile</code></pre>
+
 ##Runs from console
 
 Start    
