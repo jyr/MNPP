@@ -35,21 +35,21 @@ class MNPPAppDelegate(NSObject):
         statusItem = NSStatusBar.systemStatusBar().statusItemWithLength_(NSVariableStatusItemLength).retain()
         statusItem.setMenu_(self.statusMenu)
         statusItem.setHighlightMode_(YES)
-	statusItem.setToolTip_("MNPP: Mac + Nginx + Percona + PHP/Python")
-	
-	font = NSFontManager.sharedFontManager().convertFont_toHaveTrait_(NSFont.menuBarFontOfSize_(11), NSBoldFontMask)
-	#first row has a high line height to keep the icon vertical centered
-	parStyleFirstRow = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
-	parStyleFirstRow.setAlignment_(NSCenterTextAlignment)
-	parStyleFirstRow.setMinimumLineHeight_(15)
-	#second row has low line height to keep the icon compact
-	parStyleSecondRow = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
-	parStyleSecondRow.setParagraphStyle_(parStyleFirstRow)
-	parStyleSecondRow.setMaximumLineHeight_(10)
-	#the char \u2009 is a thin space
-	title = NSMutableAttributedString.alloc().initWithString_attributes_(u"MN\nP\u2009P", {NSFontAttributeName: font})
-	title.addAttribute_value_range_(NSParagraphStyleAttributeName, parStyleFirstRow, NSMakeRange(0,3))
-	title.addAttribute_value_range_(NSParagraphStyleAttributeName, parStyleSecondRow, NSMakeRange(3,3))
+        statusItem.setToolTip_("MNPP: Mac + Nginx + Percona + PHP/Python")
+        
+        font = NSFontManager.sharedFontManager().convertFont_toHaveTrait_(NSFont.menuBarFontOfSize_(11), NSBoldFontMask)
+        #first row has a high line height to keep the icon vertical centered
+        parStyleFirstRow = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
+        parStyleFirstRow.setAlignment_(NSCenterTextAlignment)
+        parStyleFirstRow.setMinimumLineHeight_(15)
+        #second row has low line height to keep the icon compact
+        parStyleSecondRow = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
+        parStyleSecondRow.setParagraphStyle_(parStyleFirstRow)
+        parStyleSecondRow.setMaximumLineHeight_(10)
+        #the char \u2009 is a thin space
+        title = NSMutableAttributedString.alloc().initWithString_attributes_(u"MN\nP\u2009P", {NSFontAttributeName: font})
+        title.addAttribute_value_range_(NSParagraphStyleAttributeName, parStyleFirstRow, NSMakeRange(0,3))
+        title.addAttribute_value_range_(NSParagraphStyleAttributeName, parStyleSecondRow, NSMakeRange(3,3))
         statusItem.setAttributedTitle_(title)
 
     @objc.IBAction
