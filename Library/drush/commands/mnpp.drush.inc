@@ -135,7 +135,7 @@ function mnpp_service_init_script($service, $command){
  * @param String $script
  */
 function mnpp_service_init_script_rc($service, $command, $script){
-	$script = "sudo " . $script . " > /Users/jyr/log.txt";
+	$script = "sudo " . $script . " > /Applications/MNPP/logs/mnpp";
 	$filename = mnpp_php_version($service, $command);	
 	$rc = MNPP_INIT_SCRIPTS . $filename . ".sh";
 
