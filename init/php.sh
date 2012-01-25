@@ -50,15 +50,9 @@ wait_for_pid () {
  
 }
 
-__create_alias( ) {
-    if [ ! -d "/usr/local/mysql" ]; then
-        ln -s /Applications/MNPP/Library/mysql /usr/local/mysql
-    fi
-}
-
 __set_privilegies( ) {
-   chown -R mysql:mysql /usr/local/mysql/
    chown -R mysql:mysql /Applications/MNPP/tmp/mysql
+   chown -R mysql:mysql /Applications/MNPP/Library/mysql
    chmod -R 755 /Applications/MNPP/Library/mysql/*
    chmod 644 /Applications/MNPP/Library/mysql/my.cnf
 }
@@ -87,7 +81,6 @@ __show_usage( ) {
   exit 1
 }
 
-__create_alias
 __set_privilegies
 __hosts
 __export_library

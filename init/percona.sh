@@ -7,8 +7,8 @@ __show_usage( ) {
 }
 
 __set_privilegies( ) {
-   chown -R mysql:mysql /usr/local/mysql/
    chown -R mysql:mysql /Applications/MNPP/tmp/mysql
+   chown -R mysql:mysql /Applications/MNPP/Library/mysql
    chmod -R 755 /Applications/MNPP/Library/mysql/*
    chmod 644 /Applications/MNPP/Library/mysql/my.cnf
 }
