@@ -8,6 +8,12 @@
 [César Salazar](http://cesarsalazar.mx/)    
 [HackerHub](http://www.hackerhub.com)
 
+**Pull requests authors**
+
+[hmert](https://github.com/hmert)    
+[francescolaffi](https://github.com/francescolaffi)    
+[gnuget](https://github.com/gnuget)    
+
 ##Features
 
 * Start / stop services global
