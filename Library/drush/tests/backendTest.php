@@ -11,9 +11,44 @@
 *  Advantages of this approach:
 *    - No network calls and thus more robust.
 *    - No network calls and thus faster.
+*
+*  @group base
 */
 
 class backendCase extends Drush_CommandTestCase {
+  // Test to insure that calling drush_invoke_process with 'dispatch-using-alias'
+  // will build a command string that uses the alias instead of --root and --uri.
+  function testDispatchUsingAlias() {
+    $aliasPath = UNISH_SANDBOX . '/aliases';
+    mkdir($aliasPath);
+    $aliasFile = $aliasPath . '/foo.aliases.drushrc.php';
+    $aliasContents = <<<EOD
+  <?php
+  // Writtne by Unish. This file is safe to delete.
+  \$aliases['dev'] = array('root' => '/fake/path/to/root', 'uri' => 'default');
+EOD;
+    file_put_contents($aliasFile, $aliasContents);
+    $options = array(
+      'alias-path' => $aliasPath,
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+      'backend' => TRUE,
+    );
+    $php = <<<EOD
+    \$valuesUsingAlias = drush_invoke_process("@dev", "unit-return-argv", array(), array(), array("dispatch-using-alias" => TRUE));
+    \$valuesWithoutAlias = drush_invoke_process("@dev", "unit-return-argv", array(), array(), array());
+    return array('with' => \$valuesUsingAlias['object'], 'without' => \$valuesWithoutAlias['object']);
+EOD;
+    $this->drush('php-eval', array($php), $options);
+    $parsed = parse_backend_output($this->getOutput());
+
+    // $parsed['with'] and $parsed['without'] now contain an array
+    // each with the original arguments passed in with and without
+    // 'dispatch-using-alias', respectively.
+    $argDifference = array_diff($parsed['object']['with'], $parsed['object']['without']);
+    $this->assertEquals(array_diff(array_values($argDifference), array('@foo.dev')), array());
+    $argDifference = array_diff($parsed['object']['without'], $parsed['object']['with']);
+    $this->assertEquals(array_diff(array_values($argDifference), array('--root=/fake/path/to/root', '--uri=default')), array());
+  }
 
   /*
    * Covers the following origin responsibilities.
@@ -23,10 +58,10 @@ class backendCase extends Drush_CommandTestCase {
    * General handling of site aliases will be in sitealiasTest.php.
    */
   function testOrigin() {
-    $exec = sprintf('%s %s version arg1 arg2 --simulate --ssh-options=%s 2>/dev/null | grep ssh', self::escapeshellarg(UNISH_DRUSH), self::escapeshellarg('user@server/path/to/drupal#sitename'), self::escapeshellarg('-i mysite_dsa'));
+    $exec = sprintf('%s %s version arg1 arg2 --simulate --ssh-options=%s | grep ssh', UNISH_DRUSH, self::escapeshellarg('user@server/path/to/drupal#sitename'), self::escapeshellarg('-i mysite_dsa'));
     $this->execute($exec);
-    // $expected might be different on non unix platforms. We shall see.
-    $expected = "Simulating backend invoke: ssh -i mysite_dsa user@server 'drush  --simulate --uri=sitename --root=/path/to/drupal version arg1 arg2 --invoke 2>&1' 2>&1";
+    $bash = $this->escapeshellarg('drush  --invoke --simulate --uri=sitename --root=/path/to/drupal  version arg1 arg2 2>&1');
+    $expected = "Simulating backend invoke: ssh -i mysite_dsa user@server $bash 2>&1";
     $output = $this->getOutput();
     $this->assertEquals($expected, $output, 'Expected ssh command was built');
   }
@@ -40,7 +75,7 @@ class backendCase extends Drush_CommandTestCase {
   */
   function testTarget() {
     $stdin = json_encode(array('filter'=>'sql'));
-    $exec = sprintf('echo %s | %s help --backend 2>/dev/null', self::escapeshellarg($stdin), self::escapeshellarg(UNISH_DRUSH));
+    $exec = sprintf('echo %s | %s version --backend', self::escapeshellarg($stdin), UNISH_DRUSH);
     $this->execute($exec);
     $parsed = parse_backend_output($this->getOutput());
     $this->assertTrue((bool) $parsed, 'Successfully parsed backend output');
@@ -49,12 +84,11 @@ class backendCase extends Drush_CommandTestCase {
     $this->assertArrayHasKey('object', $parsed);
     $this->assertEquals(self::EXIT_SUCCESS, $parsed['error_status']);
     // This assertion shows that `help` was called and that stdin options were respected.
-    $this->assertStringStartsWith('SQL commands', $parsed['output']);
+    $this->assertStringStartsWith('drush ', $parsed['output']);
     $this->assertEquals('Bootstrap to phase 0.', $parsed['log'][0]['message']);
 
     // Check error propogation by requesting an invalid command (missing Drupal site).
-    $exec = sprintf('%s core-cron --backend 2>/dev/null', self::escapeshellarg(UNISH_DRUSH));
-    $this->execute($exec, self::EXIT_ERROR);
+    $this->drush('core-cron', array(), array('backend' => NULL), NULL, NULL, self::EXIT_ERROR);
     $parsed = parse_backend_output($this->getOutput());
     $this->assertEquals(1, $parsed['error_status']);
     $this->assertArrayHasKey('DRUSH_NO_DRUPAL_ROOT', $parsed['error_log']);
@@ -67,7 +101,7 @@ class backendCase extends Drush_CommandTestCase {
    *   - Insures that the drush output appears before the backend output start marker (output is displayed in 'real time' as it is produced).
    */
   function testRealtimeOutput() {
-    $exec = sprintf('%s core-status --backend --nocolor 2>&1', self::escapeshellarg(UNISH_DRUSH));
+    $exec = sprintf('%s core-status --backend --nocolor 2>&1', UNISH_DRUSH);
     $this->execute($exec);
 
     $output = $this->getOutput();
@@ -103,5 +137,112 @@ class backendCase extends Drush_CommandTestCase {
     $parsed = parse_backend_output($this->getOutput());
     // assert that $parsed has 'foo' and not 'bar'
     $this->assertEquals("'foo'", var_export($parsed['object'], TRUE));
+  }
+
+  /**
+   * Covers the following target responsibilities.
+   *   - Insures that the backend option 'invoke-multiple' will cause multiple commands to be executed.
+   *   - Insures that the right number of commands run.
+   *   - Insures that the 'concurrent'-format result array is returned.
+   *   - Insures that correct results are returned from each command.
+   */
+  function testBackendInvokeMultiple() {
+    $options = array(
+      'backend' => NULL,
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+    );
+    $php = "\$values = drush_invoke_process('@none', 'unit-return-options', array('value'), array('x' => 'y'), array('invoke-multiple' => '3')); return \$values;";
+    $this->drush('php-eval', array($php), $options);
+    $parsed = parse_backend_output($this->getOutput());
+    // assert that $parsed has a 'concurrent'-format output result
+    $this->assertEquals('concurrent', implode(',', array_keys($parsed['object'])));
+    // assert that the concurrent output has indexes 0, 1 and 2 (in any order)
+    $concurrent_indexes = array_keys($parsed['object']['concurrent']);
+    sort($concurrent_indexes);
+    $this->assertEquals('0,1,2', implode(',', $concurrent_indexes));
+    foreach ($parsed['object']['concurrent'] as $index => $values) {
+      // assert that each result contains 'x' => 'y' and nothing else
+      $this->assertEquals("array (
+  'x' => 'y',
+)", var_export($values['object'], TRUE));
+    }
+  }
+  /**
+   * Covers the following target responsibilities.
+   *   - Insures that arrays are stripped when using --backend mode's method GET
+   *   - Insures that arrays can be returned as the function result of
+   *     backend invoke.
+   */
+  function testBackendMethodGet() {
+    $options = array(
+      'backend' => NULL,
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+    );
+    $php = "\$values = drush_invoke_process('@none', 'unit-return-options', array('value'), array('x' => 'y', 'data' => array('a' => 1, 'b' => 2)), array('method' => 'GET')); return array_key_exists('object', \$values) ? \$values['object'] : 'no result';";
+    $this->drush('php-eval', array($php), $options);
+    $parsed = parse_backend_output($this->getOutput());
+    // assert that $parsed has 'x' but not 'data'
+    $this->assertEquals("array (
+  'x' => 'y',
+)", var_export($parsed['object'], TRUE));
+  }
+
+  /**
+   * Covers the following target responsibilities.
+   *   - Insures that complex arrays can be passed through when using --backend mode's method POST
+   *   - Insures that arrays can be returned as the function result of
+   *     backend invoke.
+   */
+  function testBackendMethodPost() {
+    $options = array(
+      'backend' => NULL,
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+    );
+    $php = "\$values = drush_invoke_process('@none', 'unit-return-options', array('value'), array('x' => 'y', 'data' => array('a' => 1, 'b' => 2)), array('method' => 'POST')); return array_key_exists('object', \$values) ? \$values['object'] : 'no result';";
+    $this->drush('php-eval', array($php), $options);
+    $parsed = parse_backend_output($this->getOutput());
+    // assert that $parsed has 'x' and 'data'
+    $this->assertEquals(array_diff(array (
+  'x' => 'y',
+  'data' =>
+  array (
+    'a' => 1,
+    'b' => 2,
+  ),
+), $parsed['object']), array());
+  }
+}
+
+class backendUnitCase extends Drush_UnitTestCase {
+
+  /**
+   * Covers the following target responsibilities.
+   *   - Insures that drush_invoke_process called with fork backend set is able
+   *     to invoke a non-blocking process.
+   */
+  function testBackendFork() {
+    // Need to set DRUSH_COMMAND so that drush will be called and not phpunit
+    define('DRUSH_COMMAND', UNISH_DRUSH);
+
+    // Ensure that file that will be created by forked process does not exist
+    // before invocation.
+    $test_file = UNISH_SANDBOX . '/fork_test.txt';
+    if (file_exists($test_file)) {
+      unlink($test_file);
+    }
+
+    // Sleep for a milisecond, then create the file
+    $ev_php = "usleep(1000);fopen('$test_file','a');";
+    drush_invoke_process("@none", "ev", array($ev_php), array(), array("fork" => TRUE));
+
+    // Test file does not exist immediate after process forked
+    $this->assertEquals(file_exists($test_file), FALSE);
+    // Check every 100th of a second for up to 4 seconds to see if the file appeared
+    $repetitions = 400;
+    while (!file_exists($test_file) && ($repetitions > 0)) {
+      usleep(10000);
+    }
+    // Assert that the file did finally appear
+    $this->assertEquals(file_exists($test_file), TRUE);
   }
 }

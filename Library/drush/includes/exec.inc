@@ -26,9 +26,8 @@
  */
 function drush_op_system($exec) {
   if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-     drush_print("Calling system($exec);");
+    drush_print("Calling system($exec);", 0, STDERR);
   }
-
   if (drush_get_context('DRUSH_SIMULATE')) {
     return 0;
   }
@@ -108,16 +107,25 @@ function drush_shell_exec_interactive($cmd) {
  * @see drush_shell_exec.
  */
 function _drush_shell_exec($args, $interactive = FALSE) {
-  //do not change the command itself, just the parameters.
+  // Do not change the command itself, just the parameters.
   for ($x = 1; $x < sizeof($args); $x++) {
     $args[$x] = drush_escapeshellarg($args[$x]);
   }
-  $command = call_user_func_array('sprintf', $args);
-
-  if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-    drush_print('Executing: ' . $command);
+  // Important: we allow $args to take one of two forms here.  If
+  // there is only one item in the array, it is the already-escaped
+  // command string, but otherwise sprintf is used.  In the case
+  // of pre-escaped strings, sprintf will fail if any of the escaped
+  // parameters contain '%', so we must not call sprintf unless necessary.
+  if (count($args) == 1) {
+    $command = $args[0];
+  }
+  else {
+    $command = call_user_func_array('sprintf', $args);
   }
 
+  if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
+    drush_print('Executing: ' . $command, 0, STDERR);
+  }
   if (!drush_get_context('DRUSH_SIMULATE')) {
     if ($interactive) {
       $result = drush_shell_proc_open($command);
@@ -152,7 +160,8 @@ function _drush_shell_exec($args, $interactive = FALSE) {
  * @param string $command
  *   An optional bash fragment.
  * @param string $cd
- *   An optional directory to change into before executing the $command.
+ *   An optional directory to change into before executing the $command. Set to
+ *   boolean TRUE to change into $site['root'] if available.
  * @return string
  *   A string suitable for execution with drush_shell_remote_exec().
  */
@@ -202,7 +211,7 @@ function drush_shell_proc_build($site, $command = '', $cd = NULL) {
  */
 function drush_shell_proc_open($cmd) {
   if (drush_get_context('DRUSH_VERBOSE') || drush_get_context('DRUSH_SIMULATE')) {
-    drush_print("Calling proc_open($cmd);");
+    drush_print("Calling proc_open($cmd);", 0, STDERR);
   }
   if (!drush_get_context('DRUSH_SIMULATE')) {
     $process = proc_open($cmd, array(0 => STDIN, 1 => STDOUT, 2 => STDERR), $pipes);
@@ -300,19 +309,7 @@ function drush_escapeshellarg($arg, $os = NULL) {
     return _drush_escapeshellarg_windows($arg);
   }
   else {
-    $escaped = _drush_escapeshellarg_linux($arg);
-    // We expect that our escapeshellarg should return exactly the
-    // same thing that escapeshellarg does on Linux; to be conservative,
-    // though, we will compare and correct against the reference implementation,
-    // and remove this check once everything works perfectly.
-    if (!drush_is_windows()) {
-      $compare_escaped = escapeshellarg($arg);
-      if ($compare_escaped != $escaped) {
-        drush_log(dt("Error in _drush_escapeshellarg_linux;\nReturned: !escaped\nExpected: !expected", array('!escaped' => $escaped, '!expected' => $compare_escaped)), 'debug');
-        $escaped = $compare_escaped;
-      }
-    }
-    return $escaped;
+    return _drush_escapeshellarg_linux($arg);
   }
 }
 
@@ -323,11 +320,11 @@ function _drush_escapeshellarg_windows($arg) {
   // Double up existing backslashes
   $arg = preg_replace('/\\\/', '\\\\\\\\', $arg);
 
-  // Escape double quotes.
-  $arg = preg_replace('/"/', '^"', $arg);
+  // Double up double quotes
+  $arg = preg_replace('/"/', '""', $arg);
 
-  // Escape single quotes.
-  $arg = preg_replace('/\'/', '^\'', $arg);
+  // Double up percents.
+  $arg = preg_replace('/%/', '%%', $arg);
 
   // Add surrounding quotes.
   $arg = '"' . $arg . '"';
@@ -351,6 +348,11 @@ function _drush_escapeshellarg_linux($arg) {
   $arg = preg_replace('/\'/', '\'\\\'\'', $arg);
 
   // Replace "\t", "\n", "\r", "\0", "\x0B" with a whitespace.
+  // Note that this replacement makes Drush's escapeshellarg work differently
+  // than the built-in escapeshellarg in PHP on Linux, as these characters
+  // usually are NOT replaced. However, this was done deliberately to be more
+  // conservative when running _drush_escapeshellarg_linux on Windows
+  // (this can happen when generating a command to run on a remote Linux server.)
   $arg = str_replace(array("\t", "\n", "\r", "\0", "\x0B"), ' ', $arg);
 
   // Add surrounding quotes.
@@ -393,21 +395,29 @@ function drush_shell_exec_output() {
  *   TRUE if browser was opened, FALSE if browser was disabled by the user or a,
  *   default browser could not be found.
  */
-function drush_start_browser($uri = NULL) {
-  if (!parse_url($uri, PHP_URL_HOST)) {
-    $site = drush_get_context('DRUSH_URI');
-    $host = parse_url($site, PHP_URL_HOST);
+function drush_start_browser($uri = NULL, $sleep = FALSE) {
+  if ($browser = drush_get_option('browser', TRUE)) {
+    // We can only open a browser if we have a DISPLAY environment variable on
+    // POSIX or are running Windows.
+    if (!drush_get_context('DRUSH_SIMULATE') && !getenv('DISPLAY') && !drush_is_windows()) {
+      drush_log(dt('No graphical display appears to be available, not starting browser.'), 'notice');
+      return FALSE;
+    }
+    $host = parse_url($uri, PHP_URL_HOST);
+    if (!$host) {
+      // Build a URI for the current site, if we were passed a path.
+      $site = drush_get_context('DRUSH_URI');
+      $host = parse_url($site, PHP_URL_HOST);
+      $uri = $site . '/' . ltrim($uri, '/');
+    }
     // Validate that the host part of the URL resolves, so we don't attempt to
     // open the browser for http://default or similar invalid hosts.
-    $hosterror = gethostbyname($host) == $host;
-    $iperror = ip2long($host) && gethostbyaddr($host) == $host;
-    if ($hosterror && $iperror) {
+    $hosterror = (gethostbynamel($host) === FALSE);
+    $iperror = (ip2long($host) && gethostbyaddr($host) == $host);
+    if (!drush_get_context('DRUSH_SIMULATE') && ($hosterror || $iperror)) {
       drush_log(dt('!host does not appear to be a resolvable hostname or IP, not starting browser.', array('!host' => $host)), 'warning');
       return FALSE;
     }
-    $uri = $site . '/' . ltrim($uri, '/');
-  }
-  if ($browser = drush_get_option('browser', TRUE)) {
     if ($browser === TRUE) {
       // See if we can find an OS helper to open URLs in default browser.
       if (drush_shell_exec('which xdg-open')) {
@@ -416,15 +426,24 @@ function drush_start_browser($uri = NULL) {
       else if (drush_shell_exec('which open')) {
         $browser = 'open';
       }
+      else if (!drush_has_bash()) {
+        $browser = 'start';
+      }
       else {
         // Can't find a valid browser.
         $browser = FALSE;
       }
     }
-    if ($browser && !drush_get_context('DRUSH_SIMULATE')) {
-      $pipes = array();
-      drush_log(dt('Opening browser at !uri', array('!uri' => $uri)));
-      proc_close(proc_open($browser . ' ' . drush_escapeshellarg($uri) . ' 2> /dev/null &', array(), $pipes));
+    $prefix = '';
+    if ($sleep) {
+      $prefix = 'sleep ' . $sleep . ' && ';
+    }
+    if ($browser) {
+      drush_log(dt('Opening browser !browser at !uri', array('!browser' => $browser, '!uri' => $uri)));
+      if (!drush_get_context('DRUSH_SIMULATE')) {
+        $pipes = array();
+        proc_close(proc_open($prefix . $browser . ' ' . drush_escapeshellarg($uri) . ' 2> ' . drush_bit_bucket() . ' &', array(), $pipes));
+      }
       return TRUE;
     }
   }

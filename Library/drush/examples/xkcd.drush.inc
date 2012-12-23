@@ -14,6 +14,7 @@
  *     2. Anywhere in a folder tree below an active module on your site.
  *     3. /usr/share/drush/commands (configurable)
  *     4. In an arbitrary folder specified with the --include option.
+ *     5. Drupal's sites/all/drush folder.
  */
 
 /**
@@ -158,7 +159,7 @@ function drush_xkcd_display($url) {
     $data['date'] = $data['year'] . '/' . $data['month'] . '/' . $data['day'];
     unset($data['safe_title'], $data['news'], $data['link'], $data['year'], $data['month'], $data['day']);
     drush_print_table(drush_key_value_to_array_table($data));
-    $img = realpath(_drush_download_file($data['img']));
+    $img = drush_download_file($data['img']);
     drush_register_file_for_deletion($img);
     drush_shell_exec(drush_get_option('image-viewer', 'display') . ' ' . $img);
   }

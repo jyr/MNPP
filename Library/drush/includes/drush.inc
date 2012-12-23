@@ -31,6 +31,12 @@ define('DRUSH_APPLICATION_ERROR', 255);
 define('DRUSH_DRUPAL_KILOBYTE', 1024);
 
 /**
+ * Default amount of time, in seconds, to cache downloads via
+ * drush_download_file(). One day is 86400 seconds.
+ */
+define('DRUSH_CACHE_LIFETIME_DEFAULT', 86400);
+
+/**
  * Include a file, selecting a version specific file if available.
  *
  * For example, if you pass the path "/var/drush" and the name
@@ -58,21 +64,40 @@ function drush_include($path, $name, $version = NULL, $extension = 'inc') {
   $version = ($version) ? $version : drush_drupal_major_version();
   $file = sprintf("%s/%s_%s.%s", $path, $name, $version, $extension);
   if (file_exists($file)) {
-    // drush_log(dt('Including version specific file : @file', array('@file' => $file)));
+    //drush_log(dt('Including version specific file : @file', array('@file' => $file)));
     include_once($file);
     return TRUE;
   }
   $file = sprintf("%s/%s.%s", $path, $name, $extension);
   if (file_exists($file)) {
-    // drush_log(dt('Including non-version specific file : @file', array('@file' => $file)));
+    //drush_log(dt('Including non-version specific file : @file', array('@file' => $file)));
     include_once($file);
     return TRUE;
   }
 }
 
 /**
- * Return a structured array of engines of a specific type from commandfiles
- * implementing hook_drush_engine_$type.
+ * Obtain all engine types info and normalize with defaults.
+ *
+ * @see hook_drush_engine_type_info().
+ */
+function drush_get_engine_types_info() {
+  $info = drush_command_invoke_all('drush_engine_type_info');
+  foreach ($info as $type => $data) {
+    $info[$type] += array(
+      'description' => '',
+      'option' => FALSE,
+      'default' => NULL,
+      'options' => array(),
+      'add-options-to-command' => FALSE,
+    );
+  }
+
+  return $info;
+}
+
+/**
+ * Return a structured array of engines of a specific type.
  *
  * Engines are pluggable subsystems. Each engine of a specific type will
  * implement the same set of API functions and perform the same high-level
@@ -91,28 +116,37 @@ function drush_include($path, $name, $version = NULL, $extension = 'inc') {
  * the "pm" commandfile would automatically be found if the file
  * "pm/handler/wget.inc" exists and a specific path is not provided.
  *
- * @param $type
+ * @param $engine_type
  *   The type of engine.
  *
  * @return
  *   A structured array of engines.
  */
-function drush_get_engines($type) {
-  $engines = array();
+function drush_get_engines($engine_type) {
+  $info = drush_get_engine_types_info();
+  if (!isset($info[$engine_type])) {
+    return drush_set_error('DRUSH_UNKNOWN_ENGINE_TYPE', dt('Unknown engine type !engine_type', array('!engine_type' => $engine_type)));
+  }
+
+  $engines = array(
+    'info' => $info[$engine_type],
+    'engines' => array(),
+  );
   $list = drush_commandfile_list();
+  $hook = 'drush_engine_' . $engine_type;
   foreach ($list as $commandfile => $path) {
-    if (drush_command_hook($commandfile, 'drush_engine_' . $type)) {
-      $function = $commandfile . '_drush_engine_' . $type;
+    if (drush_command_hook($commandfile, $hook)) {
+      $function = $commandfile . '_' . $hook;
       $result = $function();
-      foreach ((array)$result as $key => $engine) {
+      foreach ($result as $key => $engine) {
         // Add some defaults
         $engine += array(
           'commandfile' => $commandfile,
           // Engines by default live in a subdirectory of the commandfile that
           // declared them, named as per the type of engine they are.
-          'path' => sprintf("%s/%s", dirname($path), $type),
+          'path' => sprintf("%s/%s", dirname($path), $engine_type),
         );
-        $engines[$key] = $engine;
+        $engines['engines'][$key] = $engine;
       }
     }
   }
@@ -150,9 +184,9 @@ function drush_get_engines($type) {
  * @return TRUE or instanced object of available class on success. FALSE on fail.
  */
 function drush_include_engine($type, $engine, $version = NULL, $path = NULL) {
-  $engines = drush_get_engines($type);
-  if (!$path && isset($engines[$engine])) {
-    $path = $engines[$engine]['path'];
+  $engine_info = drush_get_engines($type);
+  if (!$path && isset($engine_info['engines'][$engine])) {
+    $path = $engine_info['engines'][$engine]['path'];
   }
   if (!$path) {
     return drush_set_error('DRUSH_ENGINE INCLUDE_NO_PATH', dt('No path was set for including the !type engine !engine.', array('!type' => $type, '!engine' => $engine)));
@@ -189,8 +223,10 @@ function drush_check_self_update() {
 
   $is_dev = FALSE;
 
-  // Get release info for drush
-  $info = _drush_pm_get_releases(array('drush'));
+  // Get release info for drush.
+  drush_include_engine('release_info', 'updatexml');
+  $request = pm_parse_project_version(array('drush'));
+  $info = release_info_get_releases($request);
   // Check for newer releases based on the datestamp.
   // We add 60 seconds to the drush.info date because of a drupal.org WTF. See http://drupal.org/node/1019356.
   $version_date = $drush_info['datestamp'] + 60;
@@ -210,7 +246,7 @@ function drush_check_self_update() {
   }
 
   if ($newer_version) {
-    drush_print(dt('A newer version of drush, !version, is available.  You are currently running drush version !currentversion. The update process depends on how you installed drush. Some common update commands are: `pear upgrade drush`,  `git pull`, `drush dl drush --destination=[/path/to/drush]`.  To disable this check, put "$options[\'self-update\'] = FALSE;" in your drushrc.php configuration file.' . "\n", array('!version' => $newer_version, '!currentversion' => DRUSH_VERSION)));
+    drush_print(dt('A newer version of drush, !version, is available.  You are currently running drush version !currentversion. The update process depends on how you installed drush. Some common update commands are: `pear upgrade drush/drush`,  `git pull`, `drush dl drush --destination=[/path/to/drush]`.' . "\n", array('!version' => $newer_version, '!currentversion' => DRUSH_VERSION)));
     return TRUE;
   }
   else {
@@ -341,7 +377,7 @@ function _convert_csv_to_array($args) {
  *     - description: The help text for this item. displayed by `drush help`.
  */
 function drush_get_global_options($brief = FALSE) {
-  $options['root']               = array('short-form' => 'r', 'short-has-arg' => TRUE, 'never-post' => TRUE, 'description' => "Drupal root directory to use (default: current directory).", 'example-value' => '<path>');
+  $options['root']               = array('short-form' => 'r', 'short-has-arg' => TRUE, 'never-post' => TRUE, 'description' => "Drupal root directory to use (default: current directory).", 'example-value' => 'path');
   $options['uri']                = array('short-form' => 'l', 'short-has-arg' => TRUE, 'never-post' => TRUE, 'description' => 'URI of the drupal site to use (only needed in multisite environments or when running on an alternate port).', 'example-value' => 'http://example.com:8888');
   $options['verbose']            = array('short-form' => 'v', 'context' => 'DRUSH_VERBOSE', 'description' => 'Display extra information about the command.');
   $options['debug']              = array('short-form' => 'd', 'context' => 'DRUSH_DEBUG', 'description' => 'Display even more information, including internal messages.');
@@ -351,19 +387,19 @@ function drush_get_global_options($brief = FALSE) {
   $options['pipe']               = array('short-form' => 'p', 'description' => "Emit a compact representation of the command for scripting.");
   $options['help']               = array('short-form' => 'h', 'description' => "This help system.");
   $options['version']            = array('description' => "Show drush version.");
-  $options['php']                = array('description' => "The absolute path to your PHP intepreter, if not 'php' in the path.");
+  $options['php']                = array('description' => "The absolute path to your PHP intepreter, if not 'php' in the path.", 'example-value' => '/path/to/file');
   $options['interactive']        = array('short-form' => 'ia', 'description' => "Force interactive mode for commands run on multiple targets (e.g. `drush @site1,@site2 cc --ia`).");
 
   if (!$brief) {
     $options['quiet']               = array('short-form' => 'q', 'description' => 'Suppress non-error messages.');
-    $options['include']             = array('short-form' => 'i', 'short-has-arg' => TRUE, 'context' => 'DRUSH_INCLUDE', 'local-context-only' => TRUE, 'never-post' => TRUE, 'propagate-cli-value' => TRUE, 'merge-pathlist' => TRUE, 'description' => "A list of additional directory paths to search for drush commands.");
+    $options['include']             = array('short-form' => 'i', 'short-has-arg' => TRUE, 'context' => 'DRUSH_INCLUDE', 'local-context-only' => TRUE, 'never-post' => TRUE, 'propagate-cli-value' => TRUE, 'merge-pathlist' => TRUE, 'description' => "A list of additional directory paths to search for drush commands.", 'example-value' => '/path/to/directory');
     $options['config']              = array('short-form' => 'c', 'short-has-arg' => TRUE, 'context' => 'DRUSH_CONFIG', 'local-context-only' => TRUE, 'merge-pathlist' => TRUE, 'description' => "Specify an additional config file to load. See example.drushrc.php.");
-    $options['user']                = array('short-form' => 'u', 'short-has-arg' => TRUE, 'propagate-cli-value' => TRUE, 'description' => "Specify a Drupal user to login with. May be a name or a number.");
+    $options['user']                = array('short-form' => 'u', 'short-has-arg' => TRUE, 'propagate-cli-value' => TRUE, 'description' => "Specify a Drupal user to login with. May be a name or a number.", 'example-value' => 'name_or_number');
     $options['backend']             = array('short-form' => 'b', 'never-propagate' => TRUE, 'description' => "Hide all output and return structured data (internal use only).");
     $options['invoke']              = array('hidden' => TRUE, 'description' => 'Invoked from a script; skip option verification.');
-    $options['choice']              = array('description' => "Provide an answer to a multiple-choice prompt.");
-    $options['variables']           = array('description' => "Comma delimited list of name=value pairs. These values take precedence even over settings.php variable overrides.");
-    $options['search-depth']        = array('description' => "Control the depth that drush will search for alias files.");
+    $options['choice']              = array('description' => "Provide an answer to a multiple-choice prompt.", 'example-value' => 'number');
+    $options['variables']           = array('description' => "Comma delimited list of name=value pairs. These values take precedence even over settings.php variable overrides.", 'example-value' => 'foo=bar,baz=yaz');
+    $options['search-depth']        = array('description' => "Control the depth that drush will search for alias files.", 'example-value' => 'number');
     $options['ignored-modules']     = array('description' => "Exclude some modules from consideration when searching for drush command files.");
     $options['no-label']            = array('description' => "Remove the site label that drush includes in multi-site command output(e.g. `drush @site1,@site2 status`).");
     $options['nocolor']             = array('context' => 'DRUSH_NOCOLOR', 'propagate-cli-value' => TRUE, 'description' => "Suppress color highlighting on log messages.");
@@ -388,6 +424,8 @@ function drush_get_global_options($brief = FALSE) {
     $options['command-specific']    = array('hidden' => TRUE, 'merge-associative' => TRUE, 'description' => 'Command-specific options.');
     $options['site-aliases']        = array('hidden' => TRUE, 'merge-associative' => TRUE, 'description' => 'List of site aliases.');
     $options['shell-aliases']       = array('hidden' => TRUE, 'merge' => TRUE, 'never-propagate' => TRUE, 'description' => 'List of shell aliases.');
+    $options['path-aliases']        = array('hidden' => TRUE, 'never-propagate' => TRUE, 'description' => 'Path aliases from site alias.');
+    $options['ssh-options']         = array('never-propagate' => TRUE, 'description' => 'A string of extra options that will be passed to the ssh command (e.g. "-p 100")');
 
     $command = array(
       'options' => $options,
@@ -651,7 +689,7 @@ function drush_choice_multiple($options, $defaults = FALSE, $prompt = 'Select so
       return $selections;
     }
     // If the user selected too many options, drop the oldest selection.
-    if (count($selections) > $max) {
+    if (isset($max) && count($selections) > $max) {
       array_pop($selections);
     }
   }
@@ -774,24 +812,34 @@ function drush_op($function) {
  *   downloaded.
  */
 function drush_download_file($url, $destination = FALSE, $cache_duration = 0) {
-  if (drush_get_option('cache') && $cache_duration !== 0 && $cache_dir = drush_directory_cache() . '/download') {
-    drush_mkdir($cache_dir);
-    $cache_name = str_replace(array(':', '/'), '-', $url);
+  // Generate destination of omitted.
+  if (!$destination) {
+    $file = basename(current(explode('?', $url, 2)));
+    $destination = getcwd() . '/' . basename($file);
+  }
+
+  if (drush_get_option('cache') && $cache_duration !== 0 && $cache_dir = drush_directory_cache('download')) {
+    $cache_name = str_replace(array(':', '/', '?', '='), '-', $url);
     $cache_file = $cache_dir . "/" . $cache_name;
     // Check for cached, unexpired file.
     if (file_exists($cache_file) && filectime($cache_file) > ($_SERVER['REQUEST_TIME']-$cache_duration)) {
       drush_log(dt('!name retrieved from cache.', array('!name' => $cache_name)));
-      return $cache_file;
     }
     else {
       if (_drush_download_file($url, $cache_file, TRUE)) {
         // Cache was set just by downloading file to right location.
-        return $cache_file;
       }
       elseif (file_exists($cache_file)) {
         drush_log(dt('!name retrieved from an expired cache since refresh failed.', array('!name' => $cache_name)), 'warning');
-        return $cache_file;
       }
+      else {
+        $cache_file = FALSE;
+      }
+    }
+
+    if ($cache_file && copy($cache_file, $destination)) {
+      // Copy cached file to the destination
+      return $destination;
     }
   }
   elseif ($return = _drush_download_file($url, $destination)) {
@@ -811,24 +859,24 @@ function drush_download_file($url, $destination = FALSE, $cache_duration = 0) {
  *   The url of the file to download.
  * @param string $destination
  *   The name of the file to be saved, which may include the full path.
- *   Optional, if omitted the filename will be extracted from the url and the
- *   file downloaded to the current working directory (Drupal root if
- *   bootstrapped).
  * @param boolean $overwrite
  *   Overwrite any file thats already at the destination.
  * @return string
  *   The path to the downloaded file, or FALSE if the file could not be
  *   downloaded.
  */
-function _drush_download_file($url, $destination = FALSE, $overwrite = TRUE) {
-  if (!$destination) {
-    $destination = getcwd() . '/' . basename($url);
+function _drush_download_file($url, $destination, $overwrite = TRUE) {
+  static $use_wget;
+  if ($use_wget === NULL) {
+    $use_wget = drush_shell_exec('which wget');
   }
 
   $destination_tmp = drush_tempnam('download_file');
-  drush_shell_exec("wget -q --timeout=30 -O %s %s", $destination_tmp, $url);
-  if (!drush_file_not_empty($destination_tmp)) {
-    drush_shell_exec("curl -s -L --connect-timeout 30 -o %s %s", $destination_tmp, $url);
+  if ($use_wget) {
+    drush_shell_exec("wget -q --timeout=30 -O %s %s", $destination_tmp, $url);
+  }
+  else {
+    drush_shell_exec("curl --fail -s -L --connect-timeout 30 -o %s %s", $destination_tmp, $url);
   }
   if (!drush_file_not_empty($destination_tmp) && $file = @file_get_contents($url)) {
     @file_put_contents($destination_tmp, $file);
@@ -843,77 +891,271 @@ function _drush_download_file($url, $destination = FALSE, $overwrite = TRUE) {
 }
 
 /**
+ * Determines the MIME content type of the specified file.
+ *
+ * The power of this function depends on whether the PHP installation
+ * has either mime_content_type() or finfo installed -- if not, only tar,
+ * gz, zip and bzip2 types can be detected.
+ *
+ * If mime type can't be obtained, an error will be set.
+ *
+ * @return mixed
+ *   The MIME content type of the file or FALSE.
+ */
+function drush_mime_content_type($filename) {
+  // 1. Try to use php built-ins.
+  $content_type = FALSE;
+  if (class_exists('finfo')) {
+    drush_log(dt('Fileinfo extension available.'), 'debug');
+    // For pecl's fileinfo on php 5.2 there is quite some inconsistency in
+    // distributions and loading of magic files.
+    // TODO: remove @ and use FILEINFO_MIME_TYPE when drush requires php 5.3
+    $finfo = @new finfo(FILEINFO_MIME);
+    $ct = @$finfo->file($filename);
+    if ($ct) {
+      // We only want the first part, before the ;
+      $content_type = current(explode(';', $ct));
+    }
+  }
+
+  // TODO: to be removed in php 5.3 (deprecated).
+  if ((!$content_type) && (function_exists('mime_content_type'))) {
+    drush_log(dt('mime_magic support enabled.'), 'debug');
+    $content_type = trim(mime_content_type($filename));
+  }
+
+  if (!$content_type) {
+    drush_log(dt('No fileinfo or mime_magic support available.'), 'debug');
+  }
+  elseif ($content_type == 'application/octet-stream') {
+    drush_log(dt('Mime type for !file is application/octet-stream.', array('!file' => $filename)), 'debug');
+    $content_type = FALSE;
+  }
+
+  // 2. if PHP's built-ins aren't present or PHP is configured in such a way
+  // that all these files are considered octet-stream (e.g with mod_mime_magic
+  // and an http conf that's serving all archives as octet-stream for other
+  // reasons) we'll detect (a few select) mime types on our own by examing the
+  // file's magic header bytes.
+  if (!$content_type) {
+    drush_log(dt('Examining !file headers.', array('!file' => $filename)), 'debug');
+    if ($file = fopen($filename, 'rb')) {
+      $first = fread($file, 2);
+      fclose($file);
+
+      if ($first !== FALSE) {
+        // Interpret the two bytes as a little endian 16-bit unsigned int.
+        $data = unpack('v', $first);
+        switch ($data[1]) {
+          case 0x8b1f:
+            // First two bytes of gzip files are 0x1f, 0x8b (little-endian).
+            // See http://www.gzip.org/zlib/rfc-gzip.html#header-trailer
+            $content_type = 'application/x-gzip';
+            break;
+
+          case 0x4b50:
+            // First two bytes of zip files are 0x50, 0x4b ('PK') (little-endian).
+            // See http://en.wikipedia.org/wiki/Zip_(file_format)#File_headers
+            $content_type = 'application/zip';
+            break;
+
+          case 0x5a42:
+            // First two bytes of bzip2 files are 0x5a, 0x42 ('BZ') (big-endian).
+            // See http://en.wikipedia.org/wiki/Bzip2#File_format
+            $content_type = 'application/x-bzip2';
+            break;
+
+          default:
+            drush_log(dt('Unable to determine mime type from header bytes 0x!hex of !file.', array('!hex' => dechex($data[1]), '!file' => $filename,), 'debug'));
+        }
+      }
+      else {
+        drush_log(dt('Unable to read !file.', array('!file' => $filename)), 'warning');
+      }
+    }
+    else {
+      drush_log(dt('Unable to open !file.', array('!file' => $filename)), 'warning');
+    }
+  }
+
+  // 3. Lastly if above methods didn't work, try to guess the mime type from
+  // the file extension. This is useful if the file has no identificable magic
+  // header bytes (for example tarballs).
+  if (!$content_type) {
+    drush_log(dt('Examining !file extension.', array('!file' => $filename)), 'debug');
+
+    // Remove querystring from the filename, if present.
+    $filename = basename(current(explode('?', $filename, 2)));
+    $extension_mimetype = array(
+      '.tar'     => 'application/x-tar',
+    );
+    foreach ($extension_mimetype as $extension => $ct) {
+      if (substr($filename, -strlen($extension)) === $extension) {
+        $content_type = $ct;
+        break;
+      }
+    }
+  }
+
+  if ($content_type) {
+    drush_log(dt('Mime type for !file is !mt', array('!file' => $filename, '!mt' => $content_type)), 'notice');
+    return $content_type;
+  }
+
+  return drush_set_error('MIME_CONTENT_TYPE_UNKNOWN', dt('Unable to determine mime type for !file.', array('!file' => $filename)));
+}
+
+/**
+ * Check whether a file is a supported tarball.
+ *
+ * @return mixed
+ *   The file content type if it's a tarball. FALSE otherwise.
+ */
+function drush_file_is_tarball($path) {
+  $content_type = drush_mime_content_type($path);
+  $supported = array(
+    'application/x-bzip2',
+    'application/x-gzip',
+    'application/x-tar',
+    'application/x-zip',
+    'application/zip',
+  );
+  if (in_array($content_type, $supported)) {
+    return $content_type;
+  }
+  return FALSE;
+}
+
+/**
  * Extract a tarball.
  *
  * @param string $path
- *   The name of the .tar.gz or .tgz file to be extracted.
+ *   Path to the archive to be extracted.
  * @param string $destination
  *   The destination directory the tarball should be extracted into.
  *   Optional, if ommitted the tarball directory will be used as destination.
  * @param boolean $listing
  *   If TRUE, a listing of the tar contents will be returned on success.
  *
- * @return string
+ * @return mixed
  *   TRUE on success, FALSE on fail. If $listing is TRUE, a file listing of the
  *   tarball is returned if the extraction reported success, instead of TRUE.
  */
 function drush_tarball_extract($path, $destination = FALSE, $listing = FALSE) {
-  if (!file_exists($path)) {
-    return drush_set_error('TARBALL_EXTRACT_NOT_FOUND', dt('Tarball !path could not be found.', array('!path' => $path)));
+  // Check if tarball is supported.
+  if (!($mimetype = drush_file_is_tarball($path))) {
+    return drush_set_error('TARBALL_EXTRACT_UNKNOWN_FORMAT', dt('Unable to extract !path. Unknown archive format.', array('!path' => $path)));
   }
-  $olddir = getcwd();
+
+  // Check if destination is valid.
   if (!$destination) {
     $destination = dirname($path);
   }
-  if (!is_writeable($destination)) {
-    return drush_set_error('TARBALL_EXTRACT_DESTINATION', dt('Extracting !path failed, as the destination directory !dest was not found or could not be written to.', array('!path' => $path, '!dest' => $dest)));
+  if (!drush_mkdir($destination)) {
+    // drush_mkdir already set an error.
+    return FALSE;
   }
-  // If we are not on Windows, then try to do "tar" in a single operation.
-  if ((!drush_is_windows()) && (drush_shell_cd_and_exec(dirname($path), "tar -C %s -xzf %s", $destination, basename($path)))) {
+
+  // Perform the extraction of a zip file.
+  if (($mimetype == 'application/zip') || ($mimetype == 'application/x-zip')) {
+    $return = drush_shell_cd_and_exec(dirname($path), "unzip %s -d %s", $path, $destination);
+    if (!$return) {
+      return drush_set_error('DRUSH_TARBALL_EXTRACT_ERROR', dt('Unable to unzip !filename.', array('!filename' => $path)));
+    }
     if ($listing) {
-      // We use a separate tar -tzf instead of -xvf above because
+      // unzip prefixes the file listing output with a header line,
+      // and prefixes each line with a verb representing the compression type.
+      $output = drush_shell_exec_output();
+      // Remove the header line.
+      array_shift($output);
+      // Remove the prefix verb from each line.
+      $output = array_map(create_function('$str', 'return substr($str, strpos($str, ":") + 3 + ' . strlen(dirname($path)) . ');'), $output);
+      // Remove any remaining blank lines.
+      $return = array_filter($output, create_function('$str', 'return $str != "";'));
+    }
+  }
+  // Otherwise we have a possibly-compressed Tar file.
+  // If we are not on Windows, then try to do "tar" in a single operation.
+  elseif (!drush_is_windows()) {
+    $tar = drush_get_tar_executable();
+    $tar_compression_flag = '';
+    if ($mimetype == 'application/x-gzip') {
+      $tar_compression_flag = 'z';
+    }
+    elseif ($mimetype == 'application/x-bzip2') {
+      $tar_compression_flag = 'j';
+    }
+
+    $return = drush_shell_cd_and_exec(dirname($path), "$tar -C %s -x%sf %s", $destination, $tar_compression_flag, basename($path));
+    if (!$return) {
+      return drush_set_error('DRUSH_TARBALL_EXTRACT_ERROR', dt('Unable to untar !filename.', array('!filename' => $path)));
+    }
+    if ($listing) {
+      // We use a separate tar -tf instead of -xvf above because
       // the output is not the same in Mac.
-      drush_shell_cd_and_exec(dirname($path), "tar -tzf %s", basename($path));
-      return drush_shell_exec_output();
+      drush_shell_cd_and_exec(dirname($path), "$tar -t%sf %s", $tar_compression_flag, basename($path));
+      $return = drush_shell_exec_output();
     }
-    return TRUE;
   }
-  // If we could not get the single-op tar to work, do it in three steps.
-  // Copy the source tarball to the destination directory.  Rename to a temp name in case the destination directory == dirname($path)
-  $paths_basename = basename(basename($path, '.tar.gz'), '.tgz');
-  $tarball = drush_tempnam($paths_basename, $destination) . ".tar.gz";
-  drush_register_file_for_deletion($tarball);
-  drush_copy_dir($path, $tarball);
-  $unzipped = $destination . '/' . basename($tarball, ".tar.gz") . ".tar";
-  // We used to use gzip --decompress in --stdout > out, but the output redirection sometimes failed on Windows for some binary output
-  drush_shell_cd_and_exec(dirname($tarball), "gzip --decompress %s", $tarball);
-  if (file_exists($unzipped)) {
-    drush_register_file_for_deletion($unzipped);
-    if (drush_shell_cd_and_exec(dirname($unzipped), "tar -xf %s", basename($unzipped))) {
-      if ($listing) {
-        // We use a separate tar -tf instead of -xf above because
-        // the output is not the same in Mac.
-        drush_shell_cd_and_exec(dirname($unzipped), "tar -tf %s", basename($unzipped));
-        return drush_shell_exec_output();
-      }
-      return TRUE;
-    }
-    return drush_set_error('TARBALL_EXTRACT_TAR_FAIL', dt('Extracting !path using the tar command failed.', array('!path' => $path)));
-  }
+  // In windows, do the extraction by its primitive steps.
   else {
-    return drush_set_error('TARBALL_EXTRACT_GZIP_FAIL', dt('Uncompressing !path using  the gzip command failed.', array('!path' => $path)));
+    // 1. copy the source tarball to the destination directory. Rename to a
+    // temp name in case the destination directory == dirname($path)
+    $tmpfile = drush_tempnam(basename($path), $destination);
+    drush_copy_dir($path, $tmpfile, FILE_EXISTS_OVERWRITE);
+
+    // 2. uncompress the tarball, if compressed.
+    if (($mimetype == 'application/x-gzip') || ($mimetype == 'application/x-bzip2')) {
+      if ($mimetype == 'application/x-gzip') {
+        $compressed = $tmpfile . '.gz';
+        // We used to use gzip --decompress in --stdout > out, but the output
+        // redirection sometimes failed on Windows for some binary output.
+        $command = 'gzip --decompress %s';
+      }
+      elseif ($mimetype == 'application/x-bzip2') {
+        $compressed = $tmpfile . '.bz2';
+        $command = 'bzip2 --decompress %s';
+      }
+      drush_op('rename', $tmpfile, $compressed);
+      $return = drush_shell_cd_and_exec(dirname($compressed), $command, $compressed);
+      if (!$return || !file_exists($tmpfile)) {
+        return drush_set_error('DRUSH_TARBALL_EXTRACT_ERROR', dt('Unable to decompress !filename.', array('!filename' => $compressed)));
+      }
+    }
+
+    // 3. Untar.
+    $tar = drush_get_tar_executable();
+    $return = drush_shell_cd_and_exec(dirname($tmpfile), "$tar -xvf %s", basename($tmpfile));
+    if (!$return) {
+      return drush_set_error('DRUSH_TARBALL_EXTRACT_ERROR', dt('Unable to untar !filename.', array('!filename' => $tmpfile)));
+    }
+    if ($listing) {
+      $return = drush_shell_exec_output();
+      // Cut off the 'x ' prefix for the each line of the tar output
+      // See http://drupal.org/node/1775520
+      foreach($return as &$line) {
+        if(strpos($line, "x ") === 0)
+          $line = substr($line, 2);
+      }
+    }
+
+    // Remove the temporary file so the md5 hash is accurate.
+    unlink($tmpfile);
   }
+
+  return $return;
 }
 
 /**
- * Extract a tarball to the lib directory.
+ * Download and extract a tarball to the lib directory.
+ *
  * Checks for reported success, but callers should normally check for existence
  * of specific expected file(s) in the library.
  *
  * @param string $url
- *   The URL to of the .tar.gz or .tgz file to be extracted.
+ *   The URL to the library tarball.
  *
- * @return string
+ * @return boolean
  *   TRUE is the download and extraction reported success, FALSE otherwise.
  */
 function drush_lib_fetch($url) {
@@ -922,10 +1164,12 @@ function drush_lib_fetch($url) {
     return drush_set_error('DRUSH_LIB_UNWRITABLE', dt("Drush needs to download a library from !url in order to function, and the attempt to download this file automatically failed because you do not have permission to write to the library directory !path. To continue you will need to manually download the package from !url, extract it, and copy the directory into your !path directory.", array('!path' => $lib, '!url' => $url)));
   }
 
-  // We use an arbitary filename, since some sources (e.g. github) do not
-  // include a filename in the URL.
-  $path = $lib . '/drush-library-' . mt_rand() . '.tar.gz';
-  return drush_download_file($url, $path) && drush_tarball_extract($path);
+  $destination = $lib . '/drush-library-' . mt_rand();
+  $path = drush_download_file($url, $destination);
+  if (!$path) {
+    return FALSE;
+  }
+  return drush_tarball_extract($path);
 }
 
 /**
@@ -937,12 +1181,14 @@ function drush_lib_fetch($url) {
  */
 
 /**
- * Process commands that are executed on a remote drush instance.
+ * Handle any command preprocessing that may need to be done, including
+ * potentially redispatching the command immediately (e.g. for remote
+ * commands).
  *
  * @return
  *   TRUE if the command was handled remotely.
  */
-function drush_remote_command() {
+function drush_preflight_command_dispatch() {
   $interactive = drush_get_option('interactive', FALSE);
 
   // The command will be executed remotely if the --remote-host flag
@@ -953,13 +1199,45 @@ function drush_remote_command() {
   $remote_host = drush_get_option('remote-host');
   // Get the command early so that we can allow commands to directly handle remote aliases if they wish
   $command = drush_parse_command();
-  if (is_array($command) && array_key_exists('mask-local-cli-options', $command)) {
-    $global_cli_options = drush_get_context('DRUSH_GLOBAL_CLI_OPTIONS', array());
-    drush_expand_short_form_options($global_cli_options);
-    drush_set_context('cli', $global_cli_options);
+  if (isset($command)) {
+    drush_command_default_options($command);
+  }
+  // If the command sets the 'strict-option-handling' flag, then we will remove
+  // any cli options that appear after the command name form the 'cli' context.
+  // The cli options that appear before the command name are stored in the
+  // 'DRUSH_GLOBAL_CLI_OPTIONS' context, so we will just overwrite the cli context
+  // with this, after doing the neccessary fixup from short-form to long-form options.
+  // After we do that, we put back any local drush options identified by $command['options'].
+  if (is_array($command) && !empty($command['strict-option-handling'])) {
+    $cli_options = drush_get_context('DRUSH_GLOBAL_CLI_OPTIONS', array());
+    // Now we are going to sort out any options that exist in $command['options'];
+    // we will remove these from DRUSH_COMMAND_ARGS and put them back into the
+    // cli options.
+    $cli_context = drush_get_context('cli');
+    $remove_from_command_args = array();
+    foreach ($command['options'] as $option => $info) {
+      if (array_key_exists($option, $cli_context)) {
+        $cli_options[$option] = $cli_context[$option];
+        $remove_from_command_args[$option] = $option;
+      }
+    }
+    if (!empty($remove_from_command_args)) {
+      $drush_command_args = array();
+      foreach (drush_get_context('DRUSH_COMMAND_ARGS') as $arg) {
+        if (!_drush_should_remove_command_arg($arg, $remove_from_command_args)) {
+          $drush_command_args[] = $arg;
+        }
+      }
+      drush_set_context('DRUSH_COMMAND_ARGS', $drush_command_args);
+    }
+    drush_expand_short_form_options($cli_options);
+    drush_set_context('cli', $cli_options);
     _drush_bootstrap_global_options();
   }
-  if (is_array($command) && array_key_exists('handle-remote-commands', $command)) {
+  // If the command sets the 'handle-remote-commands' flag, then we will short-circuit
+  // remote command dispatching and site-list command dispatching, and always let
+  // the command handler run on the local machine.
+  if (is_array($command) && !empty($command['handle-remote-commands'])) {
     return FALSE;
   }
   if (isset($remote_host)) {
@@ -969,7 +1247,14 @@ function drush_remote_command() {
 
     // Force interactive mode if there is a single remote target.  #interactive is added by drush_do_command_redispatch
     drush_set_option('interactive', TRUE);
-    drush_do_command_redispatch($command_name, $args, $remote_host, $remote_user);
+    $values = drush_do_command_redispatch($command_name, $args, $remote_host, $remote_user);
+    // In 'interactive' mode, $values is the result code from drush_shell_proc_open.
+    // TODO: in _drush_backend_invoke, return array('error_status' => $ret) instead for uniformity.
+    if (!is_array($values) && ($values != 0)) {
+      // Force an error result code.  Note that drush_shutdown() will still run.
+      drush_set_context('DRUSH_EXECUTION_COMPLETED', TRUE);
+      exit($values);
+    }
     return TRUE;
   }
   // If the --site-list flag is set, then we will execute the specified
@@ -979,13 +1264,12 @@ function drush_remote_command() {
     if (!is_array($site_list)) {
       $site_list = explode(',', $site_list);
     }
-    $site_list = drush_sitealias_resolve_sitespecs($site_list);
-    $site_list = drush_sitealias_simplify_names($site_list);
+    $site_record = array('site-list' => $site_list);
     $args = drush_get_arguments();
 
     if (!drush_get_context('DRUSH_SIMULATE') && !$interactive) {
       drush_print(dt("You are about to execute '!command' non-interactively (--yes forced) on all of the following targets:", array('!command' => implode(" ", $args))));
-      foreach ($site_list as $one_destination => $one_record) {
+      foreach ($site_list as $one_destination) {
         drush_print(dt('  !target', array('!target' => $one_destination)));
       }
 
@@ -997,35 +1281,61 @@ function drush_remote_command() {
     $command_name = array_shift($args);
     $multi_options = drush_get_context('cli');
     $backend_options = array();
-    if (drush_get_option('pipe')) {
+    if (drush_get_option('pipe') || drush_get_option('interactive')) {
       $backend_options['interactive'] = TRUE;
     }
-
-    if (!drush_get_option('no-label', FALSE) && !$interactive) {
-      $label_separator = ' >> ';
-      $max_name_length = 0;
-      foreach ($site_list as $alias_name => $alias_record) {
-        if (strlen($alias_name) > $max_name_length) {
-          $max_name_length = strlen($alias_name);
-        }
-      }
-      $multi_options['reserve-margin'] = $max_name_length + strlen($label_separator);
-      foreach ($site_list as $alias_name => $alias_record) {
-        $backend_options['output-label'] = str_pad($alias_name, $max_name_length, " ") . $label_separator;
-        $values = drush_do_site_command($alias_record, $command_name, $args, $multi_options, $backend_options);
-      }
+    if (drush_get_option('no-label', FALSE)) {
+      $backend_options['no-label'] = TRUE;
     }
-    else {
-      if ($interactive) {
-        $backend_options['interactive'] = TRUE;
-      }
-      foreach ($site_list as $alias_name => $alias_record) {
-        drush_print(dt("!site >> !command", array('!command' => $command_name . ' ' . implode(" ", $args), '!site' => $alias_name)));
-        $values = drush_do_site_command($alias_record, $command_name, $args, $multi_options, $backend_options);
-        drush_print($values['output']);
-      }
-    }
+    $values = drush_invoke_process($site_record, $command_name, $args, $multi_options, $backend_options);
     return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Determine whether or not an argument should be removed from the
+ * DRUSH_COMMAND_ARGS context.  This method is used when a Drush
+ * command has set the 'strict-option-handling' flag indicating
+ * that it will pass through all commandline arguments and any
+ * additional options (not known to Drush) to some shell command.
+ *
+ * Take as an example the following call to core-rsync:
+ *
+ *   drush --yes core-rsync -v -az --exclude-paths='.git:.svn' local-files/ @site:%files
+ *
+ * In this instance:
+ *
+ *   --yes is a global Drush option
+ *
+ *   -v is an rsync option.  It will make rsync run in verbose mode,
+ *     but will not make Drush run in verbose mode due to the fact that
+ *     core-rsync sets the 'strict-option-handling' flag.
+ *
+ *   --exclude-paths is a local Drush option.  It will be converted by
+ *     Drush into --exclude='.git' and --exclude='.svn', and then passed
+ *     on to the rsync command.
+ *
+ * The parameter $arg passed to this function is one of the elements
+ * of DRUSH_COMMAND_ARGS.  It will have values such as:
+ *   -v
+ *   -az
+ *   --exclude-paths='.git:.svn'
+ *   local-files/
+ *   @site:%files
+ *
+ * Our job in this function is to determine if $arg should be removed
+ * by virtue of appearing in $removal_list.  $removal_list is an array
+ * that will contain values such as 'exclude-paths'.  Both the key and
+ * the value of $removal_list is the same.
+ */
+function _drush_should_remove_command_arg($arg, $removal_list) {
+  foreach ($removal_list as $candidate) {
+    if (($arg == "-$candidate") ||
+        ($arg == "--$candidate") ||
+        (substr($arg,0,strlen($candidate)+3) == "--$candidate=") ) {
+      return TRUE;
+    }
   }
   return FALSE;
 }
@@ -1095,30 +1405,17 @@ function drush_do_multiple_command($command, $source_record, $destination_record
  * Run a command on the site specified by the provided command record.
  *
  * The standard function that provides this service is called
- * drush_invoke_process.  Please call the standard function
- * unless you need to set $integrate = TRUE.
+ * drush_invoke_process.  Please call the standard function.
  *
  * @param backend_options
  *   TRUE - integrate errors
  *   FALSE - do not integrate errors
- *   array - @see drush_backend_invoke_sitealias_command
- */
-function drush_do_site_command($site_record, $command, $args = array(), $data = array(), $backend_options = FALSE) {
-  $values = NULL;
-  if (!empty($site_record)) {
-    if (is_bool($backend_options)) {
-      $integrate = $backend_options;
-      $backend_options = array('integrate' => $integrate);
-    }
-    foreach ($site_record as $key => $value) {
-      if (!isset($data[$key]) && !in_array($key, drush_sitealias_site_selection_keys())) {
-        $data[$key] = $site_record[$key];
-      }
-    }
-    $values = drush_backend_invoke_sitealias_command($site_record, $command, $args, $data, $backend_options);
-  }
-  return $values;
+ *   array - @see drush_backend_invoke_concurrent
+ *
+function drush_do_site_command($site_record, $command, $args = array(), $command_options = array(), $backend_options = FALSE) {
+  return drush_invoke_process($site_record, $command, $args, $command_options, $backend_options);
 }
+ */
 
 /**
  * Redispatch the specified command using the same
@@ -1212,17 +1509,22 @@ function drush_backend_packet_log($entry, $backend_options) {
   if (!is_string($entry['message'])) {
     $entry['message'] = implode("\n", (array)$entry['message']);
   }
+  $entry['message'] = $entry['message'];
   $log =& drush_get_context('DRUSH_LOG', array());
-  $callback = drush_get_context('DRUSH_LOG_CALLBACK', '_drush_print_log');
   $log[] = $entry;
   // Yes, this looks odd, but we might in fact be a backend command
   // that ran another backend command.
   drush_backend_packet('log', $entry);
-  if (array_key_exists('output-label', $backend_options)) {
-    $entry['message'] = $backend_options['output-label'] . $entry['message'];
+  if (array_key_exists('#output-label', $backend_options)) {
+    $entry['message'] = $backend_options['#output-label'] . $entry['message'];
   }
 
-  return $callback($entry);
+  // If integrate is FALSE, then log messages are stored in DRUSH_LOG,
+  // but are -not- printed to the console.
+  if ($backend_options['integrate']) {
+    $callback = drush_get_context('DRUSH_LOG_CALLBACK', '_drush_print_log');
+    return $callback($entry);
+  }
 }
 
 /**
@@ -1248,7 +1550,7 @@ function dlm($object) {
 function drush_pipe_output() {
   $pipe = drush_get_context('DRUSH_PIPE_BUFFER');
   if (!empty($pipe)) {
-    drush_print_r($pipe);
+    drush_print_r($pipe, NULL, FALSE);
   }
 }
 
@@ -1653,7 +1955,8 @@ function drush_version_control_reserved_files() {
   if (!$files) {
     // Also support VCSs that are not drush vc engines.
     $files = array('.git', '.gitignore', '.hg', '.hgignore', '.hgrags');
-    $vcs = array_keys(drush_get_engines('version_control'));
+    $engine_info = drush_get_engines('version_control');
+    $vcs = array_keys($engine_info['engines']);
     foreach ($vcs as $name) {
       $version_control = drush_include_engine('version_control', $name);
       $files = array_merge($files, $version_control->reserved_files());

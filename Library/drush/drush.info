@@ -1,7 +1,8 @@
-drush_version=5.0-dev
+drush_version=5.8
 
-; Information added by drupal.org packaging script on 2011-12-06
-version = "All-versions-5.x-dev"
+; Information added by drupal.org packaging script on 2012-11-12
+version = "7.x-5.8"
+core = "7.x"
 project = "drush"
-datestamp = "1323130454"
+datestamp = "1352754361"
 

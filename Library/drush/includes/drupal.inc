@@ -14,8 +14,8 @@ function drush_drupal_version($drupal_root = NULL) {
 
   if (!$version) {
     if (($drupal_root != NULL) || ($drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT'))) {
-      // D7 stores VERSION in bootstrap.inc. D8 moved that to /core/includes.
-      $version_constant_paths = array('/modules/system/system.module', '/includes/bootstrap.inc', '/core/includes/bootstrap.inc');
+      // Path to files in D6 and D7 where VERSION is defined.
+      $version_constant_paths = array('/modules/system/system.module', '/includes/bootstrap.inc');
       foreach ($version_constant_paths as $path) {
         if (file_exists($drupal_root . $path)) {
           require_once $drupal_root . $path;
@@ -160,3 +160,82 @@ function drush_drupal_login($drush_user) {
 
   return TRUE;
 }
+
+/**
+ * Parse Drupal info file format.
+ *
+ * Copied with modifications from includes/common.inc.
+ *
+ * @see drupal_parse_info_file
+ */
+function drush_drupal_parse_info_file($filename) {
+  if (!file_exists($filename)) {
+    return array();
+  }
+
+  $data = file_get_contents($filename);
+  return _drush_drupal_parse_info_file($data);
+}
+
+/**
+ * Parse the info file.
+ */
+function _drush_drupal_parse_info_file($data) {
+  if (!$data) {
+    return FALSE;
+  }
+
+  if (preg_match_all('
+    @^\s*                           # Start at the beginning of a line, ignoring leading whitespace
+    ((?:
+      [^=;\[\]]|                    # Key names cannot contain equal signs, semi-colons or square brackets,
+      \[[^\[\]]*\]                  # unless they are balanced and not nested
+    )+?)
+    \s*=\s*                         # Key/value pairs are separated by equal signs (ignoring white-space)
+    (?:
+      ("(?:[^"]|(?<=\\\\)")*")|     # Double-quoted string, which may contain slash-escaped quotes/slashes
+      (\'(?:[^\']|(?<=\\\\)\')*\')| # Single-quoted string, which may contain slash-escaped quotes/slashes
+      ([^\r\n]*?)                   # Non-quoted string
+    )\s*$                           # Stop at the next end of a line, ignoring trailing whitespace
+    @msx', $data, $matches, PREG_SET_ORDER)) {
+    $info = array();
+    foreach ($matches as $match) {
+      // Fetch the key and value string.
+      $i = 0;
+      foreach (array('key', 'value1', 'value2', 'value3') as $var) {
+        $$var = isset($match[++$i]) ? $match[$i] : '';
+      }
+      $value = stripslashes(substr($value1, 1, -1)) . stripslashes(substr($value2, 1, -1)) . $value3;
+
+      // Parse array syntax.
+      $keys = preg_split('/\]?\[/', rtrim($key, ']'));
+      $last = array_pop($keys);
+      $parent = &$info;
+
+      // Create nested arrays.
+      foreach ($keys as $key) {
+        if ($key == '') {
+          $key = count($parent);
+        }
+        if (!isset($parent[$key]) || !is_array($parent[$key])) {
+          $parent[$key] = array();
+        }
+        $parent = &$parent[$key];
+      }
+
+      // Handle PHP constants.
+      if (defined($value)) {
+        $value = constant($value);
+      }
+
+      // Insert actual value.
+      if ($last == '') {
+        $last = count($parent);
+      }
+      $parent[$last] = $value;
+    }
+    return $info;
+  }
+  return FALSE;
+}
+

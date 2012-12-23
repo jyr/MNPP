@@ -3,7 +3,16 @@
 /**
  * @file
  * Documentation of the Drush API.
- *
+ */
+
+/**
+ * Declare a new command.
+ */
+function hook_drush_command() {
+  // To learn more, run `drush topic docs-commands` and `drush topic docs-examplecommand`
+}
+
+/**
  * All drush commands are invoked in a specific order, using
  * drush-made hooks, very similar to the Drupal hook system. See drush_invoke()
  * for the actual implementation.
@@ -12,18 +21,20 @@
  * order, for the command "COMMAND":
  *
  * 0. drush_COMMAND_init()
- * 1. drush_hook_COMMAND_validate()
- * 2. drush_hook_pre_COMMAND()
- * 3. drush_hook_COMMAND()
- * 4. drush_hook_post_COMMAND()
+ * 1. drush_hook_COMMAND_pre_validate()
+ * 2. drush_hook_COMMAND_validate()
+ * 3. drush_hook_pre_COMMAND()
+ * 4. drush_hook_COMMAND()
+ * 5. drush_hook_post_COMMAND()
  *
  * For example, here are the hook opportunities for a mysite.drush.inc file
  * that wants to hook into the `pm-download` command.
  *
- * 1. drush_mysite_pm_download_validate()
- * 2. drush_mysite_pre_pm_download()
- * 3. drush_mysite_pm_download()
- * 4. drush_mysite_post_pm_download()
+ * 1. drush_mysite_pm_download_pre_validate()
+ * 2. drush_mysite_pm_download_validate()
+ * 3. drush_mysite_pre_pm_download()
+ * 4. drush_mysite_pm_download()
+ * 5. drush_mysite_post_pm_download()
  *
  * Note that the drush_COMMAND_init() hook is only for use by the
  * commandfile that defines the command.
@@ -48,6 +59,7 @@
  * 2. drush_mysite_pm_download_rollback()
  * 3. drush_mysite_pre_pm_download_rollback()
  * 4. drush_mysite_pm_download_validate_rollback()
+ * 5. drush_mysite_pm_download_pre_validate_rollback()
  *
  * Before any command is called, hook_drush_init() is also called.
  * hook_drush_exit() is called at the very end of command invocation.
@@ -56,6 +68,7 @@
  *
  * @see hook_drush_init()
  * @see drush_COMMAND_init()
+ * @see drush_hook_COMMAND_pre_validate()
  * @see drush_hook_COMMAND_validate()
  * @see drush_hook_pre_COMMAND()
  * @see drush_hook_COMMAND()
@@ -64,6 +77,7 @@
  * @see drush_hook_COMMAND_rollback()
  * @see drush_hook_pre_COMMAND_rollback()
  * @see drush_hook_COMMAND_validate_rollback()
+ * @see drush_hook_COMMAND_pre_validate_rollback()
  * @see hook_drush_exit()
  */
 
@@ -93,6 +107,18 @@ function hook_drush_init() {
  */
 function drush_COMMAND_init() {
   drush_bootstrap_max();
+}
+
+/**
+ * Run before a specific command validates.
+ *
+ * Logging an error stops command execution, and the rollback function (if any)
+ * for each hook implementation is invoked.
+ *
+ * @see drush_hook_COMMAND_pre_validate_rollback()
+ */
+function drush_hook_COMMAND_pre_validate() {
+
 }
 
 /**
@@ -200,14 +226,29 @@ function hook_drush_pm_download_destination_alter(&$project, $release) {
 }
 
 /**
- * Add information to the upgrade project map; this information
- * will be shown to the user when upgrading Drupal to the next
- * major version if the module containing this hook is enabled.
+ * Automatically download project dependencies at pm-enable time.
+ * Use a pre-pm_enable hook to download before your module is enabled,
+ * or a post-pm_enable hook (drush_hook_post_pm_enable) to run after
+ * your module is enabled.
  *
- * @see drush_upgrade_project_map().
+ * Your hook will be called every time pm-enable is executed; you should
+ * only download dependencies when your module is being enabled.  Respect
+ * the --skip flag, and take no action if it is present.
  */
-function hook_drush_upgrade_project_map_alter(&$project_map) {
-  $project_map['warning']['hook'] = dt("You need to take special action before upgrading this module. See http://mysite.com/mypage for more information.");
+function drush_hook_pre_pm_enable() {
+  // Get the list of modules being enabled; only download dependencies if our module name appears in the list
+  $modules = drush_get_context('PM_ENABLE_MODULES');
+  if (in_array('hook', $modules) && !drush_get_option('skip')) {
+    $url = 'http://server.com/path/MyLibraryName.tgz';
+    $path = drush_get_context('DRUSH_DRUPAL_ROOT');
+    if (module_exists('libraries')) {
+      $path .= '/' . libraries_get_path('MyLibraryName') . '/MyLibraryName.tgz';
+    }
+    else {
+      $path .= '/'. drupal_get_path('module', 'hook') . '/MyLibraryName.tgz';
+    }
+    drush_download_file($url, $path) && drush_tarball_extract($path);
+  }
 }
 
 /**
@@ -222,19 +263,6 @@ function hook_drush_sql_sync_sanitize($source) {
     dt('Reset passwords and email addresses in user table'),
     "update users set pass = MD5('password'), mail = concat('user+', uid, '@localhost') where uid > 0;");
 }
-
-/**
- * Take action before modules are disabled in a major upgrade.
- * Note that when this hook fires, it will be operating on a
- * copy of the database.
- */
-function drush_hook_pre_site_upgrade_prepare() {
-  // site upgrade prepare will disable contrib_extensions and
-  // uninstall the uninstall_extension
-  $contrib_extensions = func_get_args();
-  $uninstall_extensions = explode(',', drush_get_option('uninstall', ''));
-}
-
 
 /**
  * Add help components to a command
@@ -257,6 +285,62 @@ function hook_drush_help_alter(&$command) {
  */
 function hook_drush_cache_clear(&$types) {
   $types['views'] = 'views_invalidate_cache';
+}
+
+/**
+ * Inform drush about one or more engine types.
+ *
+ * This hook allow to declare available engine types, the cli option to select
+ * between engine implementatins, which one to use by default, global options
+ * and other parameters. Commands may override this info when declaring the
+ * engines they use.
+ *
+ * @return
+ *   An array whose keys are engine type names and whose values describe
+ *   the characteristics of the engine type in relation to command definitions:
+ *
+ *   - description: The engine type description.
+ *   - option: The command line option to choose an implementation for
+ *     this engine type.
+ *     FALSE means there's no option. That is, the engine type is for internal
+ *     usage of the command and thus an implementation is not selectable.
+ *   - default: The default implementation to use by the engine type.
+ *   - options: Engine options common to all implementations.
+ *   - add-options-to-command: If there's a single implementation for this
+ *     engine type, add its options as command level options.
+ *
+ * @see drush_get_engine_types_info()
+ * @see pm_drush_engine_type_info()
+ */
+function hook_drush_engine_type_info() {
+  return array(
+    'dessert' => array(
+      'description' => 'Choose a dessert while the sandwich is baked.',
+      'option' => 'dessert',
+      'default' => 'ice-cream',
+      'options' => 'sweetness',
+      'add-options-to-command' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Inform drush about one or more engines implementing a given engine type.
+ *
+ * This hook allow to declare implementations for an engine type.
+ *
+ * @see pm_drush_engine_package_handler()
+ * @see pm_drush_engine_version_control()
+ */
+function hook_drush_engine_ENGINE_TYPE() {
+  return array(
+    'ice-cream' => array(
+      'description' => 'Feature rich ice-cream with all kind of additives.',
+      'options' => array(
+        'flavour' => 'Choose your favorite flavour',
+      ),
+    ),
+  );
 }
 
 /**

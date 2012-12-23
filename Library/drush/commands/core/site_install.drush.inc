@@ -4,7 +4,7 @@
  * Command validate.
  */
 function drush_core_site_install_validate() {
-  if ($sites_subdir = drush_get_option('sites-subdir', 'default')) {
+  if ($sites_subdir = drush_get_option('sites-subdir')) {
     $lower = strtolower($sites_subdir);
     if ($sites_subdir != $lower) {
       drush_log(dt('Only lowercase sites-subdir are valid. Switching to !lower.', array('!lower' => $lower)), 'warning');
@@ -23,7 +23,8 @@ function drush_core_pre_site_install($profile = NULL) {
     drush_set_error(dt('Could not determine database connection parameters. Pass --db-url option.'));
     return;
   }
-  $sites_subdir = drush_get_option('sites-subdir', 'default');
+  $default_sites_subdir = drush_get_context('DRUSH_DRUPAL_SITE', 'default');
+  $sites_subdir = drush_get_option('sites-subdir', $default_sites_subdir);
 
   $conf_path = "sites/$sites_subdir";
   $files = "$conf_path/files";
@@ -56,7 +57,7 @@ function drush_core_pre_site_install($profile = NULL) {
     drush_log(dt('Sites directory @subdir already exists - proceeding.', array('@subdir' => $conf_path)));
   }
 
-  if (!file_exists($settingsfile)) {
+  if (!drush_file_not_empty($settingsfile)) {
     if (!drush_op('copy', 'sites/default/default.settings.php', $settingsfile) && !drush_get_context('DRUSH_SIMULATE')) {
       drush_set_error(dt('Failed to copy sites/default/default.settings.php to  @settingsfile', array('@settingsfile' => $settingsfile)));
       return;
@@ -86,7 +87,7 @@ function drush_core_pre_site_install($profile = NULL) {
   // to help drush find commandfiles earlier in the drush bootstrap.
   if (!empty($profile)) {
     $contents = file_get_contents($settingsfile);
-    if (strpos("\$conf['profile']", $contents) === FALSE) {
+    if (strpos($contents, "\$conf['profile']") === FALSE) {
       $install_profile_config = "\$conf['install_profile'] = '$profile';";
       $appended = file_put_contents($settingsfile, "\n" . $install_profile_config . "\n", FILE_APPEND);
     }
@@ -94,6 +95,7 @@ function drush_core_pre_site_install($profile = NULL) {
 
   // The Drupal 6 installer needs to bootstrap up to the specified site.
   // We need to be at least at DRUSH_BOOTSTRAP_DRUPAL_SITE to select the site uri to install to
+  define('MAINTENANCE_MODE', 'install');
   if (drush_drupal_major_version() == 6) {
     drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_CONFIGURATION);
   }

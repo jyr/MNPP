@@ -105,7 +105,7 @@ function drush_cache_get_multiple(array &$cids, $bin = 'default') {
  */
 function drush_cache_set($cid, $data, $bin = 'default', $expire = DRUSH_CACHE_PERMANENT) {
   $ret = _drush_cache_get_object($bin)->set($cid, $data, $expire);
-  if ($ret) drush_log(dt("Cache SET cid: %cid", array('%cid' => $cid)), 'debug');
+  if ($ret) drush_log(dt("Cache SET cid: !cid", array('!cid' => $cid)), 'debug');
   return $ret;
 }
 
@@ -131,7 +131,7 @@ function drush_cache_set($cid, $data, $bin = 'default', $expire = DRUSH_CACHE_PE
 function drush_cache_clear_all($cid = NULL, $bin = 'default', $wildcard = FALSE) {
   if (!isset($cid) && !isset($bin)) {
     foreach (drush_cache_get_bins() as $bin) {
-      return _drush_cache_get_object($bin)->clear();
+      _drush_cache_get_object($bin)->clear();
     }
     return;
   }
@@ -311,9 +311,8 @@ class DrushFileCache implements DrushCacheInterface {
   }
 
   function cacheDirectory($bin = NULL) {
-    $bin = $bin ? '/' . $bin : '/' . $this->bin;
-    $cache_dir = drush_directory_cache() . '/' . $bin;
-    return drush_mkdir($cache_dir) ? $cache_dir : FALSE;
+    $bin = $bin ? $bin : $this->bin;
+    return drush_directory_cache($bin);
   }
 
   function get($cid) {
@@ -365,6 +364,10 @@ class DrushFileCache implements DrushCacheInterface {
     else {
       $cache->expire = $expire;
     }
+
+    // Ensure the cache directory still exists, in case a backend process
+    // cleared the cache after the cache was initialized.
+    drush_mkdir($this->directory);
 
     $filename = $this->getFilePath($cid);
     return $this->writeFile($filename, $cache);

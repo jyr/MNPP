@@ -1,8 +1,13 @@
 <?php
 
-/*
+/**
  * @file
  *   Tests for enable, disable, uninstall, pm-list commands.
+ */
+
+/**
+ *  @group slow
+ *  @group pm
  */
 class EnDisUnListCase extends Drush_CommandTestCase {
 
@@ -22,11 +27,15 @@ class EnDisUnListCase extends Drush_CommandTestCase {
     $list = $this->getOutputAsList();
     $this->assertTrue(in_array('devel', $list));
 
-    $this->drush('pm-enable', array('menu', 'devel'), $options);
+    $this->drush('pm-enable', array('devel'), $options);
     $this->drush('pm-list', array(), $options + array('status' => 'enabled'));
     $list = $this->getOutputAsList();
     $this->assertTrue(in_array('devel', $list));
     $this->assertTrue(in_array('bartik', $list), 'Themes are in the pm-list');
+
+    $this->drush('sql-query', array("SELECT path FROM menu_router WHERE path = 'devel/settings'"), array('root' => $this->webroot(), 'uri' => key($sites)));
+    $list = $this->getOutputAsList();
+    $this->assertTrue(in_array('devel/settings', $list), 'Cache was cleared after modules were enabled');
 
     $this->drush('pm-list', array(), $options + array('package' => 'Core'));
     $list = $this->getOutputAsList();
@@ -48,5 +57,12 @@ class EnDisUnListCase extends Drush_CommandTestCase {
     $this->drush('variable-get', array('devel_query_display'), $options, NULL, NULL, self::EXIT_ERROR);
     $output = $this->getOutput();
     $this->assertEmpty($output, 'Devel variable was uninstalled.');
+
+    // Test pm-enable is able to download dependencies.
+    $this->drush('pm-download', array('pathauto'), $options);
+    $this->drush('pm-enable', array('pathauto'), $options + array('resolve-dependencies' => TRUE));
+    $this->drush('pm-list', array(), $options + array('status' => 'enabled'));
+    $list = $this->getOutputAsList();
+    $this->assertTrue(in_array('token', $list));
   }
 }

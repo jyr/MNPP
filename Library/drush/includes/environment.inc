@@ -121,7 +121,11 @@ function _drush_environment_check_php_ini() {
  */
 function drush_environment_lib() {
   $lib = drush_get_option('lib', DRUSH_BASE_PATH . '/lib');
-  drush_mkdir($lib);
+  // We tell drush_mkdir that $lib is not required, because otherwise it
+  // will throw an error if the folder exists but is not writable.  It
+  // is okay with us if the $lib dir is not writable by the current
+  // user, as it may have already been set up by the user who installed Drush.
+  drush_mkdir($lib, FALSE);
   if (!is_dir($lib)) {
     return FALSE;
   }
@@ -283,7 +287,7 @@ function drush_site_path($path = NULL) {
  */
 function drush_conf_path($server_uri, $require_settings = TRUE) {
   $drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT');
-  if(!isset($drupal_root) || !isset($server_uri)) {
+  if(empty($drupal_root) || empty($server_uri)) {
     return NULL;
   }
   $parsed_uri = parse_url($server_uri);
@@ -398,6 +402,7 @@ function drush_valid_db_credentials() {
     return FALSE;
   }
   $type = $creds['driver'];
+
   switch (drush_drupal_major_version()) {
     case 6:
       // Check availability of db extension in PHP and also Drupal support.
@@ -410,7 +415,7 @@ function drush_valid_db_credentials() {
         }
       }
       else {
-        drush_log('!type database type is unsupported.', array('!type' => $type), 'bootstrap');
+        drush_log(dt('!type database type is unsupported.', array('!type' => $type)), 'bootstrap');
         return FALSE;
       }
       // Verify connection settings.
@@ -461,6 +466,7 @@ function drush_valid_db_credentials() {
       break;
     case 7:
     default:
+      $type = ( $type=='oracle' ? 'oci' : $type); // fix PDO driver name, should go away in Drupal 8
       // Drupal >=7 requires PDO and drush requires php 5.2, that ships with PDO
       // but it may be compiled with --disable-pdo.
       if (!class_exists('PDO')) {
@@ -482,6 +488,17 @@ function drush_valid_db_credentials() {
           $server .= ", " . $creds['port'];
         }
         $constr = sprintf("%s:database=%s;server=%s", $type, $creds['name'], $server);
+      }
+      elseif ($type === 'oci') {
+
+        if (empty($creds['port']))
+          $creds['port'] = 1521;
+
+        if ($creds['host'] == 'USETNS')
+          $constr = 'oci:dbname=' . $creds['database'] . ';charset=AL32UTF8';
+        else
+          $constr = 'oci:dbname=//' . $creds['host'] . ':' . $creds['port'] . '/' . $creds['database'] . ';charset=AL32UTF8';
+
       }
       else {
         $constr = sprintf("%s:dbname=%s", $type, $creds['name']);
@@ -623,6 +640,33 @@ function drush_is_mingw($os = NULL) {
   return _drush_test_os($os, array("MINGW"));
 }
 
+/*
+ * Return tar executable name specific for the current OS
+ */
+function drush_get_tar_executable() {
+  return drush_is_windows() ? "bsdtar.exe" : "tar";
+}
+
+/**
+ * Checks if the operating system has bash.
+ */
+function drush_has_bash($os = NULL) {
+  return drush_is_cygwin($os) || !drush_is_windows($os);
+}
+
+/*
+ * Checks operating system and returns
+ * supported bit bucket folder.
+ */
+function drush_bit_bucket() {
+  if (drush_has_bash()) {
+    return '/dev/null';
+  }
+  else {
+    return 'nul';
+  }
+}
+
 /**
  * Return the OS we are running under.
  *
@@ -694,15 +738,22 @@ function drush_is_local_host($host) {
     return TRUE;
   }
 
-  // If uname -n returns an fqdn (that is, uname -n == hostname -f),
-  // then we will require that it exactly match the host in order
-  // to be considered local.  However, the usual convention is for
-  // uname -n to return only the node name (that is, uname -n == hostname -a).
-  // When this is the case, we will consider $host to be local if the
-  // machine portion of it (everything up to the first dot) matches the
-  // current value of uname -n.  We prefer uname -n to hostname as
-  // the output of uname is more regular than hostname.
+  // We'll start out by asking for uname -n via php_uname, since
+  // that is most portable.  On Linux, uname -n returns the contents of
+  // /etc/hostname, which, according to `man hostname`, should never
+  // contain the fqdn.  We will therefore also try `hostname -f`, and
+  // see if we can get the fqdn from that.
   $uname = php_uname('n');
+  if ((strpos($uname,'.') === FALSE) && (!drush_is_windows())) {
+    $hostname = exec('hostname -f');
+    if (!empty($hostname)) {
+      $uname = $hostname;
+    }
+  }
+  // We will require an exact match if we have the fqdn for this
+  // host; if we only have the short name, then we will consider it
+  // to be a match if it matches the first part of the remote-host
+  // item (up to the first dot).
   return (strpos($uname,'.') !== FALSE) ? ($host == $uname) : substr($host . '.',0,strlen($uname)+1) == $uname . '.';
 }
 
@@ -724,17 +775,42 @@ function drush_server_home() {
 
 /*
  * The path to the global cache directory.
+ *
+ * @param subdir
+ *   Return the specified subdirectory inside the global
+ *   cache directory instead.  The subdirectory is created.
  */
-function drush_directory_cache() {
+function drush_directory_cache($subdir = '') {
+  $cache_locations = array();
   if (getenv('CACHE_PREFIX')) {
-    return getenv('CACHE_PREFIX') . '/cache';
+    $cache_locations[getenv('CACHE_PREFIX')] = 'cache';
   }
-  elseif ($home = drush_server_home()) {
-    return "$home/.drush/cache";
+  $home = drush_server_home();
+  if ($home) {
+    $cache_locations[$home] = '.drush/cache';
   }
-  else {
-    return FALSE;
+  $cache_locations[drush_find_tmp()] = 'drush/' . getenv('USER') . '/cache';
+  foreach ($cache_locations as $base => $dir) {
+    if (!empty($base) && is_writable($base)) {
+      $cache_dir = $base . '/' . $dir;
+      if (!empty($subdir)) {
+        $cache_dir .= '/' . $subdir;
+      }
+      if (drush_mkdir($cache_dir)) {
+        return $cache_dir;
+      }
+      else {
+        // If the base directory is writable, but the cache directory
+        // is not, then we will get an error. The error will be displayed,
+        // but we will still call drush_clear_error so that we can go
+        // on and try the next location to see if we can find a cache
+        // directory somewhere.
+        drush_clear_error();
+      }
+    }
   }
+  return drush_set_error('DRUSH_NO_WRITABLE_CACHE', dt('Drush must have a writable cache directory; please insure that one of the following locations is writable: @locations',
+    array('@locations' => implode(',', array_keys($cache_locations)))));
 }
 
 /**
@@ -743,9 +819,9 @@ function drush_directory_cache() {
  * @return
  *   An array containing info for all available extensions.
  */
-function drush_get_extensions() {
+function drush_get_extensions($include_hidden = TRUE) {
   drush_include_engine('drupal', 'environment');
-  $extensions = array_merge(drush_get_modules(), drush_get_themes());
+  $extensions = array_merge(drush_get_modules($include_hidden), drush_get_themes($include_hidden));
   foreach ($extensions as $name => $extension) {
     $extensions[$name]->label = $extension->info['name'].' ('.$extension->name.')';
     if (empty($extension->info['package'])) {
