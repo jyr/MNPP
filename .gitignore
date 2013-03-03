@@ -20,3 +20,5 @@
 Library/mysql/var/ib_logfile*
 Library/mysql/var/ibdata*
 
+# Processes #
+*.pid
