@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2011 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -16,7 +16,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: php_date.h 306939 2011-01-01 02:19:59Z felipe $ */
+/* $Id$ */
 
 #ifndef PHP_DATE_H
 #define PHP_DATE_H
@@ -82,6 +82,8 @@ PHP_FUNCTION(timezone_abbreviations_list);
 PHP_FUNCTION(timezone_version_get);
 
 PHP_METHOD(DateInterval, __construct);
+PHP_METHOD(DateInterval, __wakeup);
+PHP_METHOD(DateInterval, __set_state);
 PHP_FUNCTION(date_interval_format);
 PHP_FUNCTION(date_interval_create_from_date_string);
 

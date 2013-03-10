@@ -14,7 +14,7 @@
 #  | Author: Sascha Schumann <sascha@schumann.cx>                         |
 #  +----------------------------------------------------------------------+
 #
-# $Id: mkdep.awk 204189 2006-01-01 12:51:34Z sniper $
+# $Id$
 #
 # Usage:
 #
