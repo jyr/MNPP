@@ -17,8 +17,7 @@
 
 # Databases #
 #############
-Library/mysql/var/ib_logfile*
-Library/mysql/var/ibdata*
+Library/mysql/var/*
 
 # Processes #
 *.pid
