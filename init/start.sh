@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/bash
 
 __init( ) {
     sh /Applications/MNPP/init/php.sh $1 start
