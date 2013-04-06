@@ -169,6 +169,10 @@ make && make install
 
 NGINX
 ---
-./configure --prefix=/Applications/MNPP/Library/nginx --sbin-path=/Applications/MNPP/Library/nginx --conf-path=/Applications/MNPP/conf/nginx/nginx.conf --user=www --group=www --with-http_ssl_module --with-http_stub_status_module --pid-path=/Applications/MNPP/run/nginx --with-http_gzip_static_module --with-pcre=/Applications/MNPP/src/pcre-8.11/    
-make    
-make install
+wget http://downloads.sourceforge.net/project/pcre/pcre/8.32/pcre-8.32.tar.gz && tar xvfz pcre-8.32.tar.gz
+
+curl http://nginx.org/download/nginx-1.2.7.tar.gz | tar -zx && cd nginx-1.2.7
+
+./configure --prefix=/Applications/MNPP/Library/nginx --sbin-path=/Applications/MNPP/Library/nginx --conf-path=/Applications/MNPP/conf/nginx/nginx.conf --user=www --group=www --with-http_ssl_module --with-http_stub_status_module --pid-path=/Applications/MNPP/run/nginx --with-http_gzip_static_module --with-pcre=/Applications/MNPP/pcre-8.32/
+
+make && make install
