@@ -1,4 +1,4 @@
-/* $Id: crypt_freesec.h 265472 2008-08-25 14:37:07Z pajoye $ */
+/* $Id$ */
 
 #ifndef _CRYPT_FREESEC_H
 #define _CRYPT_FREESEC_H

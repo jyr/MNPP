@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2011 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -16,7 +16,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: file.h 306939 2011-01-01 02:19:59Z felipe $ */
+/* $Id$ */
 
 /* Synced with php 3.0 revision 1.30 1999-06-16 [ssb] */
 
@@ -123,6 +123,7 @@ typedef struct {
 	php_stream_context *default_context;
 	HashTable *stream_wrappers;			/* per-request copy of url_stream_wrappers_hash */
 	HashTable *stream_filters;			/* per-request copy of stream_filters_hash */
+	HashTable *wrapper_errors;			/* key: wrapper address; value: linked list of char* */
 } php_file_globals;
 
 #ifdef ZTS
