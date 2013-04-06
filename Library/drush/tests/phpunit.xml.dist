@@ -3,8 +3,17 @@
     backupStaticAttributes="false"
     syntaxCheck="false"
     bootstrap="drush_testcase.inc">
+  <testsuites>
+    <testsuite name="Drush Test Suite">
+      <directory>.</directory>
+    </testsuite>
+  </testsuites>
+
   <php>
     <!-- These variables may alternatively be set as bash environment variables. -->
+
+    <!-- Drupal major version to run tests over -->
+    <!-- <var name="UNISH_DRUPAL_MAJOR_VERSION" value="7"/> -->
 
     <!--Uncomment and edit one of the lines below depending on DB platform.-->
     <!--DB User must have create/drop permissions-->
@@ -18,6 +27,9 @@
 
     <!--Uncomment the line below if your path to drush differs from `which drush`. Use absolute path.-->
     <!--<var name="UNISH_DRUSH" value="/Users/mw/bin/drush"/>-->
+
+    <!--Uncomment to provide a group the user running the tests belong to. This is needed for some filesystem tests. -->
+    <!--<var name="UNISH_USERGROUP" value="staff"/>-->
 
     <includePath>.</includePath>
   </php>

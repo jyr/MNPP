@@ -77,14 +77,29 @@ function drush_cache_command_clear($type = NULL) {
 
   if ($type) {
     drush_op($types[$type]);
-    drush_log(dt("'!name' cache was cleared", array('!name' => $type)), 'success');
+    if ($type == 'all' && !drush_has_boostrapped(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
+      $type = 'drush';
+    }
   }
   else {
-    $choice = drush_choice($types, 'Enter a number to choose which cache to clear.', '!key');
-    if ($choice !== FALSE) {
-      call_user_func($types[$choice]);
-      drush_log(dt("'!name' cache was cleared", array('!name' => $choice)), 'success');
+    // Don't offer 'all' unless Drush has bootstrapped the Drupal site
+    if (!drush_has_boostrapped(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
+      unset($types['all']);
     }
+    $type = drush_choice($types, 'Enter a number to choose which cache to clear.', '!key');
+    if ($type !== FALSE) {
+      call_user_func($types[$type]);
+    }
+  }
+  if ($type !== FALSE) {
+    $site_label = '';
+    if ($type != 'drush') {
+      $self_name = drush_sitealias_bootstrapped_site_name();
+      if (isset($self_name)) {
+        $site_label = dt(' in !name', array('!name' => $self_name));
+      }
+    }
+    drush_log(dt("'!name' cache was cleared!insitename", array('!name' => $type, '!insitename' => $site_label)), 'success');
   }
 }
 
@@ -147,17 +162,12 @@ function drush_cache_command_set($cid = NULL, $data = '', $bin = NULL, $expire =
     $data = $data->data;
   }
 
-  switch(drush_drupal_major_version()) {
-    case 5:
-      cache_set($cid, $bin, $data, $expire);
-      break;
-    case 6:
-    case 7:
-    default:
-      cache_set($cid, $data, $bin, $expire);
-  }
+  cache_set($cid, $data, $bin, $expire);
 }
 
+/*
+ * All types of caches available for clearing. Contrib commands can alter in their own.
+ */
 function drush_cache_clear_types() {
   $types = array(
     'all' => 'drush_cache_clear_both',
@@ -172,9 +182,6 @@ function drush_cache_clear_types() {
       'module-list' => 'drush_get_modules',
       'theme-list' => 'drush_get_themes',
     );
-    if (count(module_implements('node_grants'))) {
-      $types['nodeaccess'] = 'node_access_rebuild';
-    }
   }
 
   if (drush_drupal_major_version() >= 7) {
@@ -196,7 +203,12 @@ function drush_cache_clear_types() {
 }
 
 function drush_cache_clear_theme_registry() {
-  drush_db_delete('cache', 'cid LIKE :theme_registry', array(':theme_registry' => 'theme_registry%'));
+  if (drush_drupal_major_version() >= 7) {
+    drupal_theme_rebuild();
+  }
+  else {
+    drush_db_delete('cache', 'cid LIKE :theme_registry', array(':theme_registry' => 'theme_registry%'));
+  }
 }
 
 function drush_cache_clear_css_js() {

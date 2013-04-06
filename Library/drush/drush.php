@@ -10,7 +10,9 @@
 
 require(dirname(__FILE__) . '/includes/bootstrap.inc');
 
-drush_bootstrap_prepare();
+if (drush_bootstrap_prepare() === FALSE) {
+  exit(1);
+}
 exit(drush_main());
 
 /**
@@ -52,8 +54,9 @@ function drush_main() {
   $return = '';
   drush_bootstrap_to_phase(DRUSH_BOOTSTRAP_DRUSH);
   if (!drush_get_error()) {
-    // Process a remote command if 'remote-host' option is set.
-    $command_handled = drush_remote_command();
+    // Do any necessary preprocessing operations on the command,
+    // perhaps handling immediately.
+    $command_handled = drush_preflight_command_dispatch();
     if (!$command_handled) {
       $return = _drush_bootstrap_and_dispatch();
     }
@@ -107,7 +110,15 @@ function _drush_bootstrap_and_dispatch() {
   }
 
   if (!$command_found) {
-    // If we reach this point, we have not found either a valid or matching command.
+    // If we reach this point, command doesn't fit requirements or we have not
+    // found either a valid or matching command.
+
+    // If no command was found check if it belongs to a disabled module.
+    if (!$command) {
+      $command = drush_command_belongs_to_disabled_module();
+    }
+
+    // Set errors related to this command.
     $args = implode(' ', drush_get_arguments());
     if (isset($command) && is_array($command)) {
       foreach ($command['bootstrap_errors'] as $key => $error) {
@@ -116,7 +127,7 @@ function _drush_bootstrap_and_dispatch() {
       drush_set_error('DRUSH_COMMAND_NOT_EXECUTABLE', dt("The drush command '!args' could not be executed.", array('!args' => $args)));
     }
     elseif (!empty($args)) {
-      drush_set_error('DRUSH_COMMAND_NOT_FOUND', dt("The drush command '!args' could not be found.", array('!args' => $args)));
+      drush_set_error('DRUSH_COMMAND_NOT_FOUND', dt("The drush command '!args' could not be found.  Run `drush cache-clear drush` to clear the commandfile cache if you have installed new extensions.", array('!args' => $args)));
     }
     // Set errors that occurred in the bootstrap phases.
     $errors = drush_get_context('DRUSH_BOOTSTRAP_ERRORS', array());
@@ -125,4 +136,38 @@ function _drush_bootstrap_and_dispatch() {
     }
   }
   return $return;
+}
+
+/**
+ * Check if the given command belongs to a disabled module
+ *
+ * @return
+ *   Array with a command-like bootstrap error or FALSE if Drupal was not
+ * bootstrapped fully or the command does not belong to a diabled module.
+ */
+function drush_command_belongs_to_disabled_module() {
+  if (drush_has_boostrapped(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
+    _drush_find_commandfiles(DRUSH_BOOTSTRAP_DRUPAL_SITE, DRUSH_BOOTSTRAP_DRUPAL_CONFIGURATION);
+    $commands = drush_get_commands();
+    $command_name = array_shift(drush_get_arguments());
+    if (isset($commands[$command_name])) {
+      // We found it. Load its module name and set an error.
+      if (is_array($commands[$command_name]['drupal dependencies']) && count($commands[$command_name]['drupal dependencies'])) {
+        $modules = implode(', ', $commands[$command_name]['drupal dependencies']);
+      } else {
+        // The command does not define Drupal dependencies. Derive them.
+        $command_files = drush_get_context('DRUSH_COMMAND_FILES', array());
+        $command_path = $commands[$command_name]['path'] . DIRECTORY_SEPARATOR . $commands[$command_name]['commandfile'] . '.drush.inc';
+        $modules = array_search($command_path, $command_files);
+      }
+      return array(
+        'bootstrap_errors' => array(
+          'DRUSH_COMMAND_DEPENDENCY_ERROR' =>
+        dt('Command !command needs the following module(s) enabled to run: !dependencies.', array('!command' => $command_name, '!dependencies' => $modules)),
+        )
+      );
+    }
+  }
+
+  return FALSE;
 }

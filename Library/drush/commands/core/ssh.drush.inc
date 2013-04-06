@@ -15,7 +15,7 @@ function ssh_drush_command() {
     ),
     'options' => drush_shell_exec_proc_build_options(),
     'handle-remote-commands' => TRUE,
-    'mask-local-cli-options' => TRUE,
+    'strict-option-handling' => TRUE,
     'examples' => array(
       'drush @mysite ssh' => 'Open an interactive shell on @mysite\'s server.',
       'drush @prod ssh \'ls /tmp\'' => 'Run "ls /tmp" on @prod site. If @prod is a site list, then ls will be executed on each site.',
@@ -31,8 +31,8 @@ function ssh_drush_command() {
  * Command callback.
  */
 function drush_ssh_site_ssh($command = NULL) {
-  // The DRUSH_COMMAND_ARGS contain all args and options that appear after the command name.
-  $args = drush_get_context('DRUSH_COMMAND_ARGS', array());
+  // Get all of the args and options that appear after the command name.
+  $args = drush_get_original_cli_args_and_options();
   // n.b. we do not escape the first (0th) arg to allow `drush ssh 'ls /path'`
   // to work in addition to the preferred form of `drush ssh ls /path`.
   // Supporting the legacy form means that we cannot give the full path to an
@@ -42,7 +42,7 @@ function drush_ssh_site_ssh($command = NULL) {
   }
   $command = implode(' ', $args);
   if (!$alias = drush_get_context('DRUSH_TARGET_SITE_ALIAS')) {
-    return drush_set_error('DRUSH_MISSING_TARGET_ALIAS', 'A remote site alias is required.');
+    return drush_set_error('DRUSH_MISSING_TARGET_ALIAS', 'A remote site alias is required. The way you call ssh command has changed to `drush @alias ssh`.');
   }
   $site = drush_sitealias_get_record($alias);
   // We only accept remote aliases.

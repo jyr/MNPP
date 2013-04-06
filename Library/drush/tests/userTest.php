@@ -4,6 +4,11 @@
  * @file
  *   Tests for user.drush.inc
  */
+
+/*
+ *  @group slow
+ *  @group commands
+ */
 class userCase extends Drush_CommandTestCase {
 
   /*
@@ -71,23 +76,37 @@ class userCase extends Drush_CommandTestCase {
     $this->assertEquals('1', $output, 'User can login with new password.');
 
     // user-login
-    $this->drush('user-login', array($name), $options);
+    $user_login_options = $options + array('simulate' => TRUE, 'browser' => 'unish');
+    // Collect full logs so we can check browser.
+    $this->drush('user-login', array(), $user_login_options + array('backend' => NULL));
+    $parsed = parse_backend_output($this->getOutput());
+    $url = parse_url($parsed['output']);
+    $this->assertStringStartsWith('/user/reset/1', $url['path'], 'Login returned a reset URL for uid 1 by default');
+    $browser = FALSE;
+    foreach ($parsed['log'] as $key => $log) {
+      if (strpos($log['message'], 'Opening browser unish at http://dev/user/reset/1') === 0) {
+        $browser = TRUE;
+      }
+    }
+    $this->assertEquals($browser, TRUE, 'Correct browser opened at correct URL');
+    // Check specific user and path argument.
+    $this->drush('user-login', array($name, 'node/add'), $user_login_options);
     $output = $this->getOutput();
     $url = parse_url($output);
-    $this->assertStringStartsWith('/user/reset/' . $uid, $url['path'], 'Login returned a valid reset URL');
+    $this->assertStringStartsWith('/user/reset/' . $uid, $url['path'], 'Login with user argument returned a valid reset URL');
+    $this->assertEquals('destination=node/add', $url['query'], 'Login included destination path in URL');
+    // Check path used as only argument when using uid option.
+    $this->drush('user-login', array('node/add'), $user_login_options + array('uid' => $uid));
+    $output = $this->getOutput();
+    $url = parse_url($output);
+    $this->assertStringStartsWith('/user/reset/' . $uid, $url['path'], 'Login with uid option returned a valid reset URL');
+    $this->assertEquals('destination=node/add', $url['query'], 'Login included destination path in URL');
 
     // user-cancel
     // create content
-    $eval = $this->create_node_types_php();
+    $this->drush('php-script', array('create_node_types'), $options + array('script-path' => dirname(__FILE__) . '/resources'));
     $this->drush('php-eval', array($eval), $options);
-    $eval = "
-      \$node = (object) array(
-        'title' => 'foo',
-        'uid' => 2,
-        'type' => 'page',
-      );
-      node_save(\$node);
-    ";
+    $eval = "\$node = (object) array('title' => 'foo', 'uid' => 2, 'type' => 'page',); node_save(\$node);";
     $this->drush('php-eval', array($eval), $options);
     $this->drush('user-cancel', array($name), $options + array('delete-content' => NULL));
     $eval = 'print (string) user_load(2)';

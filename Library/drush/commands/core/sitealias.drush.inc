@@ -20,7 +20,7 @@ function sitealias_drush_command() {
     'description' => 'Print site alias records for all known site aliases and local sites.',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'arguments' => array(
-      'site' => 'Site specification alias to print',
+      'site' => 'Site specification to print',
     ),
     'options' => array(
       'table' => 'Display the alias name, root, uri and host in a table.',
@@ -41,6 +41,24 @@ function sitealias_drush_command() {
       'drush site-alias @dev' => 'Print an alias record for the alias \'dev\'.',
     ),
     'topics' => array('docs-aliases'),
+  );
+  $items['site-set'] = array(
+    'description' => 'Set a site alias to work on that will persist for the current session.',
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'arguments' => array(
+      'site' => 'Site specification to use, or "-" for previous site.',
+    ),
+    'aliases' => array('use'),
+    'examples' => array(
+      'drush site-set @dev' => 'Set the current session to use the @dev alias.',
+      'drush site-set user@server/path/to/drupal#sitename' => 'Set the current session to use a site specification.',
+      'drush site-set -' => 'Go back to the previously-set site (like `cd -`).',
+    ),
+  );
+  $items['site-reset'] = array(
+    'description' => 'Reset a persistently set site.',
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'handle-remote-commands' => TRUE,
   );
   return $items;
 }
@@ -75,13 +93,16 @@ function _drush_sitealias_alias_list() {
  */
 function _drush_sitealias_site_list() {
   $site_list = array();
-  $base_path = drush_get_context('DRUSH_DRUPAL_ROOT') . '/sites';
-  $files = drush_scan_directory($base_path, '/settings\.php/', array('.', '..', 'CVS', 'all'));
-  foreach ($files as $filename => $info) {
-    if ($info->basename == 'settings.php') {
-      $alias_record = drush_sitealias_build_record_from_settings_file($filename);
-      if (!empty($alias_record)) {
-        $site_list[drush_sitealias_uri_to_site_dir($alias_record['uri'])] = $alias_record;
+  $base_path = drush_get_context('DRUSH_DRUPAL_ROOT');
+  if ($base_path) {
+    $base_path .= '/sites';
+    $files = drush_scan_directory($base_path, '/settings\.php/', array('.', '..', 'CVS', 'all'));
+    foreach ($files as $filename => $info) {
+      if ($info->basename == 'settings.php') {
+        $alias_record = drush_sitealias_build_record_from_settings_file($filename);
+        if (!empty($alias_record)) {
+          $site_list[drush_sitealias_uri_to_site_dir($alias_record['uri'])] = $alias_record;
+        }
       }
     }
   }
@@ -326,4 +347,51 @@ function _drush_sitealias_site_dir_to_uri($site_dir) {
   $uri = preg_replace("/([0-9]+)_([0-9]+)_([0-9]+)_([0-9]+)/", "$1.$2.$3.$4", $site_dir);
 
   return 'http://' . $uri;
+}
+
+/**
+ * Set the DRUPAL_SITE variable by writing it out to a temporary file that we
+ * then source for persistent site switching.
+ *
+ * @param site
+ *  A valid site specification.
+ */
+function drush_sitealias_site_set($site = '@none') {
+  if ($filename = drush_sitealias_get_envar_filename()) {
+    $last_site_filename = drush_sitealias_get_envar_filename('drush-drupal-prev-site-');
+    if ($site == '-') {
+      if (file_exists($last_site_filename)) {
+        $site = file_get_contents($last_site_filename);
+      }
+      else {
+        $site = '@none';
+      }
+    }
+    if (_drush_sitealias_set_context_by_name($site)) {
+      if (file_exists($filename)) {
+        @unlink($last_site_filename);
+        @rename($filename, $last_site_filename);
+      }
+      if ($site == '@none') {
+        drush_delete_dir($filename);
+      }
+      else {
+        file_put_contents($filename, $site);
+      }
+      drush_print(dt("Site set to !site", array('!site' => $site)));
+    }
+    else {
+      drush_set_error('DRUPAL_SITE_NOT_FOUND', dt("Could not find a site definition for !site.", array('!site' => $site)));
+    }
+  }
+}
+
+/**
+ * Deletes the file that stores the DRUPAL_SITE variable for persistent
+ * site switching.
+ */
+function drush_sitealias_site_reset() {
+  if (($filename = drush_sitealias_get_envar_filename()) && file_exists($filename)) {
+    drush_delete_dir($filename);
+  }
 }

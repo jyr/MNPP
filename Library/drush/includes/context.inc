@@ -102,14 +102,14 @@ function _drush_config_file($context, $prefix = NULL, $version = '') {
   if ($config_list = (array)drush_get_context('DRUSH_CONFIG')) {
     foreach ($config_list as $config) {
       if (is_dir($config)) {
-        $config = $config . '/drushrc.php';
+        $config = $config . '/' . $config_file;
       }
       $configs['custom'][] = $config;
     }
   }
 
   if ($drupal_root = drush_get_context('DRUSH_SELECTED_DRUPAL_ROOT')) {
-    $configs['drupal'] = $drupal_root . '/' . $config_file;
+    $configs['drupal'] = $drupal_root . '/sites/all/drush/' . $config_file;
 
     if ($site_path = $drupal_root . '/' . drush_get_context('DRUSH_SELECTED_DRUPAL_SITE_CONF_PATH')) {
       $configs['site'] = $site_path . "/" . $config_file;
@@ -122,12 +122,13 @@ function _drush_config_file($context, $prefix = NULL, $version = '') {
   }
 
   // in $HOME/.drush directory
-  if (!is_null(drush_server_home())) {
-    $configs['home.drush'] = drush_server_home() . '/.drush/' . $config_file;
+  $per_user_config_dir = drush_get_context('DRUSH_PER_USER_CONFIGURATION');
+  if (!empty($per_user_config_dir)) {
+    $configs['home.drush'] = $per_user_config_dir . '/' . $config_file;
   }
 
   // In the system wide configuration folder.
-  $configs['system'] = drush_get_context('ETC_PREFIX', '') . '/etc/drush/' . $config_file;
+  $configs['system'] = drush_get_context('DRUSH_SITE_WIDE_CONFIGURATION') . '/' . $config_file;
 
   // in the drush installation folder
   $configs['drush'] = dirname(__FILE__) . '/../' . $config_file;
@@ -154,7 +155,7 @@ function drush_load_config_file($context, $config_list) {
         drush_log(dt('Cannot open drushrc "!config", ignoring.', array('!config' => realpath($config))), 'warning');
         return FALSE;
       }
-      if (!empty($options) || !empty($aliases) || !empty($command_specific)) {
+      if (!empty($options) || !empty($aliases) || !empty($command_specific) || !empty($override)) {
         $options = array_merge(drush_get_context($context), $options);
         $options['config-file'] = realpath($config);
 
@@ -481,7 +482,7 @@ function drush_get_option_override($option_overrides, $option, $default = NULL, 
  *   Optional. The context to check for the option. If this is set, only this context will be searched.
  */
 function drush_sitealias_get_option($site_alias_record, $option, $default = NULL, $prefix = '', $context = NULL) {
-  if (isset($site_alias_record) && array_key_exists($option, $site_alias_record)) {
+  if (is_array($site_alias_record) && array_key_exists($option, $site_alias_record)) {
     return $site_alias_record[$option];
   }
   else {

@@ -3,12 +3,13 @@ Drush's test suite based on PHPUnit (http://www.phpunit.de/).
 Usage
 --------
 - Install PHPUnit [*]
-- Optional. Copy phpunit.xml.dist to phpunit.xml and customize if needed.
+- Review the configuration settings in phpunit.xml.dist. If customization is needed, copy and rename to phpunit.xml and edit away.
 - From the /tests subdirectory, run `phpunit .`
 
 Advanced usage
 ---------
 - Run only tests matching a regex: phpunit --filter=testVersionString .
+- Skip slow tests (usually those with network usage): phpunit --exclude-group slow .
 - XML results: phpunit --filter=testVersionString --log-junit results.xml .
 
 Reuse by Drush Commandfiles
@@ -20,11 +21,14 @@ such as `phpunit --bootstrap=/path/to/drush/tests/drush_testcase.inc`.
 The devel project does exactly this -
 http://drupalcode.org/project/devel.git/blob/refs/heads/8.x-1.x:/develDrushTest.php
 
-Notes
-----------
-- I have run tests within Netbeans and it works.
+Cache
+-----------
+In order to speed up test runs, Unish (the drush testing class) caches built Drupal sites
+and restores them as requested by tests. Once in while, you might need to clear this cache
+by deleting the <tmp>/drush-cache directory.
 
 [*] Install PHPUnit:
+---------------
 
 Drush requires PHPUnit 3.5 or later; installing with PEAR is easiest.
  

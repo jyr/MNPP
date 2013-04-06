@@ -2,6 +2,8 @@
 
 /**
   * pm-download testing
+  *
+  * @group pm
   */
 class pmDownloadCase extends Drush_CommandTestCase {
   public function testPmDownload() {
@@ -20,7 +22,7 @@ class pmDownloadCase extends Drush_CommandTestCase {
     $devel_options = array(
       'cache' => NULL,
       'skip' => NULL, // No FirePHP
-      'invoke' => NULL, // invoke from script: do not verify options
+      'invoke' => NULL, // Invoke from script: do not verify options
     );
 
     // Default to sites/all.
@@ -65,7 +67,7 @@ class pmDownloadCase extends Drush_CommandTestCase {
     $this->assertFileExists(UNISH_SANDBOX . '/' . $destination . '/devel/README.txt');
 }
 
-public function testSelect() {
+  public function testSelect() {
     $options = array(
       'cache' => NULL,
       'no' => NULL,
@@ -75,7 +77,9 @@ public function testSelect() {
     $this->drush('pm-download', array('devel-6.x'), $options);
     $items = $this->getOutputAsList();
     $output = $this->getOutput();
-    $this->assertLessThanOrEqual(7, count($items), '--select offerred no more than 3 options.');
+
+    // The maximums below are higher then they usually appear since --verbose can add one.
+    $this->assertLessThanOrEqual(8, count($items), '--select offerred no more than 3 options.');
     $this->assertContains('dev', $output, 'Dev release was shown by --select.');
 
     // --select --all. Specify 6.x since that has so many releases.
@@ -89,7 +93,18 @@ public function testSelect() {
     $this->drush('pm-download', array('devel-6.x'), $options + array('dev' => NULL));
     $items = $this->getOutputAsList();
     $output = $this->getOutput();
-    $this->assertEquals(5, count($items), '--select --dev expected to offer only one option.');
+    $this->assertLessThanOrEqual(6, count($items), '--select --dev expected to offer only one option.');
     $this->assertContains('6.x-1.x-dev', $output, 'Assure that --dev lists the only dev release.');
+  }
+
+  public function testPackageHandler() {
+    $options = array(
+      'cache' => NULL,
+      'package-handler' => 'git_drupalorg',
+      'yes' => NULL,
+    );
+    $this->drush('pm-download', array('devel'), $options);
+    $this->assertFileExists(UNISH_SANDBOX . '/devel/README.txt');
+    $this->assertFileExists(UNISH_SANDBOX . '/devel/.git');
   }
 }

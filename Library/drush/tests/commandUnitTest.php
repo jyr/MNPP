@@ -46,9 +46,9 @@ EOD;
     $command = $commands['dl'];
 
     $this->assertEquals('dl', current($command['aliases']));
-    $this->assertEquals('download', current($command['deprecated-aliases']));
     $this->assertArrayHasKey('version_control', $command['engines']);
     $this->assertArrayHasKey('package_handler', $command['engines']);
+    $this->assertArrayHasKey('release_info', $command['engines']);
     $this->assertEquals('pm-download', $command['command']);
     $this->assertEquals('pm', $command['commandfile']);
     $this->assertEquals('drush_command', $command['callback']);
