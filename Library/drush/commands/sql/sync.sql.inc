@@ -16,6 +16,9 @@ function drush_sql_sync_init($source = NULL, $destination = NULL) {
   // After preflight, get source and destination settings
   $source_settings = drush_sitealias_get_record($source);
   $destination_settings = drush_sitealias_get_record($destination);
+  // Apply command-specific options.
+  drush_sitealias_command_default_options($source_settings, 'source-');
+  drush_sitealias_command_default_options($destination_settings, 'target-');
 
   // Insure that we have database records for the source and destination
   // alias records.  sitealias_get_databases_from_record will cache the
@@ -51,8 +54,8 @@ function drush_sql_sync_init($source = NULL, $destination = NULL) {
 }
 
 /**
- * Sql sync sanitization function.  This hook function will sanitize usernames and
- * passwords in the user table when the --sanitize option is used.  It is
+ * Sql sync sanitization function.  This hook function will sanitize usernames,
+ * passwords, and sessions when the --sanitize option is used.  It is
  * also an example of how to write a database sanitizer for sql sync.
  *
  * To write your own sync hook function, define mymodule_drush_sql_sync_sanitize()
@@ -69,6 +72,7 @@ function drush_sql_sync_init($source = NULL, $destination = NULL) {
  */
 function sql_drush_sql_sync_sanitize($site) {
   $site_settings = drush_sitealias_get_record($site);
+  $databases = sitealias_get_databases_from_record($site_settings);
   $user_table_updates = array();
   $message_list = array();
 
@@ -102,7 +106,8 @@ function sql_drush_sql_sync_sanitize($site) {
   if ($newemail != 'no') {
     if (strpos($newemail, '%') !== FALSE) {
       // We need a different sanitization query for Postgres and Mysql.
-      $db_driver = $site_settings['databases']['default']['default']['driver'];
+
+      $db_driver = $databases['default']['default']['driver'];
       if ($db_driver == 'pgsql') {
         $email_map = array('%uid' => "' || uid || '", '%mail' => "' || replace(mail, '@', '_') || '", '%name' => "' || replace(name, ' ', '_') || '");
         $newmail =  "'" . str_replace(array_keys($email_map), array_values($email_map), $newemail) . "'";
@@ -111,16 +116,22 @@ function sql_drush_sql_sync_sanitize($site) {
         $email_map = array('%uid' => "', uid, '", '%mail' => "', replace(mail, '@', '_'), '", '%name' => "', replace(name, ' ', '_'), '");
         $newmail =  "concat('" . str_replace(array_keys($email_map), array_values($email_map), $newemail) . "')";
       }
+      $user_table_updates[] = "mail = $newmail";
     }
-    $user_table_updates[] = "mail = $newmail";
+    else {
+      $user_table_updates[] = "mail = '$newemail'";
+    }
     $message_list[] = 'email addresses';
   }
 
   if (!empty($user_table_updates)) {
-    $sanitize_query = "update users set " . implode(', ', $user_table_updates) . " where uid > 0;";
+    $sanitize_query = "UPDATE users SET " . implode(', ', $user_table_updates) . " WHERE uid > 0;";
     drush_sql_register_post_sync_op('user-email', dt('Reset !message in user table', array('!message' => implode(' and ', $message_list))), $sanitize_query);
   }
 
+  // Seems quite portable (SQLite?) - http://en.wikipedia.org/wiki/Truncate_(SQL)
+  $sql_sessions = 'TRUNCATE TABLE sessions;';
+  drush_sql_register_post_sync_op('sessions', dt('Truncate Drupal\'s sessions table'), $sql_sessions);
 }
 
 
@@ -154,7 +165,7 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
       return drush_set_error('DRUSH_DATABASE_NOT_FOUND', dt('Error: no database record could be found for !source', array('!source' => $source)));
     }
     if (empty($target_db_url)) {
-      if (empty($target_db_url)) {
+      if (empty($destination_settings)) {
         return drush_set_error('DRUSH_ALIAS_NOT_FOUND', dt('Error: no alias record could be found for !destination', array('!destination' => $destination)));
       }
       return drush_set_error('DRUSH_DATABASE_NOT_FOUND', dt('Error: no database record could be found for !destination', array('!destination' => $destination)));
@@ -219,7 +230,8 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
     }
     // If the 'cache' option is set, then we will set the no-dump option iff the
     // target file exists and its modification date is less than "cache" hours.
-    if (isset($cache)) {
+    // If --no-sync or --no-dump are already set, then this check is unnecessary.
+    if (isset($cache) && !isset($no_sync) && !isset($no_dump)) {
       if (file_exists($local_file) && (filesize($local_file) > 0)) {
         if ((time() - filemtime($local_file)) < ($cache * 60 * 60)) {
           drush_log(dt('Modification time of local dump file !file is less than !cache hours old. Use the --no-cache option to force a refresh.', array('!file' => $local_file, '!cache' => $cache)), 'warning');
@@ -274,7 +286,7 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
         drush_print();
         $txt_source = (isset($source_db_url['remote-host']) ? $source_db_url['remote-host'] . '/' : '') . $source_db_url['database'];
         $txt_destination = (isset($target_db_url['remote-host']) ? $target_db_url['remote-host'] . '/' : '') . $target_db_url['database'];
-        drush_print(dt("You will destroy data from !target and replace with data from !source.", array('!source' => $txt_source, '!target' => $txt_destination)));
+        drush_print(dt("You will destroy data in !target and replace with data from !source.", array('!source' => $txt_source, '!target' => $txt_destination)));
       }
 
       // If any sanitization operations are to be done, then get the
@@ -317,7 +329,7 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
         // from different users sharing the same dump file.
         if (!drush_is_windows($source_os) && (!$source_settings['dump-is-temp'])) {
           $source_intermediate = $source_dump . '-' . date("U");
-          $mv_intermediate = '; mv -f ' . $source_intermediate . ' ' . $source_dump;
+          $mv_intermediate = '&& mv -f ' . $source_intermediate . ' ' . $source_dump;
         }
         list($dump_exec, $dump_file) = drush_sql_build_dump_command($table_selection, $source_db_url, $source_intermediate);
         $dump_exec .= $mv_intermediate;
@@ -336,15 +348,16 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
     }
     // Call sql-dump, either on the local machine or remotely via ssh, as appropriate.
     if (!empty($dump_exec)) {
-      drush_op_system($dump_exec);
-      // TODO: IF FAILURE THEN ABORT
+      if (drush_op_system($dump_exec)) {
+        return drush_set_error('DRUSH_SQL_DUMP_FAIL', 'Database dump failed');
+      }
     }
 
     // If the sql-dump was remote, then rsync the file over to the local machine.
     if (!isset($no_sync)) {
       // If the source file is a temporary file, then we will have rsync
       // delete it for us (remove-source-files option set above).
-      if (!drush_core_call_rsync($source_remote_user . $source_at . $source_db_url['remote-host'] . ':' . $source_dump, $local_file, $source_rsync_options)) {
+      if (!drush_core_call_rsync($source_remote_user . $source_at . $source_db_url['remote-host'] . ':' . $source_dump, drush_correct_absolute_path_for_exec($local_file, "RSYNC"), $source_rsync_options)) {
         return FALSE;
       }
     }
@@ -403,11 +416,11 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
           $target_remote_pass = array_key_exists('remote-pass', $destination_settings) ? ':' . $destination_settings['remote-pass'] : '';
         }
 
-        if (!drush_core_call_rsync($local_file, $target_remote_user . $target_at . $target_db_url['remote-host'] . ':' . $target_dump, $target_rsync_options)) {
+        if (!drush_core_call_rsync(drush_correct_absolute_path_for_exec($local_file, "RSYNC"), $target_remote_user . $target_at . $target_db_url['remote-host'] . ':' . $target_dump, $target_rsync_options)) {
           return FALSE;
         }
 
-        $import_exec = $pre_import_commands . $import_command . ' < ' . $target_dump;
+        $import_exec = $pre_import_commands . $import_command . ' < ' . drush_escapeshellarg($target_dump, $target_os);
         // Delete the remote target file if it is a temporary file.
         if (!drush_is_windows($target_os) && $destination_settings['dump-is-temp']) {
           $import_exec .= '; rm -f ' . drush_escapeshellarg($target_dump, $target_os);
@@ -415,7 +428,7 @@ function drush_sql_sync($source = NULL, $destination = NULL) {
         // TODO: make sure that the remote tmp file is deleted on remote Windows machines.
       }
       else {
-        $import_exec = $pre_import_commands . $import_command . ' < ' . $local_file;
+        $import_exec = $pre_import_commands . $import_command . ' < ' . drush_escapeshellarg($local_file);
       }
       $import_exec = _drush_backend_generate_command($destination_settings, $import_exec);
 

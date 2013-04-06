@@ -14,6 +14,7 @@
  *     2. Anywhere in a folder tree below an active module on your site.
  *     3. /usr/share/drush/commands (configurable)
  *     4. In an arbitrary folder specified with the --include option.
+ *     5. Drupal's sites/all/drush folder.
  */
 
 /**
@@ -41,7 +42,10 @@ function sandwich_drush_command() {
       'filling' => 'The type of the sandwich (turkey, cheese, etc.). Defaults to ascii.',
     ),
     'options' => array(
-      'spreads' => 'Comma delimited list of spreads (e.g. mayonnaise, mustard)',
+      'spreads' => array(
+        'description' => 'Comma delimited list of spreads.',
+        'example-value' => 'mayonnaise,mustard',
+      ),
     ),
     'examples' => array(
       'drush mmas turkey --spreads=ketchup,mustard' => 'Make a terrible-tasting sandwich that is lacking in pickles.',
@@ -160,7 +164,7 @@ function drush_sandwich_make_me_a_sandwich_validate() {
  */
 function drush_sandwich_make_me_a_sandwich($filling = 'ascii') {
   $str_spreads = '';
-  // Read options with drush_get_options. Note that the options _must_
+  // Read options with drush_get_option. Note that the options _must_
   // be documented in the $items structure for this command in the 'command' hook.
   // See `drush topic docs-commands` for more information.
   if ($spreads = drush_get_option('spreads')) {

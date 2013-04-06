@@ -19,12 +19,12 @@ function drush_pm_updatecode() {
   // Get specific requests.
   $requests = pm_parse_arguments(func_get_args(), FALSE);
 
-  // Parse out project name and version.
-  $requests = pm_parse_project_version($requests);
-
   // Get installed extensions and projects.
   $extensions = drush_get_extensions();
   $projects = drush_get_projects($extensions);
+
+  // Parse out project name and version.
+  $requests = pm_parse_project_version($requests, $projects);
 
   // Get update status information.
   $update_info = _pm_get_update_info($projects);
@@ -140,7 +140,8 @@ function drush_pm_updatecode() {
 
   // If specific project updates were requested then remove releases for all
   // others.
-  if (!empty($requests)) {
+  $requested = func_get_args();
+  if (!empty($requested)) {
     foreach ($updateable as $name => $project) {
       if (!isset($requests[$name])) {
         unset($updateable[$name]);
@@ -161,12 +162,6 @@ function drush_pm_updatecode() {
         unset($updateable[$name]);
       }
     }
-  }
-
-  // First check to see if there is a newer drush.
-  $drush_update_available = NULL;
-  if (drush_get_option('self-update', TRUE)) {
-    $drush_update_available = drush_check_self_update();
   }
 
   // Do no updates in simulated mode.
@@ -201,12 +196,8 @@ function drush_pm_updatecode() {
   }
 
   // If there are no releases to update, then print a final
-  // exit message.  Supress the message if we already printed
-  // a message about a drush update being available.
+  // exit message.
   if (empty($updateable)) {
-    if ($drush_update_available === TRUE) {
-      return FALSE;
-    }
     if ($security_only) {
       return drush_log(dt('No security updates available.'), 'ok');
     }
@@ -235,7 +226,6 @@ function drush_pm_updatecode() {
  *   copied from $update_info['drupal'].  @see drush_pm_updatecode.
  */
 function _pm_update_core(&$project, $tmpfile) {
-  drush_include_engine('package_handler', drush_get_option('package-handler', 'wget'));
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
 
   drush_print(dt('Code updates will be made to drupal core.'));
@@ -244,7 +234,8 @@ function _pm_update_core(&$project, $tmpfile) {
   drush_print();
   if (drush_get_option('notes', FALSE)) {
     drush_print('Obtaining release notes for above projects...');
-    _drush_pm_releasenotes(array('drupal'), TRUE, $tmpfile);
+    $requests = pm_parse_project_version(array('drupal'));
+    release_info_print_releasenotes($requests, TRUE, $tmpfile);
   }
   if(!drush_confirm(dt('Do you really want to continue?'))) {
     drush_print(dt('Rolling back all changes. Run again with --no-core to update modules only.'));
@@ -270,6 +261,10 @@ function _pm_update_core(&$project, $tmpfile) {
   $items_to_test = drush_scan_directory($drupal_root, '/.*/', array_merge(array('.', '..'), $skip_list), 0, FALSE, 'basename', 0, TRUE);
   foreach (array_keys($items_to_test) as $item) {
     if (is_dir($item) && !is_writable($item)) {
+      $skip_list[] = $item;
+      unset($items_to_test[$item]);
+    }
+    elseif (is_link($item)) {
       $skip_list[] = $item;
       unset($items_to_test[$item]);
     }
@@ -349,7 +344,6 @@ function _pm_update_move_files($src_dir, $dest_dir, $skip_list, $remove_conflict
  *   array key candidate_version that specifies the version to be installed.
  */
 function pm_update_packages($update_info, $tmpfile) {
-  drush_include_engine('package_handler', drush_get_option('package-handler', 'wget'));
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
 
   $print = '';
@@ -377,7 +371,8 @@ function pm_update_packages($update_info, $tmpfile) {
   // Print the release notes for projects to be updated.
   if (drush_get_option('notes', FALSE)) {
     drush_print('Obtaining release notes for above projects...');
-    _drush_pm_releasenotes(array_keys($update_info), TRUE, $tmpfile);
+    $requests = pm_parse_project_version(array_keys($update_info));
+    release_info_print_releasenotes($requests, TRUE, $tmpfile);
   }
 
   // We print some warnings before the user confirms the update.

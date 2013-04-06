@@ -53,11 +53,11 @@ function test_drush_command() {
  *  Array of test classes and groups.
  */
 function test_test_run_complete() {
-  if (drush_bootstrap_max(DRUSH_BOOTSTRAP_DRUPAL_FULL) && module_exists('simpletest')) {
+  if (drush_bootstrap_max(DRUSH_BOOTSTRAP_DRUPAL_FULL) == DRUSH_BOOTSTRAP_DRUPAL_FULL && module_exists('simpletest')) {
     // Retrieve all tests and groups.
     list($groups, $all_tests) = drush_test_get_all_tests();
+    return array('values' => array_keys($groups) + $all_tests);
   }
-  return array('values' => array_keys($groups) + $all_tests);
 }
 
 // Command callback
@@ -80,7 +80,12 @@ function drush_test_run_validate($specs = NULL) {
  *   A comman delimited string of test classes or group names.
  */
 function drush_test_run($specs = NULL) {
-  cache_clear_all('simpletest', 'cache');
+  if (drush_drupal_major_version() > 7) {
+    cache()->delete('simpletest');
+  }
+  else {
+    cache_clear_all('simpletest', 'cache');
+  }
 
   // Retrieve all tests and groups.
   list($groups, $all_tests) = drush_test_get_all_tests();
@@ -89,7 +94,7 @@ function drush_test_run($specs = NULL) {
     // Run all tests.
     foreach (array_keys($groups) as $group) {
       foreach (array_keys($groups[$group]) as $class) {
-        drush_invoke_process('@none', 'test-run', array($class), array('--no-all'));
+        drush_invoke_process('@self', 'test-run', array($class));
       }
     }
     return;

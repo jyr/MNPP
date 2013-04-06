@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @group base
+ */
 class commandCase extends Drush_CommandTestCase {
   public function testInvoke() {
     $expected = array(
@@ -45,5 +48,49 @@ class commandCase extends Drush_CommandTestCase {
     // We need to run 'drush cc drush' to clear the commandfile cache; otherwise, our include will not be found.
     $include_path = dirname(__FILE__) . '/hooks/magic_help_alter';
     $this->drush('version', array(), array('include' => $include_path, 'pipe' => NULL, 'magic' => '1234', 'strict' => NULL));
+  }
+
+  /**
+   * Assert that errors are thrown for commands with missing callbacks.
+   */
+  public function testMissingCommandCallback() {
+    $options = array(
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+      //'show-invoke' => TRUE,
+    );
+    $this->drush('missing-callback', array(), $options, NULL, NULL, self::EXIT_ERROR);
+  }
+
+  /**
+   * Assert that commands depending on unknown commandfiles are detected.
+   */
+  public function testMissingDrushDependency() {
+    $options = array(
+      'include' => dirname(__FILE__), // Find unit.drush.inc commandfile.
+      'backend' => NULL, // To obtain and parse the error log.
+    );
+    $this->drush('unit-drush-dependency', array(), $options, NULL, NULL, self::EXIT_ERROR);
+    $parsed = parse_backend_output($this->getOutput());
+    $this->assertArrayHasKey("DRUSH_COMMANDFILE_DEPENDENCY_ERROR", $parsed['error_log']);
+  }
+
+  /**
+   * Assert that commands in disabled modules are detected.
+   */
+  public function testDisabledModule() {
+    $sites = $this->setUpDrupal(1, TRUE);
+    $uri = key($sites);
+    $root = $this->webroot();
+    $options = array(
+      'root' => $root,
+      'uri' => $uri,
+    );
+    $this->drush('pm-download', array('devel'), $options);
+    $options += array(
+      'backend' => NULL, // To obtain and parse the error log.
+    );
+    $this->drush('devel-download', array(), $options, NULL, NULL, self::EXIT_ERROR);
+    $parsed = parse_backend_output($this->getOutput());
+    $this->assertArrayHasKey("DRUSH_COMMAND_DEPENDENCY_ERROR", $parsed['error_log']);
   }
 }

@@ -205,6 +205,11 @@ function drush_bootstrap($phase, $phase_max = FALSE) {
 /**
  * Determine whether a given bootstrap phase has been completed
  *
+ * This function name has a typo which makes me laugh so we choose not to
+ * fix it. Take a deep breath, and smile. See
+ * http://en.wikipedia.org/wiki/HTTP_referer
+ *
+ *
  * @param phase
  *   The bootstrap phase to test
  *
@@ -428,11 +433,27 @@ function _drush_bootstrap_drush() {
   // Set the terminal width, used for wrapping table output.
   // Normally this is exported using tput in the drush script.
   // If this is not present we do an additional check using stty here.
+  // On Windows in CMD and PowerShell is this exported using mode con.
+  // PHP version prior to 5.3.0 is not supporting this, they always
+  // return 80 columns
   if (!($columns = getenv('COLUMNS'))) {
-    exec('stty size 2>&1', $stty_output, $stty_status);
-    if (!$stty_status) $columns = preg_replace('/\d+\s(\d+)/', '$1', $stty_output[0], -1, $stty_count);
-    // If stty failed, or we couldn't parse it's output, we assume 80 columns.
-    if ($stty_status || !$stty_count) $columns = 80;
+    // Trying to export the columns using stty.
+    exec('stty size 2>&1', $columns_output, $columns_status);
+    if (!$columns_status) $columns = preg_replace('/\d+\s(\d+)/', '$1', $columns_output[0], -1, $columns_count);
+
+    // If stty fails and Drush us running on Windows are we trying with mode con.
+    if (($columns_status || !$columns_count) && drush_is_windows() && version_compare(phpversion(), '5.3.0') > -1) {
+      $columns_output = array();
+      exec('mode con', $columns_output, $columns_status);
+      if (!$columns_status && is_array($columns_output)) {
+        $columns = (int)preg_replace('/\D/', '', $columns_output[4], -1, $columns_count);
+      }
+    }
+
+    // Failling back to default columns value
+    if (empty($columns)) {
+      $columns = 80;
+    }
   }
   // If a caller wants to reserve some room to add additional
   // information to the drush output via post-processing, the
@@ -475,7 +496,7 @@ function _drush_bootstrap_drush() {
   // affect these phases.
   drush_sitealias_check_arg();
 
-  // Load the config options from the Drupal root, even prior to bootstrapping the root
+  // Load the config options from Drupal's sites/all/drush directory, even prior to bootstrapping the root
   drush_load_config('drupal');
 
   // Similarly, load the Drupal site configuration options upfront.
@@ -495,6 +516,8 @@ function _drush_bootstrap_drush() {
       drush_load_config('site');
     }
   }
+  // Check to see if we 'use'd a site alias with site-set
+  drush_sitealias_check_site_env();
 
   _drush_bootstrap_global_options();
 }
@@ -551,6 +574,7 @@ function _drush_bootstrap_select_drupal_site() {
     $drupal_root = drush_locate_root();
   }
   drush_set_context('DRUSH_SELECTED_DRUPAL_ROOT', $drupal_root);
+  drush_set_context('DRUSH_SELECTED_DRUPAL_SITES_ALL_DRUSH', $drupal_root . '/sites/all/drush');
   $uri = _drush_bootstrap_selected_uri();
   drush_set_context('DRUSH_SELECTED_URI', $uri);
   drush_set_context('DRUSH_SELECTED_DRUPAL_SITE_CONF_PATH', drush_conf_path($uri));
@@ -578,10 +602,17 @@ function _drush_bootstrap_base_environment() {
     drush_set_context('DOC_PREFIX', drush_get_context('SHARE_PREFIX', '/usr') . '/share/doc/drush');
   }
   $alias_path =& drush_get_context('ALIAS_PATH');
-  $alias_path[] = drush_get_context('ETC_PREFIX', '') . '/etc/drush';
+  $default_prefix_configuration = drush_is_windows() ? getenv('ALLUSERSPROFILE') . '/Drush' : '';
+  $default_prefix_commandfile = drush_is_windows() ? getenv('ALLUSERSPROFILE') . '/Drush' : '/usr';
+  $site_wide_configuration_dir = drush_get_context('ETC_PREFIX', $default_prefix_configuration) . '/etc/drush';
+  $site_wide_commandfile_dir = drush_get_context('SHARE_PREFIX', $default_prefix_commandfile) . '/share/drush/commands';
+  $alias_path[] = $site_wide_configuration_dir;
+  drush_set_context('DRUSH_SITE_WIDE_CONFIGURATION', $site_wide_configuration_dir);
+  drush_set_context('DRUSH_SITE_WIDE_COMMANDFILES', $site_wide_commandfile_dir);
   $alias_path[] = dirname(__FILE__) . '/..';
   if(!is_null(drush_server_home())) {
     $alias_path[] = drush_server_home() . '/.drush';
+    drush_set_context('DRUSH_PER_USER_CONFIGURATION', drush_server_home() . '/.drush');
   }
 }
 
@@ -651,14 +682,24 @@ function _drush_bootstrap_drupal_root() {
 
   chdir($drupal_root);
   require_once DRUPAL_ROOT . '/' . DRUSH_DRUPAL_SIGNATURE;
+  // Beware the poison pill: prefer drush_drupal_version() and
+  // drush_drupal_major_version() to 'DRUSH_DRUPAL_VERSION' and
+  // 'DRUSH_DRUPAL_MAJOR_VERSION', respectively. See http://drupal.org/node/1816192
   $version = drush_set_context('DRUSH_DRUPAL_VERSION', drush_drupal_version());
   $major_version = drush_set_context('DRUSH_DRUPAL_MAJOR_VERSION', drush_drupal_major_version());
 
-  // DRUSH_DRUPAL_CORE should point to the /core folder in Drupal 8+ or to DRUPAL_ROOT
-  // in prior versions.
-  $core = $major_version >= 8 ? DRUPAL_ROOT . '/core' : DRUPAL_ROOT;
-  drush_set_context('DRUSH_DRUPAL_CORE', $core);
-  define('DRUSH_DRUPAL_CORE', $core);
+  if (($major_version < 6) || ($major_version > 7)) {
+    if ($major_version < 6) {
+      $recommended_version = 4;
+    }
+    else {
+      $recommended_version = 6;
+    }
+    drush_set_error('DRUSH_DRUPAL_VERSION_UNSUPPORTED', dt('Drush !drush_version does not support Drupal !major_version. Use Drush !recommended_version instead.', array('!drush_version' => DRUSH_VERSION, '!major_version' => $major_version, '!recommended_version' => $recommended_version)));
+  }
+
+  drush_set_context('DRUSH_DRUPAL_CORE', DRUPAL_ROOT);
+  define('DRUSH_DRUPAL_CORE', DRUPAL_ROOT);
 
   _drush_bootstrap_global_options();
 
@@ -801,8 +842,10 @@ function _drush_bootstrap_drupal_configuration() {
     'cron_safe_threshold' => 0,
   );
   $current_override = drush_get_option_list('variables');
-  foreach ( $current_override as $pair) {
-    list($name, $value) = explode('=', $pair, 2);
+  foreach ($current_override as $name => $value) {
+    if (is_numeric($name) && (strpos($value, '=') !== FALSE)) {
+      list($name, $value) = explode('=', $value, 2);
+    }
     $override[$name] = $value;
   }
   $conf = is_array($conf) ? array_merge($conf, $override) : $conf;
@@ -942,7 +985,7 @@ function drush_bootstrap_value($context, $value = null) {
  * @see drush.php
  */
 function drush_bootstrap_prepare() {
-  define('DRUSH_BASE_PATH', dirname(__FILE__) . '/..');
+  define('DRUSH_BASE_PATH', dirname(dirname(__FILE__)));
 
   require_once DRUSH_BASE_PATH . '/includes/environment.inc';
   require_once DRUSH_BASE_PATH . '/includes/command.inc';
@@ -960,13 +1003,13 @@ function drush_bootstrap_prepare() {
 
   // Terminate immediately unless invoked as a command line script
   if (!drush_verify_cli()) {
-    die('drush is designed to run via the command line.');
+    return drush_set_error('DRUSH_REQUIREMENTS_ERROR', dt('Drush is designed to run via the command line.'));
   }
 
   // Check supported version of PHP.
   define('DRUSH_MINIMUM_PHP', '5.2.0');
   if (version_compare(phpversion(), DRUSH_MINIMUM_PHP) < 0) {
-    die('Your command line PHP installation is too old. Drush requires at least PHP ' . DRUSH_MINIMUM_PHP . "\n");
+    return drush_set_error('DRUSH_REQUIREMENTS_ERROR', dt('Your command line PHP installation is too old. Drush requires at least PHP !version.', array('!version' => DRUSH_MINIMUM_PHP)));
   }
 
   $drush_info = drush_read_drush_info();

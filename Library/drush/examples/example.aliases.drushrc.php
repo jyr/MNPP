@@ -21,6 +21,8 @@
  *   $ drush @dev status
  *   $ drush --root=/path/to/drupal --uri=dev.mydrupalsite.com status
  *
+ * See the --uri option documentation below for hints on setting its value.
+ *
  * Any option that can be placed on the drush commandline
  * can also appear in an alias definition.
  *
@@ -39,9 +41,8 @@
  *      on the command line.
  *   2. In one of the default locations:
  *        a. /etc/drush
- *        b. In the drush installation folder
- *        c. Inside the 'aliases' folder in the drush installation folder
- *        d. $HOME/.drush
+ *        b. $HOME/.drush
+ *        c. The sites/all/drush folder for the current Drupal site
  *   3. Inside the sites folder of any bootstrapped Drupal site,
  *      or any local Drupal site indicated by an alias used as
  *      a parameter to a command
@@ -58,7 +59,7 @@
  * "drush rsync" and "drush sql-sync".
  *
  * Alias files that are named after the single alias they contain
- * may use the syntax for the canoncial alias shown at the top of
+ * may use the syntax for the canonical alias shown at the top of
  * this file, or they may set values in $options, just
  * like a drushrc.php configuration file:
  *
@@ -118,7 +119,7 @@
  * alias list definition.  Alias lists contain a list of alias names in
  * the group, and no other information.  For example:
  *
- * $aiases['mydevsites'] = array(
+ * $aliases['mydevsites'] = array(
  *   'site-list' => array('@mysite.dev', '@otherside.dev');
  * );
  *
@@ -134,8 +135,13 @@
  * Although most aliases will contain only a few options, a number
  * of settings that are commonly used appear below:
  *
- * - 'uri': This should always be the same as the site's folder name
- *     in the 'sites' folder.
+ * - 'uri': In Drupal 7, the value of --uri should always be the same as
+ *     when the site is being accessed from a web browser (e.g. http://mysite.org,
+ *     although the http:// is optional).  In Drupal 6, the value of --uri should
+ *     always be the same as the site's folder name in the 'sites' folder
+ *     (e.g. default); it is best if the site folder name matches the
+ *     URI from the browser, and is consistent on every instance of the
+ *     same site (e.g. also use sites/mysite.org for http://dev.mysite.org).
  * - 'root': The Drupal root; must not be specified as a relative path.
  * - 'remote-port': If the database is remote and 'db-url' contains
  *     a tunneled port number, put the actual database port number
@@ -150,7 +156,7 @@
  *     is not set, and 'Linux' (or $options['remote-os']) if it is.
  * - 'ssh-options': If the target requires special options, such as a non-
  *     standard port, alternative identity file, or alternative
- *     authentication method, ssh- options can contain a string of extra
+ *     authentication method, ssh-options can contain a string of extra
  *     options that are used with the ssh command, eg "-p 100"
  * - 'parent': The name of a parent alias (e.g. '@server') to use as a basis
  *     for this alias.  Any value of the parent will appear in the child
@@ -220,11 +226,11 @@
 #      '%files' => 'sites/mydrupalsite.com/files',
 #      '%custom' => '/my/custom/path',
 #     ),
-#    'databases' => 
+#    'databases' =>
 #      array (
-#        'default' => 
+#        'default' =>
 #        array (
-#          'default' => 
+#          'default' =>
 #          array (
 #            'driver' => 'mysql',
 #            'username' => 'sqlusername',
@@ -235,8 +241,8 @@
 #          ),
 #       ),
 #     ),
-#     'variables => array(
-#        site_name => 'My Drupal site',
+#     'variables' => array(
+#        'site_name' => 'My Drupal site',
 #      ),
 #     'command-specific' => array (
 #       'sql-sync' => array (

@@ -3,6 +3,8 @@
 /*
  * @file
  *   Tests for ssh.drush.inc
+ *
+ * @group commands
  */
 class siteSshCase extends Drush_CommandTestCase {
 
@@ -10,10 +12,14 @@ class siteSshCase extends Drush_CommandTestCase {
    * Test drush ssh --simulate. No additional bash passed.
    */
   public function testInteractive() {
+    if ($this->is_windows()) {
+      $this->markTestSkipped('ssh command not currently available on Windows.');
+    }
+
     $options = array(
       'simulate' => NULL,
     );
-    $this->drush('ssh', array(), $options, 'user@server/path/to/drupal#sitename');
+    $this->drush('ssh', array(), $options, 'user@server/path/to/drupal#sitename', NULL, self::EXIT_SUCCESS, '2>&1');
     $output = $this->getOutput();
     $expected = sprintf('Calling proc_open(ssh -o PasswordAuthentication=no %s@%s);', self::escapeshellarg('user'), self::escapeshellarg('server'));
     $this->assertEquals($expected, $output);
@@ -28,7 +34,7 @@ class siteSshCase extends Drush_CommandTestCase {
     $options = array(
       'simulate' => NULL,
     );
-    $this->drush('ssh', array('date'), $options, 'user@server/path/to/drupal#sitename');
+    $this->drush('ssh', array('date'), $options, 'user@server/path/to/drupal#sitename', NULL, self::EXIT_SUCCESS, '2>&1');
     $output = $this->getOutput();
     $expected = sprintf('Calling proc_open(ssh -o PasswordAuthentication=no %s@%s %s);', self::escapeshellarg('user'), self::escapeshellarg('server'), self::escapeshellarg('date'));
     $this->assertEquals($expected, $output);
@@ -41,7 +47,7 @@ class siteSshCase extends Drush_CommandTestCase {
     $options = array(
       'simulate' => NULL,
     );
-    $this->drush('ssh', array('ls', '/path1', '/path2'), $options, 'user@server/path/to/drupal#sitename');
+    $this->drush('ssh', array('ls', '/path1', '/path2'), $options, 'user@server/path/to/drupal#sitename', NULL, self::EXIT_SUCCESS, '2>&1');
     $output = $this->getOutput();
     $expected = sprintf('Calling proc_open(ssh -o PasswordAuthentication=no %s@%s \'ls /path1 /path2\');', self::escapeshellarg('user'), self::escapeshellarg('server'));
     $this->assertEquals($expected, $output);
@@ -54,7 +60,7 @@ class siteSshCase extends Drush_CommandTestCase {
    $options = array(
      'simulate' => NULL,
    );
-   $this->drush('ssh', array('ls /path1 /path2'), $options, 'user@server/path/to/drupal#sitename');
+   $this->drush('ssh', array('ls /path1 /path2'), $options, 'user@server/path/to/drupal#sitename', NULL, self::EXIT_SUCCESS, '2>&1');
    $output = $this->getOutput();
    $expected = sprintf('Calling proc_open(ssh -o PasswordAuthentication=no %s@%s \'ls /path1 /path2\');', self::escapeshellarg('user'), self::escapeshellarg('server'));
    $this->assertEquals($expected, $output);

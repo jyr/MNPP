@@ -159,6 +159,22 @@ function docs_drush_command() {
     'callback' => 'drush_print_file',
     'callback arguments' => array($docs_dir . '/examples/sandwich.drush.inc'),
   );
+  $items['docs-example-sync-extension'] = array(
+    'description' => 'Example Drush commandfile that extends sql-sync to enable development modules in the post-sync hook.',
+    'hidden' => TRUE,
+    'topic' => TRUE,
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'callback' => 'drush_print_file',
+    'callback arguments' => array($docs_dir . '/examples/sync_enable.drush.inc'),
+  );
+  $items['docs-example-sync-via-http'] = array(
+    'description' => 'Example Drush commandfile that extends sql-sync to allow transfer of the sql dump file via http rather than ssh and rsync.',
+    'hidden' => TRUE,
+    'topic' => TRUE,
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'callback' => 'drush_print_file',
+    'callback arguments' => array($docs_dir . '/examples/sync_via_http.drush.inc'),
+  );
   $items['docs-policy'] = array(
     'description' => 'Example policy file.',
     'hidden' => TRUE,
@@ -167,13 +183,13 @@ function docs_drush_command() {
     'callback' => 'drush_print_file',
     'callback arguments' => array($docs_dir . '/examples/policy.drush.inc'),
   );
-  $items['docs-upgrading'] = array(
-    'description' => 'Upgrading Drupal using the drush site-upgrade command.',
+  $items['docs-strict-options'] = array(
+    'description' => 'Strict option handling, and how commands that use it differ from regular Drush commands.',
     'hidden' => TRUE,
     'topic' => TRUE,
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'callback' => 'drush_print_file',
-    'callback arguments' => array($docs_dir . '/docs/upgrade.html'),
+    'callback arguments' => array($docs_dir . '/docs/strict-options.html'),
   );
   return $items;
 }
@@ -260,15 +276,15 @@ function _drush_docs_find_set_error_calls(&$error_list, $filename, $shortname) {
 
       // Regex adapted from http://stackoverflow.com/questions/1824325/regex-expression-for-escaped-quoted-string-wont-work-in-phps-preg-match-allif ($quote_char == '"') {
       if ($quote_char == '"') {
-	$regex = '/"((?:[^\\\]*?(?:\\\")?)*?)"/';
+        $regex = '/"((?:[^\\\]*?(?:\\\")?)*?)"/';
       }
       else {
-	$regex = "/'((?:[^\\\]*?(?:\\\')?)*?)'/";
+        $regex = "/'((?:[^\\\]*?(?:\\\')?)*?)'/";
       }
       $match_result = preg_match($regex, $line, $matches, 0, $message_start);
 
       if ($match_result) {
-	$error_message = $matches[1];
+        $error_message = $matches[1];
       }
       $error_list[$error_code] = array_key_exists($error_code, $error_list) ? array_merge($error_list[$error_code], array($error_message)) : array($error_message);
     }
