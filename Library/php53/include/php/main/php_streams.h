@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2011 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -16,7 +16,7 @@
    +----------------------------------------------------------------------+
  */
 
-/* $Id: php_streams.h 306939 2011-01-01 02:19:59Z felipe $ */
+/* $Id$ */
 
 #ifndef PHP_STREAMS_H
 #define PHP_STREAMS_H
@@ -162,8 +162,8 @@ struct _php_stream_wrapper	{
 	int is_url;						/* so that PG(allow_url_fopen) can be respected */
 
 	/* support for wrappers to return (multiple) error messages to the stream opener */
-	int err_count;
-	char **err_stack;
+	int err_count;					/* unused */
+	char **err_stack;				/* unusued */
 };
 
 #define PHP_STREAM_FLAG_NO_SEEK						1

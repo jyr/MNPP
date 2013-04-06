@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2011 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -18,7 +18,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: zend_vm_def.h 313129 2011-07-11 10:31:49Z dmitry $ */
+/* $Id$ */
 
 /* If you change this file, please regenerate the zend_vm_execute.h and
  * zend_vm_opcodes.h files by running:
@@ -896,23 +896,12 @@ ZEND_VM_HANDLER(40, ZEND_ECHO, CONST|TMP|VAR|CV, ANY)
 {
 	zend_op *opline = EX(opline);
 	zend_free_op free_op1;
-	zval z_copy;
 	zval *z = GET_OP1_ZVAL_PTR(BP_VAR_R);
 
-	if (OP1_TYPE != IS_CONST &&
-	    Z_TYPE_P(z) == IS_OBJECT && Z_OBJ_HT_P(z)->get_method != NULL) {
-	    if (OP1_TYPE == IS_TMP_VAR) {
-	    	INIT_PZVAL(z);
-	    }
-		if (zend_std_cast_object_tostring(z, &z_copy, IS_STRING TSRMLS_CC) == SUCCESS) {
-			zend_print_variable(&z_copy);
-			zval_dtor(&z_copy);
-		} else {
-			zend_print_variable(z);
-		}
-	} else {
-		zend_print_variable(z);
+	if (OP1_TYPE == IS_TMP_VAR && Z_TYPE_P(z) == IS_OBJECT) {
+		INIT_PZVAL(z);
 	}
+	zend_print_variable(z);
 
 	FREE_OP1();
 	ZEND_VM_NEXT_OPCODE();
@@ -1990,6 +1979,9 @@ ZEND_VM_HANDLER(113, ZEND_INIT_STATIC_METHOD_CALL, CONST|VAR, CONST|TMP|VAR|UNUS
 	if (OP1_TYPE == IS_CONST) {
 		/* no function found. try a static method in class */
 		ce = zend_fetch_class(Z_STRVAL(opline->op1.u.constant), Z_STRLEN(opline->op1.u.constant), opline->extended_value TSRMLS_CC);
+		if (UNEXPECTED(EG(exception) != NULL)) {
+			ZEND_VM_CONTINUE();
+		}
 		if (!ce) {
 			zend_error_noreturn(E_ERROR, "Class '%s' not found", Z_STRVAL(opline->op1.u.constant));
 		}
@@ -3043,6 +3035,9 @@ ZEND_VM_HANDLER(99, ZEND_FETCH_CONSTANT, VAR|CONST|UNUSED, CONST)
 		if (OP1_TYPE == IS_CONST) {
 
 			ce = zend_fetch_class(Z_STRVAL(opline->op1.u.constant), Z_STRLEN(opline->op1.u.constant), opline->extended_value TSRMLS_CC);
+			if (UNEXPECTED(EG(exception) != NULL)) {
+				ZEND_VM_CONTINUE();
+			}
 			if (!ce) {
 				zend_error_noreturn(E_ERROR, "Undefined class constant '%s'", Z_STRVAL(opline->op2.u.constant));
 			}
@@ -3224,14 +3219,15 @@ ZEND_VM_HANDLER(73, ZEND_INCLUDE_OR_EVAL, CONST|TMP|VAR|CV, ANY)
 	int return_value_used;
 	zend_free_op free_op1;
 	zval *inc_filename = GET_OP1_ZVAL_PTR(BP_VAR_R);
-	zval tmp_inc_filename;
+	zval *tmp_inc_filename = NULL;
 	zend_bool failure_retval=0;
 
 	if (inc_filename->type!=IS_STRING) {
-		tmp_inc_filename = *inc_filename;
-		zval_copy_ctor(&tmp_inc_filename);
-		convert_to_string(&tmp_inc_filename);
-		inc_filename = &tmp_inc_filename;
+		MAKE_STD_ZVAL(tmp_inc_filename);
+		*tmp_inc_filename = *inc_filename;
+		zval_copy_ctor(tmp_inc_filename);
+		convert_to_string(tmp_inc_filename);
+		inc_filename = tmp_inc_filename;
 	}
 
 	return_value_used = RETURN_VALUE_USED(opline);
@@ -3297,8 +3293,8 @@ ZEND_VM_HANDLER(73, ZEND_INCLUDE_OR_EVAL, CONST|TMP|VAR|CV, ANY)
 			EMPTY_SWITCH_DEFAULT_CASE()
 		}
 	}
-	if (inc_filename==&tmp_inc_filename) {
-		zval_dtor(&tmp_inc_filename);
+	if (tmp_inc_filename) {
+		zval_ptr_dtor(&tmp_inc_filename);
 	}
 	FREE_OP1();
 	EX_T(opline->result.u.var).var.ptr_ptr = &EX_T(opline->result.u.var).var.ptr;

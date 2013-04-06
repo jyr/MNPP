@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | PHP Version 5                                                        |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1997-2011 The PHP Group                                |
+   | Copyright (c) 1997-2013 The PHP Group                                |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -17,7 +17,7 @@
    +----------------------------------------------------------------------+
  */
 
-/* $Id: php.h 313662 2011-07-25 11:30:53Z felipe $ */
+/* $Id$ */
 
 #ifndef PHP_H
 #define PHP_H
@@ -60,14 +60,9 @@
 #	else
 #		define PHPAPI
 #	endif
-
-#define THREAD_LS
-#define PHP_DIR_SEPARATOR '/'
-#if defined(__MacOSX__)
-#define PHP_EOL "\r"
-#else 
-#define PHP_EOL "\n"
-#endif
+#	define THREAD_LS
+#	define PHP_DIR_SEPARATOR '/'
+#	define PHP_EOL "\n"
 #endif
 
 #ifdef NETWARE

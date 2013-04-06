@@ -1,5 +1,5 @@
 /*
- * $Id: gdcache.h 242949 2007-09-26 15:44:16Z cvs2svn $
+ * $Id$
  *
  * Caches of pointers to user structs in which the least-recently-used
  * element is replaced in the event of a cache miss after the cache has
