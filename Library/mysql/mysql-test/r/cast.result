@@ -342,11 +342,11 @@ INSERT INTO t1 SET f1 = -1.0e+30 ;
 INSERT INTO t1 SET f1 = +1.0e+30 ;
 SELECT f1 AS double_val, CAST(f1 AS SIGNED INT) AS cast_val FROM t1;
 double_val	cast_val
--1e+30	-9223372036854775808
-1e+30	9223372036854775807
+-1e30	-9223372036854775808
+1e30	9223372036854775807
 Warnings:
-Warning	1292	Truncated incorrect INTEGER value: '-1e+30'
-Warning	1292	Truncated incorrect INTEGER value: '1e+30'
+Warning	1292	Truncated incorrect INTEGER value: '-1e30'
+Warning	1292	Truncated incorrect INTEGER value: '1e30'
 DROP TABLE t1;
 select isnull(date(NULL)), isnull(cast(NULL as DATE));
 isnull(date(NULL))	isnull(cast(NULL as DATE))
@@ -363,7 +363,7 @@ cast('1.2' as decimal(3,2))
 1.20
 select 1e18 * cast('1.2' as decimal(3,2));
 1e18 * cast('1.2' as decimal(3,2))
-1.2e+18
+1.2e18
 select cast(cast('1.2' as decimal(3,2)) as signed);
 cast(cast('1.2' as decimal(3,2)) as signed)
 1
@@ -380,7 +380,7 @@ select cast(s1 as decimal(7,2)) from t1;
 cast(s1 as decimal(7,2))
 99999.99
 Warnings:
-Error	1264	Out of range value for column 'cast(s1 as decimal(7,2))' at row 1
+Warning	1264	Out of range value for column 'cast(s1 as decimal(7,2))' at row 1
 drop table t1;
 CREATE TABLE t1 (v varchar(10), tt tinytext, t text,
 mt mediumtext, lt longtext);
@@ -456,7 +456,7 @@ DROP TABLE t1;
 #   DOESN'T ADHERE TO MAX_ALLOWED_PACKET
 SET @@GLOBAL.max_allowed_packet=2048;
 Warnings:
-Warning	1105	The value of 'max_allowed_packet' should be no less than the value of 'net_buffer_length'
+Warning	1708	The value of 'max_allowed_packet' should be no less than the value of 'net_buffer_length'
 SELECT CONVERT('a', BINARY(2049));
 CONVERT('a', BINARY(2049))
 NULL
@@ -468,4 +468,13 @@ NULL
 Warnings:
 Warning	1301	Result of cast_as_char() was larger than max_allowed_packet (2048) - truncated
 SET @@GLOBAL.max_allowed_packet=default;
+#
+# Bug#13519724 63793: CRASH IN DTCOLLATION::SET(DTCOLLATION &SET)
+#
+CREATE TABLE t1 (a VARCHAR(50));
+SELECT a FROM t1 
+WHERE CAST(a as BINARY)=x'62736D697468' 
+AND CAST(a AS BINARY)=x'65736D697468';
+a
+DROP TABLE t1;
 End of 5.1 tests

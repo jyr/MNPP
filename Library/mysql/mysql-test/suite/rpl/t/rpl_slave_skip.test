@@ -1,3 +1,9 @@
+# Every statement in this test is either executing under ROW or
+# STATEMENT format, which requires the slave thread to be able to apply
+# both statement and row events. Hence, we only need to execute this
+# test for MIXED mode.
+source include/have_binlog_format_mixed.inc;
+
 source include/master-slave.inc;
 source include/have_innodb.inc;
 
@@ -5,13 +11,14 @@ source include/have_innodb.inc;
 connection slave;
 source include/have_innodb.inc;
 STOP SLAVE;
+--source include/wait_for_slave_to_stop.inc
 
 --echo **** On Master ****
 connection master;
 SET SESSION BINLOG_FORMAT=ROW;
 
-CREATE TABLE t1 (a INT, b INT);
-CREATE TABLE t2 (c INT, d INT);
+CREATE TABLE t1 (a INT, b INT) ENGINE=MyISAM;
+CREATE TABLE t2 (c INT, d INT) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (1,1),(2,4),(3,9);
 INSERT INTO t2 VALUES (1,1),(2,8),(3,27);
 let $master_log_pos= query_get_value(SHOW MASTER STATUS, Position, 1);
@@ -39,6 +46,7 @@ source include/check_slave_no_error.inc;
 # changed.
 SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;
 START SLAVE;
+--source include/wait_for_slave_to_start.inc
 sync_with_master;
 
 # These values should be what was inserted, not what was
@@ -49,6 +57,7 @@ SELECT * FROM t1;
 SELECT * FROM t2;
 
 STOP SLAVE;
+--source include/wait_for_slave_to_stop.inc
 RESET SLAVE;
 connection master;
 RESET MASTER;
@@ -66,6 +75,7 @@ eval START SLAVE UNTIL MASTER_LOG_FILE='master-bin.000001', MASTER_LOG_POS=$mast
 source include/wait_for_slave_sql_to_stop.inc;
 SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;
 START SLAVE;
+--source include/wait_for_slave_to_start.inc
 sync_with_master;
 
 --echo **** On Master ****

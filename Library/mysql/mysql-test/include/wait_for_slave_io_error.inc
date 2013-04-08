@@ -33,6 +33,10 @@
 #     (e.g., temporary connection error) and does not cause the slave
 #     IO thread to stop.
 # 
+#   $slave_io_error_replace
+#     If set, one or more regex patterns for replacing variable
+#     text in the error message. Syntax as --replace-regex
+#
 #   $slave_timeout
 #     See include/wait_for_slave_param.inc
 # 
@@ -53,7 +57,7 @@ let $slave_param_comparison= $old_slave_param_comparison;
 
 let $_wfsie_errno= query_get_value(SHOW SLAVE STATUS, Last_IO_Errno, 1);
 
-if (!$slave_io_errno) {
+if ($slave_io_errno == '') {
   --echo !!!ERROR IN TEST: you must set \$slave_io_errno before you source
   --echo !!!wait_for_slave_sql_error.inc. The error we got this time was '$_wfsie_errno',
   --echo !!!so you probably want to add the following line to your test case:
@@ -72,6 +76,7 @@ if ($show_slave_io_error)
 {
   --let $_wait_for_slave_io_error_old_status_items= $status_items
   --let $status_items= Last_IO_Error
+  --let $slave_field_result_replace= $slave_io_error_replace
   --source include/show_slave_status.inc
   --let $status_items= $_wait_for_slave_io_error_old_status_items
 }

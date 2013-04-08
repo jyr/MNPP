@@ -2,23 +2,28 @@
    Copyright (C) 2006 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2006.
 
-   This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU Library General Public License as published
-   by the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation; either version 2.1 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Library General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU Library General Public
-   License along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
-   USA.  */
+   You should have received a copy of the GNU Lesser General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
  /* IMP(x) is a symbol that contains the address of x.  */
-#define IMP(x) _imp__##x
+#if defined _WIN64 && defined __MINGW32__
+ /* mingw W64 started using __imp_ prefix for MSVC compatibility since
+    2010.  Ideally we should check the prefix in configure though,
+    we assume __imp_ on mingw W64 for the time being. */
+# define IMP(x) __imp_##x
+#else
+# define IMP(x) _imp__##x
+#endif
 
  /* Ensure that the variable x is exported from the library, and that a
     pseudo-variable IMP(x) is available.  */

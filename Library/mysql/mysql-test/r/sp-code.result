@@ -155,11 +155,11 @@ Pos	Instruction
 0	stmt 9 "drop temporary table if exists sudoku..."
 1	stmt 1 "create temporary table sudoku_work ( ..."
 2	stmt 1 "create temporary table sudoku_schedul..."
-3	stmt 94 "call sudoku_init()"
+3	stmt 88 "call sudoku_init()"
 4	jump_if_not 7(8) p_naive@0
 5	stmt 4 "update sudoku_work set cnt = 0 where ..."
 6	jump 8
-7	stmt 94 "call sudoku_count()"
+7	stmt 88 "call sudoku_count()"
 8	stmt 6 "insert into sudoku_schedule (row,col)..."
 9	set v_scounter@2 0
 10	set v_i@3 1
@@ -711,6 +711,8 @@ looping	i
 looping	1
 looping	i
 looping	0
+Warnings:
+Error	1062	Duplicate entry '1' for key 'a'
 call proc_26977_works(2);
 do something
 do something
@@ -730,6 +732,8 @@ looping	i
 looping	0
 optimizer: keep hreturn
 optimizer: keep hreturn
+Warnings:
+Error	1062	Duplicate entry '2' for key 'a'
 drop table t1;
 drop procedure proc_26977_broken;
 drop procedure proc_26977_works;
@@ -888,3 +892,85 @@ Pos	Instruction
 4	jump 6
 5	error 1339
 DROP PROCEDURE p1;
+#
+# Bug#23032: Handlers declared in a SP do not handle warnings generated in sub-SP
+#
+
+# - Case 4: check that "No Data trumps Warning".
+
+CREATE TABLE t1(a INT);
+INSERT INTO t1 VALUES (1), (2), (3);
+CREATE PROCEDURE p1()
+BEGIN
+DECLARE c CURSOR FOR SELECT a FROM t1;
+OPEN c;
+BEGIN
+DECLARE v INT;
+DECLARE CONTINUE HANDLER FOR SQLWARNING
+BEGIN
+SELECT "Warning found!";
+SHOW WARNINGS;
+END;
+DECLARE EXIT HANDLER FOR NOT FOUND
+BEGIN
+SELECT "End of Result Set found!";
+SHOW WARNINGS;
+END;
+WHILE TRUE DO
+FETCH c INTO v;
+END WHILE;
+END;
+CLOSE c;
+SELECT a INTO @foo FROM t1 LIMIT 1; # Clear warning stack
+END|
+SET SESSION debug="+d,bug23032_emit_warning";
+CALL p1();
+Warning found!
+Warning found!
+Level	Code	Message
+Warning	1105	Unknown error
+Warning found!
+Warning found!
+Level	Code	Message
+Warning	1105	Unknown error
+Warning found!
+Warning found!
+Level	Code	Message
+Warning	1105	Unknown error
+End of Result Set found!
+End of Result Set found!
+Level	Code	Message
+Warning	1105	Unknown error
+Error	1329	No data - zero rows fetched, selected, or processed
+SET SESSION debug="-d,bug23032_emit_warning";
+DROP PROCEDURE p1;
+DROP TABLE t1;
+#
+# Bug#11763507 - 56224: FUNCTION NAME IS CASE-SENSITIVE
+#
+SET @@SQL_MODE = '';
+CREATE FUNCTION testf_bug11763507() RETURNS INT
+BEGIN
+RETURN 0;
+END
+$
+CREATE PROCEDURE testp_bug11763507()
+BEGIN
+SELECT "PROCEDURE testp_bug11763507";
+END
+$
+SHOW FUNCTION CODE testf_bug11763507;
+Pos	Instruction
+0	freturn 3 0
+SHOW FUNCTION CODE TESTF_bug11763507;
+Pos	Instruction
+0	freturn 3 0
+SHOW PROCEDURE CODE testp_bug11763507;
+Pos	Instruction
+0	stmt 0 "SELECT "PROCEDURE testp_bug11763507""
+SHOW PROCEDURE CODE TESTP_bug11763507;
+Pos	Instruction
+0	stmt 0 "SELECT "PROCEDURE testp_bug11763507""
+DROP PROCEDURE testp_bug11763507;
+DROP FUNCTION testf_bug11763507;
+#END OF BUG#11763507 test.

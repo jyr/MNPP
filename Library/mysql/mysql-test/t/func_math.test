@@ -283,12 +283,20 @@ DROP TABLE t1;
 #
 # Bug #31236: Inconsistent division by zero behavior for floating point numbers
 #
+# After the fix for bug #8433 we throw an error in the below test cases
+# rather than just return a NULL value.
 
+--error ER_DATA_OUT_OF_RANGE
 SELECT 1e308 + 1e308;
+--error ER_DATA_OUT_OF_RANGE
 SELECT -1e308 - 1e308;
+--error ER_DATA_OUT_OF_RANGE
 SELECT 1e300 * 1e300;
+--error ER_DATA_OUT_OF_RANGE
 SELECT 1e300 / 1e-300;
+--error ER_DATA_OUT_OF_RANGE
 SELECT EXP(750);
+--error ER_DATA_OUT_OF_RANGE
 SELECT POW(10, 309);
 
 --echo #
@@ -310,10 +318,23 @@ DROP TABLE t1;
 --echo #
 --echo # Bug#57477 SIGFPE when dividing a huge number a negative number
 --echo #
+--error ER_DATA_OUT_OF_RANGE
 SELECT -9999999999999999991 DIV -1;
+--error ER_DATA_OUT_OF_RANGE
 SELECT -9223372036854775808 DIV -1;
 SELECT -9223372036854775808 MOD -1;
 SELECT -9223372036854775808999 MOD -1;
+
+#
+# Bug #8457: Precision math:
+#            DIV returns incorrect result with large decimal value
+# Bug #46606:Casting error for large numbers in 5.4 when 'div' is used
+
+--error ER_DATA_OUT_OF_RANGE
+select 123456789012345678901234567890.123456789012345678901234567890 div 1 as x;
+--error ER_DATA_OUT_OF_RANGE
+select "123456789012345678901234567890.123456789012345678901234567890" div 1 as x; 
+SHOW WARNINGS;
 
 --echo #
 --echo # Bug#57810 case/when/then : Assertion failed: length || !scale
@@ -356,3 +377,184 @@ SELECT ROUND(LEAST(15, -4939092, 0.2704), STDDEV('a'));
 SELECT SUM(DISTINCT (TRUNCATE((.1), NULL)));
 
 --echo End of 5.1 tests
+
+--echo #
+--echo # Bug #8433: Overflow must be an error
+--echo #
+
+# Floating point overflows
+# ========================
+--error ER_DATA_OUT_OF_RANGE
+SELECT 1e308 + 1e308;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -1e308 - 1e308;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 1e300 * 1e300;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 1e300 / 1e-300;
+--error ER_DATA_OUT_OF_RANGE
+SELECT EXP(750);
+--error ER_DATA_OUT_OF_RANGE
+SELECT POW(10, 309);
+--error ER_DATA_OUT_OF_RANGE
+SELECT COT(0);
+--error ER_DATA_OUT_OF_RANGE
+SELECT DEGREES(1e307);
+
+# Integer overflows
+# =================
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775808 + 9223372036854775808;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551615 + 1;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 1 + 18446744073709551615;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -2 + CAST(1 AS UNSIGNED);
+--error ER_DATA_OUT_OF_RANGE
+SELECT CAST(1 AS UNSIGNED) + -2;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -9223372036854775808 + -9223372036854775808;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775807 + 9223372036854775807;
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT CAST(0 AS UNSIGNED) - 9223372036854775809;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775808 - 9223372036854775809;
+--error ER_DATA_OUT_OF_RANGE
+SELECT CAST(1 AS UNSIGNED) - 2;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551615 - (-1);
+--error ER_DATA_OUT_OF_RANGE
+SELECT -1 - 9223372036854775808;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -1 - CAST(1 AS UNSIGNED);
+--error ER_DATA_OUT_OF_RANGE
+SELECT -9223372036854775808 - 1;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775807 - -9223372036854775808;
+
+# To test SIGNED overflow when subtraction arguments are both UNSIGNED
+set SQL_MODE='NO_UNSIGNED_SUBTRACTION';
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551615 - 1;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551615 - CAST(1 AS UNSIGNED);
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551614 - (-1);
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775807 - -1;
+set SQL_MODE=default;
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT 4294967296 * 4294967296;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775808 * 2;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775808 * 2;
+# The following one triggers condition #3 from the comments in
+# Item_func_mul::int_op()
+--error ER_DATA_OUT_OF_RANGE
+SELECT 7158278827 * 3221225472;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775807 * (-2);
+--error ER_DATA_OUT_OF_RANGE
+SELECT CAST(1 as UNSIGNED) * (-1);
+--error ER_DATA_OUT_OF_RANGE
+SELECT 9223372036854775807 * 2;
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT ABS(-9223372036854775808);
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT -9223372036854775808 DIV -1;
+--error ER_DATA_OUT_OF_RANGE
+SELECT 18446744073709551615 DIV -1;
+
+
+# Have to create a table because the negation op may convert literals to DECIMAL
+CREATE TABLE t1(a BIGINT, b BIGINT UNSIGNED);
+INSERT INTO t1 VALUES(-9223372036854775808, 9223372036854775809);
+
+--error ER_DATA_OUT_OF_RANGE
+SELECT -a FROM t1;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -b FROM t1;
+
+DROP TABLE t1;
+
+# Decimal overflows
+# =================
+
+SET @a:=999999999999999999999999999999999999999999999999999999999999999999999999999999999;
+--error ER_DATA_OUT_OF_RANGE
+SELECT @a + @a;
+--error ER_DATA_OUT_OF_RANGE
+SELECT @a * @a;
+--error ER_DATA_OUT_OF_RANGE
+SELECT -@a - @a;
+--error ER_DATA_OUT_OF_RANGE
+SELECT @a / 0.5;
+
+# Non-overflow tests to improve code coverage
+# ===========================================
+SELECT COT(1/0);
+SELECT -1 + 9223372036854775808;
+SELECT 2 DIV -2;
+SELECT -(1 DIV 0);
+# Crashed the server with SIGFPE before the bugfix
+SELECT -9223372036854775808 MOD -1;
+
+--echo #
+--echo # Bug #57209 valgrind + Assertion failed: dst > buf 
+--echo #
+SELECT floor(log10(format(concat_ws(5445796E25, 5306463, 30837), -358821)))
+as foo;
+
+--echo #
+--echo # Bug #58137 char(0) column cause:
+--echo #            my_gcvt: Assertion `width > 0 && to != ((void *)0)' failed
+--echo #
+CREATE TABLE t1(a char(0));
+INSERT INTO t1 (SELECT -pi());
+DROP TABLE t1;
+
+--echo #
+--echo # Bug #59241 invalid memory read
+--echo #            in do_div_mod with doubly assigned variables
+--echo #
+SELECT ((@a:=@b:=1.0) div (@b:=@a:=get_format(datetime, 'usa')));
+
+--echo #
+--echo # Bug #59498 div function broken in mysql-trunk
+--echo #
+SELECT 1 div null;
+
+--echo #
+--echo # Bug #11792200 - DIVIDING LARGE NUMBERS CAUSES STACK CORRUPTIONS
+--echo #
+select (1.175494351E-37 div 1.7976931348623157E+308);
+
+--echo #
+--echo # Bug#12537160 ASSERTION FAILED:
+--echo # STOP0 <= &TO->BUF[TO->LEN] WITH LARGE NUMBER.
+--echo #
+
+let $nine_81=
+999999999999999999999999999999999999999999999999999999999999999999999999999999999;
+
+eval select $nine_81 % 0.1 as foo;
+eval select $nine_81 % 0.0 as foo;
+
+--echo #
+--echo # Bug#12711164 - 61676:
+--echo # RESULT OF DIV WITH DECIMAL AND INTEGER DOES NOT MAKE SENSE 
+--echo #
+
+select 5 div 2;
+select 5.0 div 2.0;
+select 5.0 div 2;
+select 5 div 2.0;
+select 5.9 div 2, 1.23456789e3 DIV 2, 1.23456789e9 DIV 2, 1.23456789e19 DIV 2;

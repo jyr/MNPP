@@ -28,7 +28,7 @@ our @EXPORT= qw(report_option mtr_print_line mtr_print_thick_line
 		mtr_verbose_restart mtr_report_test_passed
 		mtr_report_test_skipped mtr_print
 		mtr_report_test_subunit
-		mtr_report_test);
+		mtr_report_test isotime);
 
 use mtr_match;
 use Subunit;
@@ -36,6 +36,7 @@ use My::Platform;
 use POSIX qw[ _exit ];
 use IO::Handle qw[ flush ];
 require "mtr_io.pl";
+use mtr_results;
 
 my $tot_real_time= 0;
 
@@ -75,7 +76,7 @@ sub _mtr_report_test_name ($) {
   print _name(). _timestamp();
   printf "%-40s ", $tname;
   my $worker = $tinfo->{worker};
-  printf "w$worker " if $worker;
+  print "w$worker " if defined $worker;
 
   return $tname;
 }
@@ -98,6 +99,7 @@ sub mtr_report_test_passed ($) {
   {
     $timer_str= mtr_fromfile("$::opt_vardir/log/timer");
     $tinfo->{timer}= $timer_str;
+    resfile_test_info('duration', $timer_str) if $::opt_resfile;
   }
 
   # Big warning if status already set
@@ -109,6 +111,8 @@ sub mtr_report_test_passed ($) {
   $tinfo->{'result'}= 'MTR_RES_PASSED';
 
   mtr_report_test($tinfo);
+
+  resfile_global("endtime ", isotime (time));
 }
 
 
@@ -295,7 +299,8 @@ sub mtr_report_stats ($$;$) {
   # Find out how we where doing
   # ----------------------------------------------------------------------
 
-  my $tot_skiped= 0;
+  my $tot_skipped= 0;
+  my $tot_skipdetect= 0;
   my $tot_passed= 0;
   my $tot_failed= 0;
   my $tot_tests=  0;
@@ -312,8 +317,9 @@ sub mtr_report_stats ($$;$) {
     }
     elsif ( $tinfo->{'result'} eq 'MTR_RES_SKIPPED' )
     {
-      # Test was skipped
-      $tot_skiped++;
+      # Test was skipped (disabled not counted)
+      $tot_skipped++ unless $tinfo->{'disable'};
+      $tot_skipdetect++ if $tinfo->{'skip_detected_by_test'};
     }
     elsif ( $tinfo->{'result'} eq 'MTR_RES_PASSED' )
     {
@@ -363,6 +369,7 @@ sub mtr_report_stats ($$;$) {
 	       time - $BASETIME, "seconds executing testcases");
   }
 
+  resfile_global("duration", time - $BASETIME) if $::opt_resfile;
 
   my $warnlog= "$::opt_vardir/log/warnings";
   if ( -f $warnlog )
@@ -442,6 +449,9 @@ sub mtr_report_stats ($$;$) {
     print "All $tot_tests tests were successful.\n\n";
   }
 
+  print "$tot_skipped tests were skipped, ".
+    "$tot_skipdetect by the test itself.\n\n" if $tot_skipped;
+
   if ( $tot_failed != 0 || $found_problems)
   {
     mtr_error("there were failing test cases") unless $dont_error;
@@ -456,7 +466,7 @@ sub mtr_report_stats ($$;$) {
 ##############################################################################
 
 sub mtr_print_line () {
-  print '-' x 60 . "\n";
+  print '-' x 74 . "\n";
 }
 
 
@@ -466,13 +476,18 @@ sub mtr_print_thick_line {
 }
 
 
-sub mtr_print_header () {
+sub mtr_print_header ($) {
+  my ($wid) = @_;
   print "\n";
   printf "TEST";
-  print " " x 38;
+  if ($wid) {
+    print " " x 34 . "WORKER ";
+  } else {
+    print " " x 38;
+  }
   print "RESULT   ";
-  print "TIME (ms)" if $timer;
-  print "\n";
+  print "TIME (ms) or " if $timer;
+  print "COMMENT\n";
   mtr_print_line();
   print "\n";
 }
@@ -584,5 +599,13 @@ sub mtr_verbose_restart (@) {
   }
 }
 
+
+# Used by --result-file for for formatting times
+
+sub isotime($) {
+  my ($sec,$min,$hr,$day,$mon,$yr)= gmtime($_[0]);
+  return sprintf "%d-%02d-%02dT%02d:%02d:%02dZ",
+    $yr+1900, $mon+1, $day, $hr, $min, $sec;
+}
 
 1;

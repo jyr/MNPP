@@ -6,29 +6,21 @@ show session variables like 'profil%';
 Variable_name	Value
 profiling	OFF
 profiling_history_size	15
-profiling_server	OFF
-profiling_use_getrusage	OFF
 select @@profiling;
 @@profiling
 0
-set global profiling = ON;
-ERROR HY000: Variable 'profiling' is a SESSION variable and can't be used with SET GLOBAL
 set @start_value= @@global.profiling_history_size;
 set global profiling_history_size=100;
 show global variables like 'profil%';
 Variable_name	Value
 profiling	OFF
 profiling_history_size	100
-profiling_server	OFF
-profiling_use_getrusage	OFF
 set session profiling = ON;
 set session profiling_history_size=30;
 show session variables like 'profil%';
 Variable_name	Value
 profiling	ON
 profiling_history_size	30
-profiling_server	OFF
-profiling_use_getrusage	OFF
 select @@profiling;
 @@profiling
 1
@@ -304,6 +296,13 @@ id
 1
 2
 3
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
+Warning	1292	Truncated incorrect DOUBLE value: 'hello'
 select @@profiling;
 @@profiling
 1

@@ -22,7 +22,7 @@
 
 progname=$0
 package=gettext-tools
-version=0.18.1
+version=0.18.2
 
 # Set variables
 # - gettext_dir     directory where the sources are stored.

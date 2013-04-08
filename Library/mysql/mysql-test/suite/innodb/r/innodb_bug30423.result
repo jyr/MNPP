@@ -27,7 +27,7 @@ analyze table bug30243_3;
 Table	Op	Msg_type	Msg_text
 test.bug30243_3	analyze	status	OK
 set global innodb_stats_method = "NULL";
-ERROR 42000: Variable 'stats_method' can't be set to the value of 'NULL'
+ERROR 42000: Variable 'innodb_stats_method' can't be set to the value of 'NULL'
 set global innodb_stats_method = "nulls_ignored";
 select @@innodb_stats_method;
 @@innodb_stats_method

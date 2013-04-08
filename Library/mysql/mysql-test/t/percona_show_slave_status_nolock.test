@@ -2,6 +2,8 @@
 --source include/have_debug_sync.inc
 --source include/have_binlog_format_statement.inc
 
+call mtr.add_suppression("Slave SQL: Request to stop slave SQL Thread received while applying a group that has non-transactional changes");
+
 --let $rpl_connection_name=slave_lock
 --let $rpl_server_number=2
 --source include/rpl_connect.inc
@@ -24,8 +26,7 @@ sync_slave_with_master;
 connection slave;
 --echo [slave]
 SET DEBUG_SYNC='RESET';
-SET GLOBAL DEBUG="+d,after_mysql_insert";
-SET GLOBAL DEBUG="+d,after_show_slave_status";
+SET GLOBAL DEBUG="+d,after_mysql_insert,after_show_slave_status";
 
 connection master;
 --echo [master]
@@ -82,6 +83,7 @@ SET GLOBAL DEBUG='';
 SET DEBUG_SYNC='RESET';
 
 connection master;
+--echo [master]
 DROP TABLE t;
 sync_slave_with_master;
 

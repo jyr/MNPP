@@ -2,12 +2,12 @@
 .\"     Title: \fBmysql_upgrade\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQL_UPGRADE\FR" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYSQL_UPGRADE\FR" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -36,12 +36,12 @@ also upgrades the system tables so that you can take advantage of new privileges
 \fBmysql_upgrade\fR
 should be executed each time you upgrade MySQL\&. It supersedes the older
 \fBmysql_fix_privilege_tables\fR
-script, which should no longer be used\&.
+script, which has been removed in MySQL 5\&.5\&.
 .PP
 If
 \fBmysql_upgrade\fR
 finds that a table has a possible incompatibility, it performs a table check and, if problems are found, attempts a table repair\&. If the table cannot be repaired, see
-Section\ \&2.13.4, \(lqRebuilding or Repairing Tables or Indexes\(rq
+Section\ \&2.11.4, \(lqRebuilding or Repairing Tables or Indexes\(rq
 for manual table repair strategies\&.
 .if n \{\
 .sp
@@ -81,7 +81,7 @@ Section\ \&6.2, \(lqDatabase Backup Methods\(rq\&.
 .PP
 Some upgrade incompatibilities may require special handling before you upgrade your MySQL installation and run
 \fBmysql_upgrade\fR\&. See
-Section\ \&2.13.1, \(lqUpgrading MySQL\(rq, for instructions on determining whether any such incompatibilities apply to your installation and how to handle them\&.
+Section\ \&2.11.1, \(lqUpgrading MySQL\(rq, for instructions on determining whether any such incompatibilities apply to your installation and how to handle them\&.
 .sp .5v
 .RE
 .PP
@@ -150,7 +150,7 @@ FOR UPGRADE
 option of the
 CHECK TABLE
 statement (see
-Section\ \&12.4.2.3, \(lqCHECK TABLE Syntax\(rq)\&.
+Section\ \&12.7.2.2, \(lqCHECK TABLE Syntax\(rq)\&.
 .RE
 .sp
 .RS 4
@@ -167,27 +167,6 @@ represents a script generated internally by
 that contains SQL statements to upgrade the tables in the
 mysql
 database\&.
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-Prior to MySQL 5\&.1\&.31,
-\fBmysql_upgrade\fR
-does not run the second
-\fBmysqlcheck\fR
-command, which is necessary to re\-encode database or table names that contain nonalphanumeric characters\&. (They still appear after the upgrade with the
-#mysql50#
-prefix described in
-Section\ \&8.2.3, \(lqMapping of Identifiers to File Names\(rq\&.) If you have such database or table names, execute the second
-\fBmysqlcheck\fR
-command manually after executing
-\fBmysql_upgrade\fR\&.
 .RE
 .PP
 All checked and repaired tables are marked with the current MySQL version number\&. This ensures that next time you run
@@ -208,12 +187,6 @@ If you install MySQL from RPM packages on Linux, you must install the server and
 is included in the server RPM but requires the client RPM because the latter includes
 \fBmysqlcheck\fR\&. (See
 Section\ \&2.5.1, \(lqInstalling MySQL from RPM Packages on Linux\(rq\&.)
-.PP
-In MySQL 5\&.1\&.7,
-\fBmysql_upgrade \fR
-was added as a shell script and worked only for Unix systems\&. As of MySQL 5\&.1\&.10,
-\fBmysql_upgrade\fR
-is an executable binary and is available on all systems\&.
 .PP
 \fBmysql_upgrade\fR
 does not upgrade the contents of the help tables\&. For upgrade instructions, see
@@ -289,7 +262,7 @@ The path to the data directory\&. This option is accepted for backward compatibi
 .\" debug-check option: mysql_upgrade
 \fB\-\-debug\-check\fR
 .sp
-Print some debugging information when the program exits\&. This option was added in MySQL 5\&.1\&.21\&.
+Print some debugging information when the program exits\&.
 .RE
 .sp
 .RS 4
@@ -305,7 +278,25 @@ Print some debugging information when the program exits\&. This option was added
 \fB\-\-debug\-info\fR,
 \fB\-T\fR
 .sp
-Print debugging information and memory and CPU usage statistics when the program exits\&. This option was added in MySQL 5\&.1\&.21\&.
+Print debugging information and memory and CPU usage statistics when the program exits\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql_upgrade: default-auth option
+.\" default-auth option: mysql_upgrade
+\fB\-\-default\-auth=\fR\fB\fIplugin\fR\fR
+.sp
+The client\-side authentication plugin to use\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.10\&.
 .RE
 .sp
 .RS 4
@@ -337,12 +328,50 @@ has already been executed for the current version of MySQL\&.
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysql_upgrade: plugin-dir option
+.\" plugin-dir option: mysql_upgrade
+\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+.sp
+The directory in which to look for plugins\&. It may be necessary to specify this option if the
+\fB\-\-default\-auth\fR
+option is used to specify an authentication plugin but
+\fBmysql_upgrade\fR
+does not find it\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.10\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysql_upgrade: tmpdir option
 .\" tmpdir option: mysql_upgrade
 \fB\-\-tmpdir=\fR\fB\fIpath\fR\fR,
 \fB\-t \fR\fB\fIpath\fR\fR
 .sp
-The path name of the directory to use for creating temporary files\&. This option was added in MySQL 5\&.1\&.25\&.
+The path name of the directory to use for creating temporary files\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql_upgrade: upgrade-system-tables option
+.\" upgrade-system-tables option: mysql_upgrade
+\fB\-\-upgrade\-system\-tables\fR,
+\fB\-s\fR
+.sp
+Upgrade only the system tables, do not upgrade data\&.
 .RE
 .sp
 .RS 4
@@ -393,13 +422,11 @@ Cause binary logging to be enabled while
 \fBmysql_upgrade\fR
 runs\&. This is the default behavior; to disable binary logging during the upgrade, use the inverse of this option (that is, start the program with
 \fB\-\-skip\-write\-binlog\fR)\&.
-.sp
-This option was introduced in MySQL 5\&.1\&.40\&.
 .RE
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

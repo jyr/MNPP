@@ -2,12 +2,12 @@
 .\"     Title: \fBmyisamchk\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYISAMCHK\FR" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYISAMCHK\FR" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -45,8 +45,8 @@ REPAIR TABLE
 statements to check and repair
 MyISAM
 tables\&. See
-Section\ \&12.4.2.3, \(lqCHECK TABLE Syntax\(rq, and
-Section\ \&12.4.2.6, \(lqREPAIR TABLE Syntax\(rq\&.
+Section\ \&12.7.2.2, \(lqCHECK TABLE Syntax\(rq, and
+Section\ \&12.7.2.5, \(lqREPAIR TABLE Syntax\(rq\&.
 .PP
 The use of
 \fBmyisamchk\fR
@@ -233,7 +233,7 @@ CHECK TABLE
 instead of
 \fBmyisamchk\fR
 to check tables\&. See
-Section\ \&12.4.2.3, \(lqCHECK TABLE Syntax\(rq\&.
+Section\ \&12.7.2.2, \(lqCHECK TABLE Syntax\(rq\&.
 .sp .5v
 .RE
 .PP
@@ -540,7 +540,7 @@ system variable\&. For more information, see the description of
 myisam_stats_method
 in
 Section\ \&5.1.3, \(lqServer System Variables\(rq, and
-Section\ \&7.5.4, \(lqInnoDB and MyISAM Index Statistics Collection\(rq\&.
+Section\ \&7.3.7, \(lqInnoDB and MyISAM Index Statistics Collection\(rq\&.
 .PP
 ft_min_word_len
 and
@@ -671,6 +671,8 @@ If you are using
 and have plenty of memory, setting the
 key_buffer_size
 variable to a large value helps the repair operation run faster\&.
+.sp
+See also the description of this option under table repair options\&.
 .sp
 For a description of the output format, see
 the section called \(lqOBTAINING TABLE INFORMATION WITH MYISAMCHK\(rq\&.
@@ -881,6 +883,8 @@ The maximum length of the data file (when re\-creating data file when it is
 \fB\-e\fR
 .sp
 Do a repair that tries to recover every possible row from the data file\&. Normally, this also finds a lot of garbage rows\&. Do not use this option unless you are desperate\&.
+.sp
+See also the description of this option under table checking options\&.
 .sp
 For a description of the output format, see
 the section called \(lqOBTAINING TABLE INFORMATION WITH MYISAMCHK\(rq\&.
@@ -1119,7 +1123,7 @@ uses the value of the
 TMPDIR
 environment variable\&.
 \fB\-\-tmpdir\fR
-can be set to a list of directory paths that are used successively in round\-robin fashion for creating temporary files\&. The separator character between directory names is the colon (\(lq:\(rq) on Unix and the semicolon (\(lq;\(rq) on Windows, NetWare, and OS/2\&.
+can be set to a list of directory paths that are used successively in round\-robin fashion for creating temporary files\&. The separator character between directory names is the colon (\(lq:\(rq) on Unix and the semicolon (\(lq;\(rq) on Windows\&.
 .RE
 .sp
 .RS 4
@@ -2067,8 +2071,7 @@ Key:  2:  Keyblocks used:  99%  Packed:   97%  Max levels:  3
 \- check data record references index: 3
 Key:  3:  Keyblocks used:  98%  Packed:  \-14%  Max levels:  3
 Total:    Keyblocks used:  98%  Packed:   89%
-\- check records and index references
-\fI*** LOTS OF ROW NUMBERS DELETED ***\fR
+\- check records and index references\fI*** LOTS OF ROW NUMBERS DELETED ***\fR
 Records:            306688  M\&.recordlength:       25  Packed:            83%
 Recordspace used:       97% Empty space:           2% Blocks/Record:   1\&.00
 Record blocks:      306688  Delete blocks:         0
@@ -2459,7 +2462,7 @@ instead of
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

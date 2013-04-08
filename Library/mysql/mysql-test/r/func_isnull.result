@@ -19,3 +19,8 @@ RELEASE_LOCK('Bug#53933')
 1
 DROP TABLE t1;
 End of 5.0 tests
+CREATE TABLE t1 (id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(id));
+INSERT INTO t1( id ) VALUES ( NULL );
+SELECT t1.id  FROM t1  WHERE (id  is not null and id is null );
+id
+DROP TABLE t1;

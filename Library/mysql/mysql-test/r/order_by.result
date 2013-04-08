@@ -1425,8 +1425,9 @@ set session sort_buffer_size= 30000;
 Warnings:
 Warning	1292	Truncated incorrect sort_buffer_size value: '30000'
 set session max_sort_length= 2180;
+CALL mtr.add_suppression("Out of sort memory");
 select * from t1 order by b;
-ERROR HY001: Out of sort memory; increase server sort buffer size
+ERROR HY001: Out of sort memory, consider increasing server sort buffer size
 drop table t1;
 call mtr.add_suppression("Out of sort memory; increase server sort buffer size");
 #
@@ -1672,3 +1673,32 @@ select 1 order by max(1) + min(1);
 1
 1
 End of 5.1 tests
+#
+# Bug #38745: MySQL 5.1 optimizer uses filesort for ORDER BY
+#             when it should use index
+#
+CREATE TABLE t1 (i1 integer NOT NULL PRIMARY KEY);
+CREATE TABLE t2 (i2 integer NOT NULL PRIMARY KEY);
+CREATE TABLE t3 (i3 integer);
+INSERT INTO t1 VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11), (12);
+INSERT INTO t2 SELECT * FROM t1;
+EXPLAIN EXTENDED
+SELECT t1.*, t2.* FROM t1 JOIN t2 ON t1.i1 = t2.i2 
+LEFT JOIN t3 ON t2.i2 = t3.i3
+ORDER BY t1.i1 LIMIT 5;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t3	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+1	SIMPLE	t1	index	PRIMARY	PRIMARY	4	NULL	5	240.00	Using index
+1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.i1	1	100.00	Using index
+Warnings:
+Note	1003	select `test`.`t1`.`i1` AS `i1`,`test`.`t2`.`i2` AS `i2` from `test`.`t1` join `test`.`t2` where (`test`.`t2`.`i2` = `test`.`t1`.`i1`) order by `test`.`t1`.`i1` limit 5
+SELECT t1.*, t2.* FROM t1 JOIN t2 ON t1.i1 = t2.i2 
+LEFT JOIN t3 ON t2.i2 = t3.i3
+ORDER BY t1.i1 LIMIT 5;
+i1	i2
+1	1
+2	2
+3	3
+4	4
+5	5
+DROP TABLE t1, t2, t3;

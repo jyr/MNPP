@@ -72,14 +72,13 @@ load data infile '../../std_data/rpl_loaddata2.dat' into table t2 fields
 terminated by ',' optionally enclosed by '%' escaped by '@' lines terminated by
 '\n##\n' starting by '>' ignore 1 lines;
 ERROR 23000: Duplicate entry '2003-03-22' for key 'day'
-include/wait_for_slave_sql_to_stop.inc
+include/wait_for_slave_sql_error.inc [errno=0]
 drop table t1, t2;
-include/stop_slave_io.inc
 drop table t1, t2;
 CREATE TABLE t1 (word CHAR(20) NOT NULL PRIMARY KEY) ENGINE=INNODB;
 LOAD DATA INFILE "../../std_data/words.dat" INTO TABLE t1;
 ERROR 23000: Duplicate entry 'Aarhus' for key 'PRIMARY'
-DROP TABLE IF EXISTS t1;
+DROP TABLE t1;
 include/rpl_reset.inc
 drop database if exists b48297_db1;
 drop database if exists b42897_db2;

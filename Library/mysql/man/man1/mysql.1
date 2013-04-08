@@ -2,12 +2,12 @@
 .\"     Title: \fBmysql\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQL\FR" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYSQL\FR" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -77,7 +77,7 @@ Then type an SQL statement, end it with
 \eG
 and press Enter\&.
 .PP
-As of MySQL 5\&.1\&.10, typing Control+C causes
+Typing Control+C causes
 \fBmysql\fR
 to attempt to kill the current statement\&. If this cannot be done, or Control+C is typed again before the statement is killed,
 \fBmysql\fR
@@ -166,6 +166,24 @@ completes it\&. Otherwise, you can press Tab again to see the possible names tha
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysql: auto-vertical-output option
+.\" auto-vertical-output option: mysql
+\fB\-\-auto\-vertical\-output\fR
+.sp
+Cause result sets to be displayed vertically if they are too wide for the current window, and using normal tabular format otherwise\&. (This applies to statements terminated by
+;
+or
+\eG\&.) This option was added in MySQL 5\&.5\&.3\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysql: batch option
 .\" batch option: mysql
 \fB\-\-batch\fR,
@@ -196,7 +214,7 @@ On a computer having multiple network interfaces, this option can be used to sel
 .sp
 This option is supported only in the version of the
 \fBmysql\fR
-client that is supplied with MySQL Cluster, beginning with MySQL Cluster NDB 6\&.3\&.4\&. It is not available in standard MySQL 5\&.1 releases\&.
+client that is supplied with MySQL Cluster\&. It is not available in standard MySQL Server 5\&.5 releases\&.
 .RE
 .sp
 .RS 4
@@ -243,10 +261,7 @@ Write column names in results\&.
 \fB\-\-column\-type\-info\fR,
 \fB\-m\fR
 .sp
-Display result set metadata\&. This option was added in MySQL 5\&.1\&.14\&. (Before that, use
-\fB\-\-debug\-info\fR\&.) The
-\fB\-m\fR
-short option was added in MySQL 5\&.1\&.21\&.
+Display result set metadata\&.
 .RE
 .sp
 .RS 4
@@ -262,7 +277,7 @@ short option was added in MySQL 5\&.1\&.21\&.
 \fB\-\-comments\fR,
 \fB\-c\fR
 .sp
-Whether to preserve comments in statements sent to the server\&. The default is \-\-skip\-comments (discard comments), enable with \-\-comments (preserve comments)\&. This option was added in MySQL 5\&.1\&.23\&.
+Whether to preserve comments in statements sent to the server\&. The default is \-\-skip\-comments (discard comments), enable with \-\-comments (preserve comments)\&.
 .RE
 .sp
 .RS 4
@@ -329,7 +344,7 @@ string is
 .\" debug-check option: mysql
 \fB\-\-debug\-check\fR
 .sp
-Print some debugging information when the program exits\&. This option was added in MySQL 5\&.1\&.21\&.
+Print some debugging information when the program exits\&.
 .RE
 .sp
 .RS 4
@@ -345,9 +360,25 @@ Print some debugging information when the program exits\&. This option was added
 \fB\-\-debug\-info\fR,
 \fB\-T\fR
 .sp
-Before MySQL 5\&.1\&.14, this option prints debugging information and memory and CPU usage statistics when the program exits, and also causes display of result set metadata during execution\&. As of MySQL 5\&.1\&.14, use
-\fB\-\-column\-type\-info\fR
-to display result set metadata\&.
+Print debugging information and memory and CPU usage statistics when the program exits\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql: default-auth option
+.\" default-auth option: mysql
+\fB\-\-default\-auth=\fR\fB\fIplugin\fR\fR
+.sp
+The client\-side authentication plugin to use\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.7\&.
 .RE
 .sp
 .RS 4
@@ -620,7 +651,7 @@ Deprecated, use
 \fB\-\-disable\-named\-commands\fR
 instead\&.
 \fB\-\-no\-named\-commands\fR
-is removed in MySQL 5\&.5\&.
+was removed in MySQL 5\&.5\&.3\&.
 .RE
 .sp
 .RS 4
@@ -640,7 +671,7 @@ Deprecated form of
 \fB\-\-pager\fR
 option\&.
 \fB\-\-no\-pager\fR
-is removed in MySQL 5\&.5\&.
+was removed in MySQL 5\&.5\&.3\&.
 .RE
 .sp
 .RS 4
@@ -660,7 +691,7 @@ Deprecated form of
 \fB\-\-tee\fR
 option\&.
 \fB\-\-no\-tee\fR
-is removed in MySQL 5\&.5\&.
+is removed in MySQL 5\&.5\&.3\&.
 .RE
 .sp
 .RS 4
@@ -832,6 +863,28 @@ Section\ \&5.3.2.2, \(lqEnd-User Guidelines for Password Security\(rq\&. You can
 \fB\-W\fR
 .sp
 On Windows, connect to the server using a named pipe\&. This option applies only if the server supports named\-pipe connections\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql: plugin-dir option
+.\" plugin-dir option: mysql
+\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+.sp
+The directory in which to look for plugins\&. It may be necessary to specify this option if the
+\fB\-\-default\-auth\fR
+option is used to specify an authentication plugin but
+\fBmysql\fR
+does not find it\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.7\&.
 .RE
 .sp
 .RS 4
@@ -1129,7 +1182,7 @@ localhost, the Unix socket file to use, or, on Windows, the name of the named pi
 Options that begin with
 \fB\-\-ssl\fR
 specify whether to connect to the server using SSL and indicate where to find SSL keys and certificates\&. See
-Section\ \&5.5.6.3, \(lqSSL Command Options\(rq\&.
+Section\ \&5.5.8.3, \(lqSSL Command Options\(rq\&.
 .RE
 .sp
 .RS 4
@@ -1277,24 +1330,6 @@ If the connection cannot be established, wait and retry instead of aborting\&.
 \fB\-X\fR
 .sp
 Produce XML output\&.
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBNote\fR
-.ps -1
-.br
-Prior to MySQL 5\&.1\&.12, there was no differentiation in the output when using this option between columns containing the
-NULL
-value and columns containing the string literal
-\'NULL\'; both were represented as
-.sp .5v
-.RE
 .sp
 .if n \{\
 .RS 4
@@ -1306,7 +1341,7 @@ value and columns containing the string literal
 .RE
 .\}
 .sp
-Beginning with MySQL 5\&.1\&.12, the output when
+The output when
 \fB\-\-xml\fR
 is used with
 \fBmysql\fR
@@ -1315,7 +1350,7 @@ matches that of
 \fBmysqldump\fR(1)
 for details\&.
 .sp
-Beginning with MySQL 5\&.1\&.18, the XML output also uses an XML namespace, as shown here:
+The XML output also uses an XML namespace, as shown here:
 .sp
 .if n \{\
 .RS 4
@@ -1352,7 +1387,7 @@ shell> \fBmysql \-\-xml \-uroot \-e "SHOW VARIABLES LIKE \'version%\'"\fR
 You can also set the following variables by using
 \fB\-\-\fR\fB\fIvar_name\fR\fR\fB=\fR\fB\fIvalue\fR\fR\&. The
 \fB\-\-set\-variable\fR
-format is deprecated and is removed in MySQL 5\&.5\&.
+format is deprecated and was removed in MySQL 5\&.5\&.3\&.
 .sp
 .RS 4
 .ie n \{\
@@ -1532,7 +1567,7 @@ Change the default character set and issue a
 SET NAMES
 statement\&. This enables the character set to remain synchronized on the client and server if
 \fBmysql\fR
-is run with auto\-reconnect enabled (which is not recommended), because the specified character set is used for reconnects\&. This command was added in MySQL 5\&.1\&.7\&.
+is run with auto\-reconnect enabled (which is not recommended), because the specified character set is used for reconnects\&.
 .RE
 .sp
 .RS 4
@@ -1586,7 +1621,7 @@ interprets as the separator between SQL statements\&. The default is the semicol
 .sp
 The delimiter string can be specified as an unquoted or quoted argument on the
 delimiter
-command line\&. Quoting can be done with either single quote (\'), douple quote ("), or backtick (`) characters\&. To include a quote within a quoted string, either quote the string with a different quote character or escape the quote with a backslash (\(lq\e\(rq) character\&. Backslash should be avoided outside of quoted strings because it is the escape character for MySQL\&. For an unquoted argument, the delimiter is read up to the first space or end of line\&. For a quoted argument, the delimiter is read up to the matching quote on the line\&.
+command line\&. Quoting can be done with either single quote (\'), double quote ("), or backtick (`) characters\&. To include a quote within a quoted string, either quote the string with a different quote character or escape the quote with a backslash (\(lq\e\(rq) character\&. Backslash should be avoided outside of quoted strings because it is the escape character for MySQL\&. For an unquoted argument, the delimiter is read up to the first space or end of line\&. For a quoted argument, the delimiter is read up to the matching quote on the line\&.
 .sp
 \fBmysql\fR
 interprets instances of the delimiter string as a statement delimiter anywhere it occurs, except within quoted strings\&. Be careful about defining a delimiter that might occur within other words\&. For example, if you define the delimiter as
@@ -1605,7 +1640,7 @@ is set to something other than the default of
 \(lq;\(rq, instances of that character are sent to the server without interpretation\&. However, the server itself still interprets
 \(lq;\(rq
 as a statement delimiter and processes statements accordingly\&. This behavior on the server side comes into play for multiple\-statement execution (see
-Section\ \&20.9.12, \(lqC API Support for Multiple Statement Execution\(rq), and for parsing the body of stored procedures and functions, triggers, and events (see
+Section\ \&21.9.13, \(lqC API Support for Multiple Statement Execution\(rq), and for parsing the body of stored procedures and functions, triggers, and events (see
 Section\ \&18.1, \(lqDefining Stored Programs\(rq)\&.
 .RE
 .sp
@@ -2207,7 +2242,7 @@ T}
 T{
 \el
 T}:T{
-The current delimiter (new in 5\&.1\&.12)
+The current delimiter
 T}
 T{
 \em
@@ -2746,7 +2781,6 @@ with the
 \fB\-\-verbose\fR
 option, which causes each statement to be displayed before the result that it produces\&.
 .PP
-As of MySQL 5\&.1\&.23,
 \fBmysql\fR
 ignores Unicode byte order mark (BOM) characters at the beginning of input files\&. Previously, it read them and sent them to the server, resulting in a syntax error\&. Presence of a BOM does not cause
 \fBmysql\fR
@@ -2945,11 +2979,11 @@ client with the
 option\&.
 .PP
 For more information about auto\-reconnect and its effect on state information when a reconnection occurs, see
-Section\ \&20.9.11, \(lqControlling Automatic Reconnection Behavior\(rq\&.
+Section\ \&21.9.12, \(lqControlling Automatic Reconnection Behavior\(rq\&.
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

@@ -1,12 +1,21 @@
+################################################################################
+#
+# NOTICE:
+#
+#  This file unfortunately contains characters in various different encodings. 
+#  Be careful when editing this file to ensure that you (or your editor) do
+#  not change things (such as encodings) on lines that you did not mean to 
+#  modify.
+#
+################################################################################
+
+
 # Uses GRANT commands that usually disabled in embedded server
 -- source include/not_embedded.inc
 
 # check that CSV engine was compiled in, as the result of the test
 # depends on the presence of the log tables (which are CSV-based).
 --source include/have_csv.inc
-
-# Save the initial number of concurrent sessions
---source include/count_sessions.inc
 
 #
 # Test of some show commands
@@ -53,7 +62,7 @@ optimize table t1;
 optimize table t1;
 drop table t1;
 
-#show variables;
+# show variables;
 
 --echo -- Here we enable metadata just to check that the collation of the
 --echo -- resultset is non-binary for string type. This should be changed
@@ -173,7 +182,7 @@ type_long_blob longblob,
 index(type_short)
 ) AVG_ROW_LENGTH=10 CHECKSUM=1 COMMENT="test" ENGINE=MYISAM MIN_ROWS=10 MAX_ROWS=100 PACK_KEYS=1 DELAY_KEY_WRITE=1 ROW_FORMAT=fixed CHARSET=latin1;
 
-# Not tested above: RAID_# UNION INSERT_METHOD DATA DIRECTORY INDEX DIRECTORY
+# Not tested above: UNION INSERT_METHOD DATA DIRECTORY INDEX DIRECTORY
 show create table t1;
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
@@ -226,14 +235,6 @@ CREATE TABLE """a" (i INT);
 SHOW CREATE TABLE """a";
 DROP TABLE """a";
 
-# Bug#4374 SHOW TABLE STATUS FROM ignores collation_connection
-#set names latin1;
-#create database `Д`;
-#create table `Д`.`Д` (a int) engine=heap;
-#--replace_column 7 # 8 # 9 #
-#show table status from `Д` LIKE 'Д';
-#drop database `Д`;
-
 # to test quotes around keywords.. :
 
 SET sql_mode= '';
@@ -276,37 +277,37 @@ CREATE TABLE t3 (
 insert into t1 values (1),(2);
 insert into t2 values (1),(2);
 insert into t3 values (1,1),(2,2);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 show table status;
 insert into t1 values (3),(4);
 insert into t2 values (3),(4);
 insert into t3 values (3,3),(4,4);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 show table status;
 delete from t1 where a=3;
 delete from t2 where b=3;
 delete from t3 where a=3;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 6 # 7 # 8 # 9 # 10 # 12 #
 show table status;
 truncate table t1;
 truncate table t2;
 truncate table t3;
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 show table status;
 insert into t1 values (5);
 insert into t2 values (5);
 insert into t3 values (5,5);
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 show table status;
 delete from t1 where a=5;
 delete from t2 where b=5;
 delete from t3 where a=5;
---replace_column 6 # 7 # 8 # 9 # 10 #
+--replace_column 6 # 7 # 8 # 9 # 10 # 12 #
 show table status;
 
 drop table t1, t2, t3;
@@ -332,6 +333,7 @@ drop table t1;
 --error ER_DBACCESS_DENIED_ERROR
 drop database mysqltest;
 disconnect con1;
+--source include/wait_until_disconnected.inc
 
 connect (con2,localhost,mysqltest_2,,test);
 connection con2;
@@ -344,6 +346,7 @@ drop table mysqltest.t1;
 --error ER_DBACCESS_DENIED_ERROR
 drop database mysqltest;
 disconnect con2;
+--source include/wait_until_disconnected.inc
 
 connect (con3,localhost,mysqltest_3,,test);
 connection con3;
@@ -353,6 +356,7 @@ show create database mysqltest;
 drop table mysqltest.t1;
 drop database mysqltest;
 disconnect con3;
+--source include/wait_until_disconnected.inc
 
 connection default;
 set names binary;
@@ -361,15 +365,6 @@ where user='mysqltest_1' || user='mysqltest_2' || user='mysqltest_3';
 delete from mysql.db
 where user='mysqltest_1' || user='mysqltest_2' || user='mysqltest_3';
 flush privileges;
-
-# This test fails on MAC OSX, so it is temporary disabled.
-# This needs WL#1324 to be done.
-#set names latin1;
-#create database `Д`;
-#create table `Д`.`Д` (a int) engine=heap;
-#--replace_column 7 # 8 # 9 #
-#show table status from `Д` LIKE 'Д';
-#drop database `Д`;
 
 # Test that USING <keytype> is always shown in SHOW CREATE TABLE when it was
 # specified during table creation, but not otherwise. (Bug#7235)
@@ -430,7 +425,7 @@ flush tables;
 # Create a junk frm file on disk
 let $MYSQLD_DATADIR= `select @@datadir`;
 system echo "this is a junk file for test" >> $MYSQLD_DATADIR/test/t1.frm ;
---replace_column 6 # 7 # 8 # 9 #
+--replace_column 6 # 7 # 8 # 9 # 12 #
 SHOW TABLE STATUS like 't1';
 --error ER_NOT_FORM_FILE
 show create table t1;
@@ -550,18 +545,14 @@ CREATE VIEW v1 AS SELECT SQL_NO_CACHE NOW();
 SHOW CREATE VIEW v1;
 DROP VIEW v1;
 
-# Check that SQL_NO_CACHE always wins.
+--error ER_WRONG_USAGE
 CREATE VIEW v1 AS SELECT SQL_CACHE SQL_NO_CACHE NOW();
-SHOW CREATE VIEW v1;
-DROP VIEW v1;
 
+--error ER_WRONG_USAGE
 CREATE VIEW v1 AS SELECT SQL_NO_CACHE SQL_CACHE NOW();
-SHOW CREATE VIEW v1;
-DROP VIEW v1;
 
+--error ER_WRONG_USAGE
 CREATE VIEW v1 AS SELECT SQL_CACHE SQL_NO_CACHE SQL_CACHE NOW();
-SHOW CREATE VIEW v1;
-DROP VIEW v1;
 
 # Check CREATE VIEW in a prepared statement in a procedure.
 delimiter |;
@@ -629,8 +620,6 @@ show plugins;
 show columns in t1;
 show slave hosts;
 show keys in t1;
-show column types;
-show table types;
 show storage engines;
 show authors;
 show contributors;
@@ -906,10 +895,12 @@ CREATE TABLE t1(колонка1 INT);
 
 --let $outfile1=$MYSQLTEST_VARDIR/tmp/show_check.mysqltest1.sql
 
+--source include/count_sessions.inc
 --echo
 --echo ---> Dumping mysqltest1 to outfile1
-
---exec $MYSQL_DUMP --default-character-set=latin1 --character-sets-dir=$CHARSETSDIR --databases mysqltest1 > $outfile1
+--exec $MYSQL_DUMP --default-character-set=latin1 --character-sets-dir=$MYSQL_SHAREDIR/charsets --databases mysqltest1 > $outfile1
+# Take care that the additional session caused by MYSQL_DUMP has disappeared.
+--source include/wait_until_count_sessions.inc
 
 #   - Clean mysqltest1;
 
@@ -923,9 +914,12 @@ DROP DATABASE mysqltest1;
 --echo
 --echo
 
+--source include/count_sessions.inc
 --echo ---> Restoring mysqltest1...
 --exec $MYSQL test < $outfile1
 --remove_file $outfile1
+# Take care that the additional session caused by MYSQL has disappeared.
+--source include/wait_until_count_sessions.inc
 
 #   - Check definition of the table.
 
@@ -995,25 +989,20 @@ grant select on `mysqltest`.`t1` to mysqltest_4@localhost;
 connect (con4,localhost,mysqltest_4,,mysqltest);
 connection con4;
 show create database mysqltest;
+disconnect con4;
+--source include/wait_until_disconnected.inc
 connection default;
 delete from mysql.user where user='mysqltest_4';
 delete from mysql.db where user='mysqltest_4';
 delete from mysql.tables_priv where user='mysqltest_4';
 flush privileges;
 drop database mysqltest;
-connection default;
-disconnect con4;
 
 #
 # Ensure that show plugin code is tested
 #
 
 --disable_result_log
-show full plugin;
---enable_result_log
-show warnings;
---disable_result_log
-show plugin;
 show plugins;
 --enable_result_log
 
@@ -1058,6 +1047,17 @@ create table `ц╘tц╘` (field1 int);
 show full tables;
 drop table `ц╘tц╘`;
 set names latin1;
+
+--echo #
+--echo # Bug#4374 SHOW TABLE STATUS FROM ignores collation_connection
+--echo # Character set: Latin-1 (ISO-8859-1)
+--echo #
+SET NAMES latin1;
+CREATE DATABASE `Д`;
+CREATE TABLE `Д`.`Д` (a int) ENGINE=Memory;
+--replace_column 6 # 7 # 8 # 9 # 12 #
+SHOW TABLE STATUS FROM `Д` LIKE 'Д';
+DROP DATABASE `Д`;
 
 #
 # Bug#26402 Server crashes with old-style named table
@@ -1185,7 +1185,7 @@ DROP EVENT ev1;
 # Bug#30036 SHOW TABLE TYPES causes the debug client to crash
 #
 --disable_result_log
-SHOW TABLE TYPES;
+SHOW STORAGE ENGINES;
 --enable_result_log
 
 
@@ -1204,6 +1204,7 @@ SHOW ENGINE MYISAM STATUS;
 --enable_result_log
 
 disconnect conn1;
+--source include/wait_until_disconnected.inc
 connection default;
 DROP USER test_u@localhost;
 
@@ -1226,12 +1227,161 @@ CONNECTION con1;
 --error ER_QUERY_INTERRUPTED
 SHOW CREATE TABLE non_existent;
 
-CONNECTION default;
 DISCONNECT con1;
+--source include/wait_until_disconnected.inc
+CONNECTION default;
 
 
 --echo End of 5.1 tests
 
-# Wait till all disconnects are completed
---source include/wait_until_count_sessions.inc
 
+--echo #
+--echo # Bug#52593 SHOW CREATE TABLE is blocked if table is locked
+--echo #           for write by another connection
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+connect(con1, localhost,root);
+connection default;
+
+CREATE TABLE t1 (i INT PRIMARY KEY);
+LOCK TABLE t1 WRITE;
+--echo # Switching to connection 'con1'.
+connection con1;
+--echo # This statement used to be blocked.
+SHOW CREATE TABLE t1;
+
+disconnect con1;
+--source include/wait_until_disconnected.inc
+
+--echo # Switching to connection 'default'.
+connection default;
+UNLOCK TABLES;
+DROP TABLE t1;
+
+
+--echo #
+--echo # Bug#54905 Connection with WRITE lock cannot ALTER table due to
+--echo #           concurrent SHOW CREATE
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1(a INT);
+
+--echo # Connection con1
+connect (con1,localhost,root);
+LOCK TABLE t1 WRITE;
+
+--echo # Connection default
+connection default;
+START TRANSACTION;
+SHOW CREATE TABLE t1;
+
+--echo # Connection con1
+connection con1;
+# Used to block
+ALTER TABLE t1 CHARACTER SET = utf8;
+UNLOCK TABLES;
+
+--echo # Connection default
+connection default;
+COMMIT;
+disconnect con1;
+DROP TABLE t1;
+
+
+--echo #
+--echo # Bug#55498 SHOW CREATE TRIGGER takes wrong type of metadata lock.
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (a INT);
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW SET new.a = 1;
+
+--echo # Test 1: SHOW CREATE TRIGGER with WRITE locked table.
+
+--echo # Connection con1
+connect (con1, localhost, root);
+LOCK TABLE t1 WRITE;
+
+--echo # Connection default
+connection default;
+# Should not block.
+SHOW CREATE TRIGGER t1_bi;
+
+--echo # Connection con1
+connection con1;
+UNLOCK TABLES;
+
+--echo # Test 2: ALTER TABLE with SHOW CREATE TRIGGER in transaction
+
+--echo # Connection default
+connection default;
+START TRANSACTION;
+SHOW CREATE TRIGGER t1_bi;
+
+--echo # Connection con1
+connection con1;
+# Should not block.
+ALTER TABLE t1 CHARACTER SET = utf8;
+
+disconnect con1;
+--source include/wait_until_disconnected.inc
+
+--echo # Connection default
+connection default;
+COMMIT;
+DROP TRIGGER t1_bi;
+DROP TABLE t1;
+
+
+--echo #
+--echo # Bug#57306 SHOW PROCESSLIST does not display string literals well.
+--echo #
+
+SET NAMES latin1;
+SELECT GET_LOCK('t', 1000);
+--connect (con1,localhost,root,,)
+--connection con1
+SET NAMES latin1;
+--send SELECT GET_LOCK('t',1000) AS 'цЁцЁцЁцЁ';
+--connection default
+# Make sure con1 has switched from "SET NAMES" to "SELECT GET_LOCK"
+let $wait_timeout= 10;
+let $wait_condition= SELECT COUNT(*) FROM INFORMATION_SCHEMA.PROCESSLIST WHERE INFO LIKE '%GET_LOCK%' AND ID != CONNECTION_ID();
+--source include/wait_condition.inc
+--replace_column 1 ### 3 ### 6 ### 7 ### 9 ### 10 ### 11 ###
+SHOW PROCESSLIST;
+SET NAMES utf8;
+--replace_column 1 ### 3 ### 6 ### 7 ### 9 ### 10 ### 11 ###
+SHOW PROCESSLIST;
+SELECT RELEASE_LOCK('t');
+--connection con1
+--reap
+--disconnect con1
+--source include/wait_until_disconnected.inc
+--connection default
+SET NAMES latin1;
+
+
+--echo #
+--echo # WL#6454: Deprecate SHOW AUTHORS and SHOW CONTRIBUTORS
+--echo #
+
+--disable_result_log
+SHOW AUTHORS;
+--enable_result_log
+SHOW WARNINGS;
+
+--disable_result_log
+SHOW CONTRIBUTORS;
+--enable_result_log
+SHOW WARNINGS;

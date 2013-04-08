@@ -10,6 +10,8 @@
 # Only run test if "mysql_upgrade" is found
 --source include/have_mysql_upgrade.inc
 
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+
 connection master;
 --disable_warnings
 DROP DATABASE IF EXISTS `#mysql50#mysqltest-1`;
@@ -28,7 +30,7 @@ sync_slave_with_master;
 connection master;
 let $after_position= query_get_value(SHOW MASTER STATUS, Position, 1);
 
-if (`SELECT '$before_position'='$after_position'`)
+if ($before_position == $after_position)
 {
   echo Master position is not changed;
 }
@@ -46,7 +48,7 @@ connection master;
 let $after_file= query_get_value(SHOW MASTER STATUS, File, 1);
 let $after_position= query_get_value(SHOW MASTER STATUS, Position, 1);
 
-if (!`SELECT '$before_position'='$after_position'`)
+if ($before_position != $after_position)
 {
   echo Master position has been changed;
 }

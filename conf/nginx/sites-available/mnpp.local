@@ -6,7 +6,7 @@ server {
     #charset koi8-r;
 
     access_log  /Applications/MNPP/logs/nginx/mnpp.access.log;
-    error_log  /Applications/MNPP/logs/nginx/mnpp.access.log;
+    error_log  /Applications/MNPP/logs/nginx/mnpp.error.log;
     
     location / {
         index  index.html index.htm index.php;

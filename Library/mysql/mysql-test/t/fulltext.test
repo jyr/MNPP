@@ -420,6 +420,15 @@ DROP TABLE t1;
 # End of 4.1 tests
 
 #
+# bug#34374 - mysql generates incorrect warning
+#
+create table t1(a text,b date,fulltext index(a))engine=myisam;
+insert into t1 set a='water',b='2008-08-04';
+select 1 from t1 where match(a) against ('water' in boolean mode) and b>='2008-08-01';
+drop table t1;
+show warnings;
+
+#
 # BUG#38842 - Fix for 25951 seems incorrect
 #
 CREATE TABLE t1 (a VARCHAR(255), b INT, FULLTEXT(a), KEY(b));
@@ -591,7 +600,7 @@ DROP TABLE t1;
 
 CREATE TABLE t1(f1 VARCHAR(6) NOT NULL, FULLTEXT KEY(f1), UNIQUE(f1));
 INSERT INTO t1 VALUES ('test');
-
+--disable_warnings
 SELECT 1 FROM t1 WHERE 1 >
  ALL((SELECT 1 FROM t1 JOIN t1 a
  ON (MATCH(t1.f1) against (""))
@@ -618,6 +627,7 @@ EXECUTE stmt;
 EXECUTE stmt;
 
 DEALLOCATE PREPARE stmt;
+--enable_warnings
 
 DROP TABLE t1;
 
