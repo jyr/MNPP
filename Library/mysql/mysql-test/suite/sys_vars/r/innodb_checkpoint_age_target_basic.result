@@ -1,3 +1,0 @@
-SELECT @@global.innodb_checkpoint_age_target;
-@@global.innodb_checkpoint_age_target
-0

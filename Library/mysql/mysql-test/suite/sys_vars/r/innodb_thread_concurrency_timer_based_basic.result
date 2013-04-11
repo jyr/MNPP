@@ -1,3 +1,0 @@
-SELECT @@global.innodb_thread_concurrency_timer_based;
-@@global.innodb_thread_concurrency_timer_based
-0

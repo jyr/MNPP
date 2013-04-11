@@ -1,1 +1,0 @@
---innodb-recovery-update-relay-log=TRUE --skip-core-file --skip-stack-trace

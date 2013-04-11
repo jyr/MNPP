@@ -1,3 +1,0 @@
-SELECT @@global.have_response_time_distribution;
-@@global.have_response_time_distribution
-YES

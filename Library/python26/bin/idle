@@ -1,5 +1,0 @@
-#!/Applications/MNPP/Library/python26/bin/python2.6
-
-from idlelib.PyShell import main
-if __name__ == '__main__':
-    main()

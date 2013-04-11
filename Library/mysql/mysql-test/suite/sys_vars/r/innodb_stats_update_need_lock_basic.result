@@ -1,3 +1,0 @@
-SELECT @@global.innodb_stats_update_need_lock;
-@@global.innodb_stats_update_need_lock
-1

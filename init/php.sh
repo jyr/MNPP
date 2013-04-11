@@ -8,13 +8,16 @@
 #              any size, especially busier sites.
 # processname: php-fpm
 
+OS_VERSION=`sw_vers -productVersion | grep -o 10\..`
+export OS_VERSION
+
 if [ $1 == 52 ];then
   php_fpm_CONF=/Applications/MNPP/conf/php52/php-fmp
 else
   php_fpm_CONF=/Applications/MNPP/conf/php$1/php-fpm.conf
 fi
 
-prefix=/Applications/MNPP/Library/php$1
+prefix=/Applications/MNPP/Library/$OS_VERSION/php$1
 exec_prefix=${prefix} 
 php_fpm_BIN=${exec_prefix}/sbin/php-fpm
 php_fpm_PID=/Applications/MNPP/run/php-fpm.pid
@@ -52,9 +55,9 @@ wait_for_pid () {
 
 __set_privilegies( ) {
    chown -R mysql:mysql /Applications/MNPP/tmp/mysql
-   chown -R mysql:mysql /Applications/MNPP/Library/mysql
-   chmod -R 755 /Applications/MNPP/Library/mysql/*
-   chmod 644 /Applications/MNPP/Library/mysql/my.cnf
+   chown -R mysql:mysql /Applications/MNPP/Library/$OS_VERSION/mysql
+   chmod -R 755 /Applications/MNPP/Library/$OS_VERSION/mysql/*
+   chmod 644 /Applications/MNPP/Library/$OS_VERSION/mysql/my.cnf
 }
 
 __hosts( ){
@@ -65,13 +68,14 @@ __hosts( ){
 __export_library( ){
 	touch /Users/$SUDO_USER/.bash_profile
 	found=`cat /Users/$SUDO_USER/.bash_profile | grep MNPP | wc -l`
-	export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
+	export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/$OS_VERSION/lib:$DYLD_LIBRARY_PATH
+	ln -s /Applications/MNPP/Library/$OS_VERSION/mysql/lib/libmysqlclient.18.dylib /usr/lib/
 	
   	if [ $found = 0 ] ; then
-		echo "alias drush='/Applications/MNPP/Library/php53/bin/php /Applications/MNPP/Library/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
-		echo "export PATH=/Applications/MNPP/init:/Applications/MNPP/Library/php53/bin:/Applications/MNPP/Library/mysql/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
-		echo "alias mysql='/Applications/MNPP/Library/mysql/bin/mysql --socket=/Applications/MNPP/tmp/mysql/mysql.sock'" >> /Users/$SUDO_USER/.bash_profile
-		echo "export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH" >> /Users/$SUDO_USER/.bash_profile
+		echo "alias drush='/Applications/MNPP/Library/$OS_VERSION/php53/bin/php /Applications/MNPP/Library/$OS_VERSION/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
+		echo "export PATH=/Applications/MNPP/init:/Applications/MNPP/Library/$OS_VERSION/php53/bin:/Applications/MNPP/Library/$OS_VERSION/mysql/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
+		echo "alias mysql='/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql --socket=/Applications/MNPP/tmp/mysql/mysql.sock'" >> /Users/$SUDO_USER/.bash_profile
+		echo "export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/$OS_VERSION/lib:$DYLD_LIBRARY_PATH" >> /Users/$SUDO_USER/.bash_profile
   	fi
 }
 
@@ -87,7 +91,7 @@ __export_library
 
 if [ $1 == 53 ] || [ $1 == 54 ];then
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/php52/bin/php-cgi" | wc -l`
+  found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php52/bin/php-cgi" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-cgi
   fi
@@ -179,14 +183,14 @@ if [ $1 == 53 ] || [ $1 == 54 ];then
   esac
 else
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/php${1}/sbin/php-fpm" | wc -l`
+  found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php${1}/sbin/php-fpm" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-fpm
   fi
 
   case "${2}" in
       start|stop|quit|restart|reload|logrotate)
-          /Applications/MNPP/Library/php52/sbin/php-fpm ${2}
+          /Applications/MNPP/Library/$OS_VERSION/php52/sbin/php-fpm ${2}
           ;;
       *)
         __show_usage

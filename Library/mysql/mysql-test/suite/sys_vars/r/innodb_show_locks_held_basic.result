@@ -1,3 +1,0 @@
-SELECT @@global.innodb_show_locks_held;
-@@global.innodb_show_locks_held
-10

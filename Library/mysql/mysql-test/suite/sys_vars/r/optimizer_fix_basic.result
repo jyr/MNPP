@@ -1,3 +1,0 @@
-SELECT @@global.optimizer_fix;
-@@global.optimizer_fix
-1

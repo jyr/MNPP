@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'log_slow_sp_statements';
-SHOW GLOBAL VARIABLES LIKE 'log_slow_sp_statements';

@@ -1,6 +1,9 @@
 #/bin/sh
- 
-NGINX_BASE_DIR="/Applications/MNPP/Library/nginx"
+
+OS_VERSION=`sw_vers -productVersion | grep -o 10\..`
+export OS_VERSION
+
+NGINX_BASE_DIR="/Applications/MNPP/Library/$OS_VERSION/nginx"
 NGINX_DAEMON="${NGINX_BASE_DIR}/nginx"
 NGINX_CONF="/Applications/MNPP/conf/nginx/nginx.conf"
 

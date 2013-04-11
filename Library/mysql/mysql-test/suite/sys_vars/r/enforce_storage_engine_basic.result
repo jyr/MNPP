@@ -1,3 +1,0 @@
-SELECT @@global.enforce_storage_engine;
-@@global.enforce_storage_engine
-NULL

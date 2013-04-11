@@ -1,3 +1,0 @@
-SELECT @@global.query_response_time_range_base;
-@@global.query_response_time_range_base
-10

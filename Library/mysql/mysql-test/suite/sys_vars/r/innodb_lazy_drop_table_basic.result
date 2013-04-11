@@ -1,3 +1,0 @@
-SELECT @@global.innodb_lazy_drop_table;
-@@global.innodb_lazy_drop_table
-0

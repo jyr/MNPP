@@ -1,3 +1,0 @@
-SELECT @@global.innodb_import_table_from_xtrabackup;
-@@global.innodb_import_table_from_xtrabackup
-0

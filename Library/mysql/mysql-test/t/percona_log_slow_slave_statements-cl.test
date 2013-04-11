@@ -1,3 +1,0 @@
-SHOW VARIABLES LIKE 'log_slow_slave_statements';
-SHOW GLOBAL VARIABLES LIKE 'log_slow_slave_statements';
-
