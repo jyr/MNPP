@@ -1,0 +1,53 @@
+===== Information about the build process: =====
+Build was run at 2013-04-08 23:50:16 on host 'deploy.cc'
+
+Build was done on  Darwin-11.4.2 using i386
+Build was done using cmake 2.8.10 
+
+===== Compiler flags used (from the 'sql/' subdirectory): =====
+# compile C with /usr/bin/cc
+# compile CXX with /usr/bin/c++
+C_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/include -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/sql -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/regex   
+C_DEFINES = -DDBUG_OFF -DHAVE_CONFIG_H -DHAVE_EVENT_SCHEDULER -DHAVE_POOL_OF_THREADS -DHAVE_RESPONSE_TIME_DISTRIBUTION -DMYSQL_SERVER
+CXX_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti  -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/include -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/sql -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.1/regex   
+CXX_DEFINES = -DDBUG_OFF -DHAVE_CONFIG_H -DHAVE_EVENT_SCHEDULER -DHAVE_POOL_OF_THREADS -DHAVE_RESPONSE_TIME_DISTRIBUTION -DMYSQL_SERVER
+
+Pointer size: 8
+
+===== Feature flags used: =====
+-- Cache values
+CMAKE_BUILD_TYPE:STRING=
+CMAKE_INSTALL_PREFIX:PATH=/Applications/MNPP/Library/10.7/mysql
+CMAKE_OSX_ARCHITECTURES:STRING=
+CMAKE_OSX_DEPLOYMENT_TARGET:STRING=
+CMAKE_OSX_SYSROOT:STRING=
+COMMUNITY_BUILD:BOOL=ON
+CORESERVICES:FILEPATH=/System/Library/Frameworks/CoreServices.framework
+ENABLED_PROFILING:BOOL=ON
+ENABLE_DEBUG_SYNC:BOOL=ON
+ENABLE_DTRACE:BOOL=ON
+ENABLE_GCOV:BOOL=OFF
+INSTALL_LAYOUT:STRING=STANDALONE
+MAX_INDEXES:STRING=64
+MYSQL_DATADIR:PATH=/Applications/MNPP/Library/10.7/mysql/data
+MYSQL_MAINTAINER_MODE:BOOL=OFF
+WITHOUT_RESPONSE_TIME_DISTRIBUTION:BOOL=OFF
+WITH_ARCHIVE_STORAGE_ENGINE:BOOL=ON
+WITH_BLACKHOLE_STORAGE_ENGINE:BOOL=ON
+WITH_DEBUG:BOOL=OFF
+WITH_EMBEDDED_SERVER:BOOL=OFF
+WITH_EXTRA_CHARSETS:STRING=complex
+WITH_FEDERATED_STORAGE_ENGINE:BOOL=ON
+WITH_INNOBASE_STORAGE_ENGINE:BOOL=ON
+WITH_LIBEDIT:BOOL=ON
+WITH_LIBWRAP:BOOL=OFF
+WITH_PAM:BOOL=OFF
+WITH_PARTITION_STORAGE_ENGINE:BOOL=ON
+WITH_PERFSCHEMA_STORAGE_ENGINE:BOOL=ON
+WITH_READLINE:BOOL=OFF
+WITH_SSL:STRING=no
+WITH_UNIT_TESTS:BOOL=ON
+WITH_VALGRIND:BOOL=OFF
+WITH_ZLIB:STRING=system
+
+===== EOF =====
