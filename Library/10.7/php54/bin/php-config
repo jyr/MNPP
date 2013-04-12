@@ -1,15 +1,15 @@
 #! /bin/sh
 
 SED="/usr/bin/sed"
-prefix="/Applications/MNPP/Library/php54"
-datarootdir="/Applications/MNPP/Library/php54/php"
+prefix="/Applications/MNPP/Library/10.7/php54"
+datarootdir="/Applications/MNPP/Library/10.7/php54/php"
 exec_prefix="/Applications/MNPP/Library/10.7/php54"
 version="5.4.13"
 vernum="50413"
 include_dir="${prefix}/include/php"
 includes="-I$include_dir -I$include_dir/main -I$include_dir/TSRM -I$include_dir/Zend -I$include_dir/ext -I$include_dir/ext/date/lib"
 ldflags=" -L/Applications/MNPP/Library/10.7/libxml/lib -L/usr/local/lib -L/Applications/MNPP/Library/10.7/libpng/lib -L/usr/X11R6/lib -L/Applications/MNPP/Library/10.7/freetype/lib -L/Applications/MNPP/Library/10.7/mysql/lib"
-libs="  -lexslt -ledit -lncurses -lmysqlclient -liconv -liconv -lfreetype -lX11 -lXpm -lpng -lz -ljpeg -lcurl -lbz2 -lz -lm  -lxml2 -lz -liconv -lm -lcurl -lxml2 -lz -liconv -lm -lmysqlclient -lz -lmysqlclient -lz -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxslt -lxml2 -lz -licucore -lm "
+libs="  -lexslt -lresolv -ledit -lncurses -lmysqlclient -liconv -liconv -lfreetype -lX11 -lXpm -lpng -lz -ljpeg -lcurl -lbz2 -lz -lm  -lxml2 -lz -liconv -lm -lcurl -lxml2 -lz -liconv -lm -lmysqlclient -lz -lmysqlclient -lz -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxslt -lxml2 -lz -licucore -lm "
 extension_dir='/Applications/MNPP/Library/10.7/php54/lib/php/extensions/no-debug-non-zts-20100525'
 man_dir=`eval echo ${datarootdir}/man`
 program_prefix=""
@@ -17,7 +17,7 @@ program_suffix=""
 exe_extension=""
 php_cli_binary=NONE
 php_cgi_binary=NONE
-configure_options=" '--prefix=/Applications/MNPP/Library/php54' '--exec-prefix=/Applications/MNPP/Library/10.7/php54' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-gd' '--with-gettext=shared,/Applications/MNPP/Library/10.7/gettext' '--with-freetype-dir=/Applications/MNPP/Library/10.7/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/10.7/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/10.7/libxml' '--with-xsl=/Applications/MNPP/Library/10.7/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/10.7/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/10.7/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--with-openssl-dir=/usr/include/openssl' '--with-zlib-dir=/Applications/MNPP/Library/10.7/zlib' '--with-png-dir=/Applications/MNPP/Library/10.7/libpng' '--with-readline' '--with-xpm-dir=/Applications/MNPP/Library/10.7/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php54' '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/10.7/libiconv' '--with-pdo-mysql=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--enable-soap'"
+configure_options=" '--prefix=/Applications/MNPP/Library/10.7/php54' '--exec-prefix=/Applications/MNPP/Library/10.7/php54' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-gd' '--with-gettext=shared,/Applications/MNPP/Library/10.7/gettext' '--with-freetype-dir=/Applications/MNPP/Library/10.7/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/10.7/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/10.7/libxml' '--with-xsl=/Applications/MNPP/Library/10.7/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/10.7/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/10.7/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--with-openssl-dir=/usr/include/openssl' '--with-zlib-dir=/Applications/MNPP/Library/10.7/zlib' '--with-png-dir=/Applications/MNPP/Library/10.7/libpng' '--with-readline' '--with-xpm-dir=/Applications/MNPP/Library/10.7/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php54' '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/10.7/libiconv' '--with-pdo-mysql=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--enable-soap'"
 php_sapis=" cli fpm cgi"
 
 # Set php_cli_binary and php_cgi_binary if available

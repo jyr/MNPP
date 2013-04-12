@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Variable declaration
-prefix='/Applications/MNPP/Library/php54'
-datarootdir='/Applications/MNPP/Library/php54/php'
+prefix='/Applications/MNPP/Library/10.7/php54'
+datarootdir='/Applications/MNPP/Library/10.7/php54/php'
 exec_prefix="`eval echo /Applications/MNPP/Library/10.7/php54`"
 phpdir="`eval echo ${exec_prefix}/lib/php`/build"
 includedir="`eval echo ${prefix}/include`/php"
@@ -152,7 +152,7 @@ phpize_copy_files()
 phpize_replace_prefix()
 {
   $SED \
-  -e "s#/Applications/MNPP/Library/php54#$prefix#" \
+  -e "s#/Applications/MNPP/Library/10.7/php54#$prefix#" \
   < "$phpdir/phpize.m4" > configure.in
 }
 
