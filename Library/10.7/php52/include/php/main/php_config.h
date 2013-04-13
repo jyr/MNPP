@@ -57,7 +57,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if your system has a working fnmatch function.  */
-#define HAVE_FNMATCH 1
+/* #undef HAVE_FNMATCH */
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
@@ -124,7 +124,7 @@
 /* #undef SIZEOF_CHAR */
 
 /* The number of bytes in a char *.  */
-#define SIZEOF_CHAR_P 8
+#define SIZEOF_CHAR_P 0
 
 /* The number of bytes in a int.  */
 #define SIZEOF_INT 4
@@ -142,7 +142,7 @@
 #define SIZEOF_LONG_LONG_INT 8
 
 /* The number of bytes in a short.  */
-#define SIZEOF_SHORT 2
+#define SIZEOF_SHORT 0
 
 /* The number of bytes in a size_t.  */
 #define SIZEOF_SIZE_T 8
@@ -190,7 +190,7 @@
 /* #undef HAVE_CUSERID */
 
 /* Define if you have the fabsf function.  */
-#define HAVE_FABSF 1
+/* #undef HAVE_FABSF */
 
 /* Define if you have the finite function.  */
 #define HAVE_FINITE 1
@@ -199,7 +199,7 @@
 #define HAVE_FLOCK 1
 
 /* Define if you have the floorf function.  */
-#define HAVE_FLOORF 1
+/* #undef HAVE_FLOORF */
 
 /* Define if you have the fork function.  */
 #define HAVE_FORK 1
@@ -1267,7 +1267,7 @@
 /* #undef HAVE_DSA_DEFAULT_METHOD */
 
 /*   */
-/* #undef HAVE_OPENSSL_EXT */
+#define HAVE_OPENSSL_EXT 1
 
 /* Whether to build pcre as dynamic module */
 /* #undef COMPILE_DL_PCRE */
@@ -1522,13 +1522,13 @@
 #define HAVE_GD_GD2 1
 
 /*   */
-#define HAVE_GD_PNG 1
+/* #undef HAVE_GD_PNG */
 
 /*   */
-#define HAVE_GD_XBM 1
+/* #undef HAVE_GD_XBM */
 
 /*   */
-#define HAVE_GD_BUNDLED 1
+/* #undef HAVE_GD_BUNDLED */
 
 /*   */
 #define HAVE_GD_GIF_READ 1
@@ -1540,10 +1540,10 @@
 #define HAVE_GD_IMAGEELLIPSE 1
 
 /*   */
-#define HAVE_GD_FONTCACHESHUTDOWN 1
+/* #undef HAVE_GD_FONTCACHESHUTDOWN */
 
 /*   */
-#define HAVE_GD_FONTMUTEX 1
+/* #undef HAVE_GD_FONTMUTEX */
 
 /*   */
 #define HAVE_GD_DYNAMIC_CTX_EX 1
@@ -1552,7 +1552,7 @@
 #define HAVE_GD_GIF_CTX 1
 
 /*   */
-#define HAVE_GD_JPG 1
+/* #undef HAVE_GD_JPG */
 
 /*   */
 #define HAVE_GD_XPM 1
@@ -1564,7 +1564,7 @@
 #define HAVE_GD_STRINGFTEX 1
 
 /*   */
-#define USE_GD_JISX0208 1
+/* #undef USE_GD_JISX0208 */
 
 /*   */
 #define USE_GD_IMGSTRTTF 1
@@ -1591,7 +1591,7 @@
 #define HAVE_LIBGD15 1
 
 /*   */
-#define HAVE_GD_PNG 1
+/* #undef HAVE_GD_PNG */
 
 /*   */
 #define HAVE_GD_GIF_READ 1
@@ -1603,7 +1603,7 @@
 #define HAVE_GD_WBMP 1
 
 /*   */
-#define HAVE_GD_JPG 1
+/* #undef HAVE_GD_JPG */
 
 /*   */
 #define HAVE_GD_XPM 1
@@ -1624,7 +1624,7 @@
 #define HAVE_GD_IMAGESETBRUSH 1
 
 /*   */
-/* #undef HAVE_GD_STRINGTTF */
+#define HAVE_GD_STRINGTTF 1
 
 /*   */
 #define HAVE_GD_STRINGFT 1
@@ -1645,13 +1645,13 @@
 /* #undef HAVE_GD_CACHE_CREATE */
 
 /*   */
-#define HAVE_GD_FONTCACHESHUTDOWN 1
+/* #undef HAVE_GD_FONTCACHESHUTDOWN */
 
 /*   */
 /* #undef HAVE_GD_FREEFONTCACHE */
 
 /*   */
-#define HAVE_GD_FONTMUTEX 1
+/* #undef HAVE_GD_FONTMUTEX */
 
 /*   */
 #define HAVE_GD_DYNAMIC_CTX_EX 1
@@ -1711,28 +1711,28 @@
 #define HAVE_ICONV 1
 
 /* Which iconv implementation to use */
-#define PHP_ICONV_IMPL "libiconv"
+/* #undef PHP_ICONV_IMPL */
 
 /* Konstantin Chuguev's iconv implementation */
 /* #undef HAVE_BSD_ICONV */
 
 /* Which iconv implementation to use */
-#define PHP_ICONV_IMPL "libiconv"
+/* #undef PHP_ICONV_IMPL */
 
 /* glibc's iconv implementation */
 /* #undef HAVE_GLIBC_ICONV */
 
 /* Which iconv implementation to use */
-#define PHP_ICONV_IMPL "libiconv"
+/* #undef PHP_ICONV_IMPL */
 
 /* Whether iconv supports error no or not */
-#define ICONV_SUPPORTS_ERRNO 1
+#define ICONV_SUPPORTS_ERRNO 0
 
 /* Whether iconv supports error no or not */
-#define ICONV_SUPPORTS_ERRNO 1
+#define ICONV_SUPPORTS_ERRNO 0
 
 /* Whether iconv supports error no or not */
-#define ICONV_SUPPORTS_ERRNO 1
+#define ICONV_SUPPORTS_ERRNO 0
 
 /* Path to iconv.h */
 #define PHP_ICONV_H_PATH </usr/include/iconv.h>
@@ -2449,7 +2449,7 @@
 /* #undef COMPILE_DL_POSIX */
 
 /* Whether you have a working ttyname_r */
-#define HAVE_TTYNAME_R 1
+/* #undef HAVE_TTYNAME_R */
 
 /* Wether struct utsname has domainname */
 /* #undef HAVE_UTSNAME_DOMAINNAME */
@@ -2488,13 +2488,13 @@
 /* #undef COMPILE_DL_REFLECTION */
 
 /*   */
-#define HAVE_PWRITE 1
+/* #undef HAVE_PWRITE */
 
 /* whether pwrite64 is default */
 /* #undef PHP_PWRITE_64 */
 
 /*   */
-#define HAVE_PREAD 1
+/* #undef HAVE_PREAD */
 
 /* whether pread64 is default */
 /* #undef PHP_PREAD_64 */
@@ -2587,10 +2587,10 @@
 #define HAVE_CRYPT 1
 
 /* Whether the system supports standard DES salt */
-#define PHP_STD_DES_CRYPT 1
+#define PHP_STD_DES_CRYPT 0
 
 /* Whether the system supports extended DES salt */
-#define PHP_EXT_DES_CRYPT 1
+#define PHP_EXT_DES_CRYPT 0
 
 /* Whether the system supports MD5 salt */
 #define PHP_MD5_CRYPT 0
@@ -2614,7 +2614,7 @@
 #define HAVE_REGEX_T_RE_MAGIC 1
 
 /*  see #24142  */
-#define PHP_ROUND_FUZZ 0.5
+#define PHP_ROUND_FUZZ 0.50000000001
 
 /* Define if your system has fork/vfork/CreateProcess */
 #define PHP_CAN_SUPPORT_PROC_OPEN 1
@@ -2686,16 +2686,16 @@
 /* #undef HAVE_LIBSOCKET */
 
 /* whether atof() accepts NAN */
-#define HAVE_ATOF_ACCEPTS_NAN 1
+/* #undef HAVE_ATOF_ACCEPTS_NAN */
 
 /* whether atof() accepts INF */
-#define HAVE_ATOF_ACCEPTS_INF 1
+/* #undef HAVE_ATOF_ACCEPTS_INF */
 
 /* whether HUGE_VAL == INF */
-#define HAVE_HUGE_VAL_INF 1
+/* #undef HAVE_HUGE_VAL_INF */
 
 /* whether HUGE_VAL + -HUGEVAL == NAN */
-#define HAVE_HUGE_VAL_NAN 1
+/* #undef HAVE_HUGE_VAL_NAN */
 
 /* whether strptime() declaration fails */
 #define HAVE_STRPTIME_DECL_FAILS 1
@@ -2923,16 +2923,16 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2013-04-11"
+#define PHP_BUILD_DATE "2013-04-13"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
 
 /* hardcode for each of the cross compiler host */
-#define PHP_UNAME "Darwin deploy.cc 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair.local 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
 
 /* uname -a output */
-#define PHP_UNAME "Darwin deploy.cc 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair.local 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
 
 /* uname output */
 #define PHP_OS "Darwin"

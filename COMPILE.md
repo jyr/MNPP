@@ -31,7 +31,9 @@ make install
 
 JPEG
 ---
-./configure --prefix=/Applications/MNPP/Library/jpeg --enable-shared --enable-static    
+wget -c http://www.ijg.org/files/jpegsrc.v9.tar.gz
+tar -zxvf jpegsrc.v9.tar.gz    
+./configure --prefix=/Applications/MNPP/Library/$OS_VERSION/jpeg --enable-shared --enable-static    
 make    
 make install
 
@@ -43,7 +45,15 @@ make && make install
 
 GD
 ---
-brew install gd
+
+#MACOSX_DEPLOYMENT_TARGET=10.7 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --prefix=/Applications/MNPP/Library/$OS_VERSION/gd --with-jpeg=/Applications/MNPP/Library/$OS_VERSION/jpeg
+https://bitbucket.org/pierrejoye/gd-libgd/get/197ed9ab8a12.zip
+unzip pierrejoye-gd-libgd-197ed9ab8a12.zip
+cd pierrejoye-gd-libgd-197ed9ab8a12
+mkdir build
+cd build 
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/Applications/MNPP/Library/$OS_VERSION/gd ..
+make && make install
 
 LibXML
 ---
@@ -119,15 +129,15 @@ make install
 
 PHP-MEMCACHE
 ---
-http://pecl.php.net/package/memcache 
-cd memcache-3.0.5   
+wget -c http://pecl.php.net/get/memcache-3.0.8.tgz
+cd memcache-3.0.8   
 phpize && ./configure --enable-memcache && make    
 cp modules/memcache.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626    
 add extension=memcache.so in php.ini
 
 PHP-MEMCACHE FOR PHP52
 ---
-/Applications/MNPP/Library/php52/bin/phpize && ./configure --with-php-config=/Applications/MNPP/Library/php52/bin/php-config --disable-memcache-session  && make && make install
+/Applications/MNPP/Library/$OS_VERSION/php52/bin/phpize && ./configure --with-php-config=/Applications/MNPP/Library/$OS_VERSION/php52/bin/php-config --disable-memcache-session  && make && make install
 
 APC
 ---
@@ -155,14 +165,14 @@ add extension=mongo.so in php.ini
 PHP 2.5.17
 ---
 
-$ wget -c http://us3.php.net/get/php-5.2.17.tar.gz/from/this/mirror
+$ wget -c http://museum.php.net/php5/php-5.2.17.tar.gz
 $ tar xvfz php-5.2.17.tar.gz
 $ cd php-5.2.17
 $ wget -c http://php-fpm.org/downloads/php-5.2.17-fpm-0.5.14.diff.gz
 $ gunzip php-5.2.17-fpm-0.5.14.diff.gz
 $ patch -p1 < php-5.2.17-fpm-0.5.14.diff
 
-./configure --prefix=/Applications/MNPP/Library/php52 --exec-prefix=/Applications/MNPP/Library/php52 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl=/Applications/MNPP/Library/curl --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config --with-openssl --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-ttf --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php52 --enable-fastcgi --enable-fpm --enable-force-cgi-redirect --with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm --with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log --with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid --with-libedit --enable-libxml --enable-dom --with-ncurses=/usr/lib  --enable-pdo --with-pcre-regex --enable-hash --enable-session --enable-json --enable-spl --enable-filter --enable-simplexml --enable-xml --with-iconv=/Applications/MNPP/Library/libiconv --enable-soap
+./configure --prefix=/Applications/MNPP/Library/$OS_VERSION/php52 --exec-prefix=/Applications/MNPP/Library/$OS_VERSION/php52 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl=/Applications/MNPP/Library/$OS_VERSION/curl --with-gd=/Applications/MNPP/Library/$OS_VERSION/gd --with-gettext=shared,/Applications/MNPP/Library/$OS_VERSION/gettext --with-freetype-dir=/Applications/MNPP/Library/$OS_VERSION/freetype --with-jpeg-dir=/Applications/MNPP/Library/$OS_VERSION/jpeg --with-libxml-dir=/Applications/MNPP/Library/$OS_VERSION/libxml --with-xsl=/Applications/MNPP/Library/$OS_VERSION/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/$OS_VERSION/mcrypt --with-mhash=/Applications/MNPP/Library/$OS_VERSION/mhash --with-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config --with-openssl --with-png-dir=/Applications/MNPP/Library/$OS_VERSION/libpng --with-readline --with-ttf --with-xpm-dir=/Applications/MNPP/Library/$OS_VERSION/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php52 --enable-fastcgi --enable-fpm --enable-force-cgi-redirect --with-fpm-conf=/Applications/MNPP/conf/php52/php-fpm --with-fpm-log=/Applications/MNPP/logs/php52/php-fpm.log --with-fpm-pid=/Applications/MNPP/tmp/php52/php-fpm.pid --with-libedit --enable-libxml --enable-dom --with-ncurses=/usr/lib  --enable-pdo --with-pcre-regex --enable-hash --enable-session --enable-json --enable-spl --enable-filter --enable-simplexml --enable-xml --with-iconv=/Applications/MNPP/Library/$OS_VERSION/libiconv --enable-soap
     
 make    
 make install    
