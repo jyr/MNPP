@@ -129,11 +129,9 @@ make install
 
 PHP-MEMCACHE
 ---
-wget -c http://pecl.php.net/get/memcache-3.0.8.tgz
-cd memcache-3.0.8   
-phpize && ./configure --enable-memcache && make    
-cp modules/memcache.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626    
-add extension=memcache.so in php.ini
+/Applications/MNPP/Library/$OS_VERSION/php52/bin/pecl install memcache
+/Applications/MNPP/Library/$OS_VERSION/php53/bin/pecl install memcache
+/Applications/MNPP/Library/$OS_VERSION/php54/bin/pecl install memcache
 
 PHP-MEMCACHE FOR PHP52
 ---
@@ -141,8 +139,9 @@ PHP-MEMCACHE FOR PHP52
 
 APC
 ---
-APC http://pecl.php.net/package/APC    
-/Applications/MNPP/Library/php{version}/bin/phpize    
+/Applications/MNPP/Library/$OS_VERSION/php52/bin/pecl install apc
+/Applications/MNPP/Library/$OS_VERSION/php53/bin/pecl install apc
+/Applications/MNPP/Library/$OS_VERSION/php54/bin/pecl install apc
 
 MACOSX_DEPLOYMENT_TARGET=10.6 CFLAGS="-arch x86_64 -g -Os -pipe -no-cpp-precomp" CCFLAGS="-arch x86_64 -g -Os -pipe" CXXFLAGS="-arch x86_64 -g -Os -pipe" LDFLAGS="-arch x86_64 -bind_at_load" ./configure --with-php-config=/Applications/MNPP/Library/php{VERSION}/bin/php-config    
 make    
@@ -155,12 +154,9 @@ APC FOR PHP52
 
 MONGO
 ---
-https://github.com/mongodb/mongo-php-driver    
-cd mongodb-mongo-php-driver-*    
-./configure    
-sudo make install    
-cp modules/mongo.so /Applications/MNPP/Library/php/lib/php/extensions/no-debug-non-zts-20090626/    
-add extension=mongo.so in php.ini        
+/Applications/MNPP/Library/$OS_VERSION/php52/bin/pecl install mongo
+/Applications/MNPP/Library/$OS_VERSION/php53/bin/pecl install mongo
+/Applications/MNPP/Library/$OS_VERSION/php54/bin/pecl install mongo
 
 PHP 2.5.17
 ---
@@ -185,7 +181,7 @@ tar xvfz php53-src.tar.gz && cd php-5.3.22
 
 brew install pkg-config curl openssl
 
-./configure --prefix=/Applications/MNPP/Library/php53 --exec-prefix=/Applications/MNPP/Library/php53 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-tidy=/Applications/MNPP/Library/tidy --with-gd=/Applications/MNPP/Library/gd --with-gettext=shared,/Applications/MNPP/Library/gettext --with-freetype-dir=/Applications/MNPP/Library/freetype --with-jpeg-dir=/Applications/MNPP/Library/jpeg --with-libxml-dir=/Applications/MNPP/Library/libxml --with-xsl=/Applications/MNPP/Library/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config  --with-openssl --with-zlib-dir=/Applications/MNPP/Library/zlib --with-png-dir=/Applications/MNPP/Library/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php54 --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/libiconv --with-pdo-mysql=/Applications/MNPP/Library/mysql/bin/mysql_config  --enable-soap
+./configure --prefix=/Applications/MNPP/Library/$OS_VERSION/php53 --exec-prefix=/Applications/MNPP/Library/$OS_VERSION/php53 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-gd --with-gettext=shared,/Applications/MNPP/Library/$OS_VERSION/gettext --with-freetype-dir=/Applications/MNPP/Library/$OS_VERSION/freetype --with-jpeg-dir=/Applications/MNPP/Library/$OS_VERSION/jpeg --with-libxml-dir=/Applications/MNPP/Library/$OS_VERSION/libxml --with-xsl=/Applications/MNPP/Library/$OS_VERSION/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/$OS_VERSION/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --with-openssl --with-zlib-dir=/Applications/MNPP/Library/$OS_VERSION/zlib --with-png-dir=/Applications/MNPP/Library/$OS_VERSION/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/$OS_VERSION/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php53 --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/$OS_VERSION/libiconv --with-pdo-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --enable-soap
 
 export EXTRA_CFLAGS=-lresolv
 
@@ -204,7 +200,7 @@ tar xvfz php54-src.tar.gz && cd php-5.4.13
 
 brew install pkg-config curl openssl
 
-./configure --prefix=/Applications/MNPP/Library/php54 --exec-prefix=/Applications/MNPP/Library/$OS_VERSION/php54 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-gd --with-gettext=shared,/Applications/MNPP/Library/$OS_VERSION/gettext --with-freetype-dir=/Applications/MNPP/Library/$OS_VERSION/freetype --with-jpeg-dir=/Applications/MNPP/Library/$OS_VERSION/jpeg --with-libxml-dir=/Applications/MNPP/Library/$OS_VERSION/libxml --with-xsl=/Applications/MNPP/Library/$OS_VERSION/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/$OS_VERSION/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --with-openssl-dir=/usr/include/openssl --with-zlib-dir=/Applications/MNPP/Library/$OS_VERSION/zlib --with-png-dir=/Applications/MNPP/Library/$OS_VERSION/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/$OS_VERSION/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php54 --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/$OS_VERSION/libiconv --with-pdo-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --enable-soap
+./configure --prefix=/Applications/MNPP/Library/$OS_VERSION/php54 --exec-prefix=/Applications/MNPP/Library/$OS_VERSION/php54 --enable-cli --enable-gd-jis-conv --enable-gd-native-ttf --enable-mbstring --with-bz2 --with-curl --with-gd --with-gettext=shared,/Applications/MNPP/Library/$OS_VERSION/gettext --with-freetype-dir=/Applications/MNPP/Library/$OS_VERSION/freetype --with-jpeg-dir=/Applications/MNPP/Library/$OS_VERSION/jpeg --with-libxml-dir=/Applications/MNPP/Library/$OS_VERSION/libxml --with-xsl=/Applications/MNPP/Library/$OS_VERSION/libxslt --with-mcrypt=shared,/Applications/MNPP/Library/$OS_VERSION/mcrypt --with-mhash --with-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql --enable-sockets --with-mysqli=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --with-openssl-dir=/usr/include/openssl --with-zlib-dir=/Applications/MNPP/Library/$OS_VERSION/zlib --with-png-dir=/Applications/MNPP/Library/$OS_VERSION/libpng --with-readline --with-xpm-dir=/Applications/MNPP/Library/$OS_VERSION/xpm --with-zlib --with-config-file-path=/Applications/MNPP/conf/php54 --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-libedit --enable-libxml --enable-dom --enable-simplexml --with-iconv=/Applications/MNPP/Library/$OS_VERSION/libiconv --with-pdo-mysql=/Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysql_config  --enable-soap
 
 export EXTRA_CFLAGS=-lresolv    
 export LC_ALL=en_US.UTF-8   

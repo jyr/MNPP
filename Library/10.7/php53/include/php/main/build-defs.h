@@ -18,7 +18,7 @@
 
 /* $Id$ */
 
-#define CONFIGURE_COMMAND " './configure'  '--prefix=/Applications/MNPP/Library/10.7/php53' '--exec-prefix=/Applications/MNPP/Library/10.7/php53' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-gd' '--with-gettext=shared,/Applications/MNPP/Library/10.7/gettext' '--with-freetype-dir=/Applications/MNPP/Library/10.7/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/10.7/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/10.7/libxml' '--with-xsl=/Applications/MNPP/Library/10.7/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/10.7/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/10.7/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--with-openssl-dir=/usr/include/openssl' '--with-zlib-dir=/Applications/MNPP/Library/10.7/zlib' '--with-png-dir=/Applications/MNPP/Library/10.7/libpng' '--with-readline' '--with-xpm-dir=/Applications/MNPP/Library/10.7/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php54' '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/10.7/libiconv' '--with-pdo-mysql=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--enable-soap'"
+#define CONFIGURE_COMMAND " './configure'  '--prefix=/Applications/MNPP/Library/10.7/php53' '--exec-prefix=/Applications/MNPP/Library/10.7/php53' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-gd' '--with-gettext=shared,/Applications/MNPP/Library/10.7/gettext' '--with-freetype-dir=/Applications/MNPP/Library/10.7/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/10.7/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/10.7/libxml' '--with-xsl=/Applications/MNPP/Library/10.7/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/10.7/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/10.7/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--with-openssl' '--with-zlib-dir=/Applications/MNPP/Library/10.7/zlib' '--with-png-dir=/Applications/MNPP/Library/10.7/libpng' '--with-readline' '--with-xpm-dir=/Applications/MNPP/Library/10.7/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php53' '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/10.7/libiconv' '--with-pdo-mysql=/Applications/MNPP/Library/10.7/mysql/bin/mysql_config' '--enable-soap'"
 #define PHP_ADA_INCLUDE		""
 #define PHP_ADA_LFLAGS		""
 #define PHP_ADA_LIBS		""
@@ -86,6 +86,6 @@
 #define PHP_DATADIR             "/Applications/MNPP/Library/10.7/php53/share/php"
 #define PHP_SYSCONFDIR          "/Applications/MNPP/Library/10.7/php53/etc"
 #define PHP_LOCALSTATEDIR       "/Applications/MNPP/Library/10.7/php53/var"
-#define PHP_CONFIG_FILE_PATH    "/Applications/MNPP/conf/php54"
+#define PHP_CONFIG_FILE_PATH    "/Applications/MNPP/conf/php53"
 #define PHP_CONFIG_FILE_SCAN_DIR    ""
 #define PHP_SHLIB_SUFFIX        "so"

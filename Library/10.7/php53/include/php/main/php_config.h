@@ -643,7 +643,7 @@
 /* #undef HAVE_DOPRNT */
 
 /* OpenSSL 0.9.7 or later */
-/* #undef HAVE_DSA_DEFAULT_METHOD */
+#define HAVE_DSA_DEFAULT_METHOD 1
 
 /* embedded MySQL support enabled */
 /* #undef HAVE_EMBEDDED_MYSQLI */
@@ -1314,7 +1314,7 @@
 #define HAVE_OPENSSL_CRYPTO_H 1
 
 /* */
-/* #undef HAVE_OPENSSL_EXT */
+#define HAVE_OPENSSL_EXT 1
 
 /* */
 /* #undef HAVE_ORALDAP */
@@ -2137,7 +2137,7 @@
 #define PHAR_HASH_OK 1
 
 /* */
-/* #undef PHAR_HAVE_OPENSSL */
+#define PHAR_HAVE_OPENSSL 1
 
 /* */
 /* #undef PHP_APACHE_HAVE_CLIENT_FD */
@@ -2146,7 +2146,7 @@
 #define PHP_BLOWFISH_CRYPT 1
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2013-04-11"
+#define PHP_BUILD_DATE "2013-04-13"
 
 /* Define if your system has fork/vfork/CreateProcess */
 #define PHP_CAN_SUPPORT_PROC_OPEN 1
@@ -2230,7 +2230,7 @@
 #define PHP_STD_DES_CRYPT 1
 
 /* uname -a output */
-#define PHP_UNAME "Darwin deploy.cc 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair.local 11.4.2 Darwin Kernel Version 11.4.2: Thu Aug 23 16:25:48 PDT 2012; root:xnu-1699.32.7~1/RELEASE_X86_64 x86_64"
 
 /* Whether PHP has to use its own crypt_r for blowfish, des and ext des */
 #define PHP_USE_PHP_CRYPT_R 1
