@@ -43,8 +43,8 @@
 # If you change base dir, you must also change datadir. These may get
 # overwritten by settings in the MySQL configuration files.
 
-basedir=
-datadir=
+basedir='/Applications/MNPP/Library/10.7/mysql'
+datadir='/Applications/MNPP/Library/10.7/mysql/var'
 
 # Default value, in seconds, afterwhich the script should timeout waiting
 # for server start. 
@@ -60,7 +60,7 @@ lock_file_path="$lockdir/mysql"
 # The following variables are only set for letting mysql.server find things.
 
 # Set some defaults
-mysqld_pid_file_path=
+mysqld_pid_file_path='/Applications/MNPP/tmp/mysql/mysql.pid'
 if test -z "$basedir"
 then
   basedir=/Applications/MNPP/Library/10.7/mysql
@@ -99,6 +99,7 @@ else
   log_failure_msg()
   {
     echo " ERROR! $@"
+    echo $@ >> /tmp/logp
   }
 fi
 
@@ -211,7 +212,7 @@ then
   print_defaults="$bindir/mysql_print_defaults"
 else
   # Try to find basedir in /etc/my.cnf
-  conf=/etc/my.cnf
+  conf=/Applications/MNPP/Library/10.7/mysql/my.cnf
   print_defaults=
   if test -r $conf
   then
