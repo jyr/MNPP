@@ -2,10 +2,11 @@
 
 OS_VERSION=`sw_vers -productVersion | grep -o 10\..`
 export OS_VERSION
+export TMPDIR=/tmp
 
 __show_usage( ) {
  
-  echo "Usage: ${0} {start|stop}"
+  echo "Usage: ${0} {start|stop|restart}"
   exit 3
 }
 
@@ -18,11 +19,14 @@ __set_privilegies( ) {
 
 case "${1}" in
     start)
-		__set_privilegies
-        /Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysqld_safe --defaults-file=/Applications/MNPP/Library/$OS_VERSION/mysql/my.cnf -u root --port=3306 --socket=/Applications/MNPP/tmp/mysql/mysql.sock --lower_case_table_names=0 --datadir=/Applications/MNPP/Library/$OS_VERSION/mysql/var --pid-file=/Applications/MNPP/tmp/mysql/mysql.pid --log-error=/Applications/MNPP/logs/mysql_error_log --tmpdir=/Applications/MNPP/tmp/mysql & sleep 1; exit 0 
+	__set_privilegies
+	/Applications/MNPP/Library/$OS_VERSION/mysql/support-files/mysql.server start
         ;;
     stop)
-        /Applications/MNPP/Library/$OS_VERSION/mysql/bin/mysqladmin -u root --socket=/Applications/MNPP/tmp/mysql/mysql.sock shutdown
+	/Applications/MNPP/Library/$OS_VERSION/mysql/support-files/mysql.server stop
+        ;;
+    restart)
+	/Applications/MNPP/Library/$OS_VERSION/mysql/support-files/mysql.server restart
         ;;
     *)
         __show_usage

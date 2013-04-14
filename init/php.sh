@@ -11,7 +11,7 @@
 OS_VERSION=`sw_vers -productVersion | grep -o 10\..`
 export OS_VERSION
 
-if [ $1 == 52 ];then
+if [ "$1" == "52" ];then
   php_fpm_CONF=/Applications/MNPP/conf/php52/php-fmp
 else
   php_fpm_CONF=/Applications/MNPP/conf/php$1/php-fpm.conf
@@ -88,9 +88,10 @@ __set_privilegies
 __hosts
 __export_library
 
-if [ $1 == 53 ] || [ $1 == 54 ];then
+if [ "$1" == "53" ] || [ "$1" == "54" ];then
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php52/bin/php-cgi" | wc -l`
+  #found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php52/bin/php-cgi" | wc -l`
+  found=`ps -ef | grep "php-cgi" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-cgi
   fi
@@ -98,7 +99,6 @@ if [ $1 == 53 ] || [ $1 == 54 ];then
   case "$2" in
       start)
           echo -n "Starting php-fpm "
-          echo $php_fpm_BIN $php_opts
           $php_fpm_BIN $php_opts
 
           if [ "$?" != 0 ] ; then
@@ -157,8 +157,8 @@ if [ $1 == 53 ] || [ $1 == 54 ];then
       ;;
 
       restart)
-          $0 stop
-          $0 start
+          /Applications/MNPP/init/mnpp --stop php$1
+          /Applications/MNPP/init/mnpp --start php$1
       ;;
 
       reload)
@@ -182,7 +182,8 @@ if [ $1 == 53 ] || [ $1 == 54 ];then
   esac
 else
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php${1}/sbin/php-fpm" | wc -l`
+  #found=`ps -ef | grep "/Applications/MNPP/Library/$OS_VERSION/php${1}/sbin/php-fpm" | wc -l`
+  found=`ps -ef | grep "php-fpm" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-fpm
   fi
