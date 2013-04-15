@@ -44,7 +44,7 @@ __show_usage( ) {
   echo "Usage: ${0} {start|stop|restart|reload}"
   exit 3
 }
- 
+
 ##
 # :: main ::
 case "${1}" in
