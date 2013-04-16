@@ -1,12 +1,12 @@
-#MNPP  Mac + Nginx + Percona + PHP or Python
+#MNPP  Mac + Nginx + Percona + PHP
 ###A high performance web server in a one-click installer.
 
 ## Contributors
 **This project is currently maintained by the following people:**    
 
 [Jair Gaxiola](https://github.com/jyr) (Core developer)    
+[Dmitry Demenchuk](https://github.com/mrded)    
 [César Salazar](http://cesarsalazar.mx/)    
-[HackerHub](http://www.hackerhub.com)
 
 **Pull requests authors**
 
@@ -17,7 +17,6 @@
 ##Features
 
 * Start / stop services global
-* Start / stop services individually
 * Open the default page MNPP
 * Set preferences - start  / stop global services
 
@@ -32,24 +31,16 @@
 
 ##Runs from console
 
-Start    
-<pre><code>$ sudo mnpp --php[Version] --start</code></pre>
-Start only one service    
-<pre><code>$ sudo mnpp --start [service]</code></pre>
+All    
+<pre><code>$ sudo mnpp [Option] [Version]</code></pre>
+Only one service    
+<pre><code>$ sudo mnpp [Service] [Option]</code></pre>
 For php    
-<pre><code>$ sudo mnpp --start php[Version]</code></pre>
-version: 52 | 53    
-service: nginx | percona | uwsgi
+<pre><code>$sudo mnpp php [Option] [Version]</code></pre>
+Version: 52 | 53 | 54    
+Service: nginx | percona | php    
+Option: start | stop | restart    
 
-Stop    
-<pre><code>$ sudo mnpp --php[Version] --stop</code></pre>
-Stop only one service    
-<pre><code>$ sudo mnpp --stop [service]</code></pre>
-For php    
-<pre><code>$ sudo mnpp --stop php[Version]</code></pre>
-
-version: 52 | 53    
-service: nginx | percona | uwsgi
 
 ##Percona account
 
