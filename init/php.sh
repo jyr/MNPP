@@ -157,8 +157,8 @@ if [ "$1" == "53" ] || [ "$1" == "54" ];then
       ;;
 
       restart)
-          /Applications/MNPP/init/mnpp --stop php$1
-          /Applications/MNPP/init/mnpp --start php$1
+          /Applications/MNPP/init/stop$1
+          /Applications/MNPP/init/start$1
       ;;
 
       reload)
