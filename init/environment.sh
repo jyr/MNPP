@@ -4,12 +4,11 @@ __export_library( ){
 	touch /Users/$SUDO_USER/.bash_profile
 	touch /var/$USER/.bash_profile
 	found=`cat /Users/$SUDO_USER/.bash_profile | grep MNPP | wc -l`
-	export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/$OS_VERSION/lib:$DYLD_LIBRARY_PATH
 	OS_VERSION=`sw_vers -productVersion | grep -o 10\..`
 	export OS_VERSION
+	export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/$OS_VERSION/lib:$DYLD_LIBRARY_PATH
   
   	if [ $found = 0 ] ; then
-		echo $USER
 		echo "OS_VERSION=`sw_vers -productVersion | grep -o 10\..`" >> /var/$USER/.bash_profile
 		echo "export OS_VERSION" >> /var/$USER/.bash_profile
 		echo "alias drush='/Applications/MNPP/Library/$OS_VERSION/bin/php /Applications/MNPP/Library/$OS_VERSION/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
