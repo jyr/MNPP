@@ -15,6 +15,10 @@
 -- source include/master-slave.inc
 source include/have_innodb.inc;
 
+--disable_query_log
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+--enable_query_log
+
 # MTR is not case-sensitive.
 let $lower_stmt_head= load data;
 let $UPPER_STMT_HEAD= LOAD DATA;
@@ -37,7 +41,9 @@ create temporary table t2 (day date,id int(9),category enum('a','b','c'),name va
 eval $lower_stmt_head infile '../../std_data/rpl_loaddata2.dat' into table t2 fields terminated by ',' optionally enclosed by '%' escaped by '@' lines terminated by '\n##\n' starting by '>' ignore 1 lines;
 
 create table t3 (day date,id int(9),category enum('a','b','c'),name varchar(60));
+--disable_warnings
 insert into t3 select * from t2;
+--enable_warnings
 
 sync_slave_with_master;
 
@@ -146,9 +152,15 @@ eval $lower_stmt_head infile '../../std_data/rpl_loaddata2.dat' into table t2 fi
 terminated by ',' optionally enclosed by '%' escaped by '@' lines terminated by
 '\n##\n' starting by '>' ignore 1 lines;
 connection slave;
---source include/wait_for_slave_sql_to_stop.inc
-drop table t1, t2;
---source include/stop_slave_io.inc
+
+if (`SELECT @@global.binlog_format != 'ROW'`)
+{
+  # Query causes error on master but not on slave. This causes the slave to
+  # stop with error code 0 (which is wrong: see BUG#57287)
+  --let $slave_sql_errno= 0
+  --source include/wait_for_slave_sql_error.inc
+  drop table t1, t2;
+}
 connection master;
 drop table t1, t2;
 
@@ -158,7 +170,7 @@ CREATE TABLE t1 (word CHAR(20) NOT NULL PRIMARY KEY) ENGINE=INNODB;
 --error ER_DUP_ENTRY
 eval $UPPER_STMT_HEAD INFILE "../../std_data/words.dat" INTO TABLE t1;
 
-DROP TABLE IF EXISTS t1;
+DROP TABLE t1;
 
 # BUG#48297: Schema name is ignored when LOAD DATA is written into binlog,
 # replication aborts
@@ -247,5 +259,4 @@ SELECT * FROM t1;
 -- connection master
 DROP TABLE t1;
 
-# End of 4.1 tests
 --source include/rpl_end.inc

@@ -43,6 +43,7 @@ INSERT INTO t1 (c1,c2,c3) VALUES('def','abc','abc');
 INSERT INTO t1 (c1,c2,c3) VALUES('def','def','abc');
 INSERT INTO t1 (c1,c2,c3) VALUES('def','abc','def');
 INSERT INTO t1 (c1,c2,c3) VALUES('abc','def','def');
+# Bug#52430 
 --error ER_DUP_ENTRY
 INSERT INTO t1 (c1,c2,c3) VALUES('abc','abc','abc');
 --error ER_DUP_ENTRY

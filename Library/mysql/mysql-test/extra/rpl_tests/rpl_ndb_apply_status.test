@@ -139,7 +139,9 @@ let $run= 5;
 while ($run)
 {
  START TRANSACTION;
+ --disable_warnings
  --eval CALL tpcb.trans($rpl_format);
+ --enable_warnings
  eval SET @my_errno= $mysql_errno;
  let $run_good= `SELECT @my_errno = 0`;
  let $run_bad= `SELECT @my_errno <> 0`;
@@ -188,7 +190,9 @@ let $run= 5;
 while ($run)
 {
  START TRANSACTION;
+ --disable_warnings
  --eval CALL tpcb.trans($rpl_format);
+ --enable_warnings
  eval SET @my_errno= $mysql_errno;
  let $run_good= `SELECT @my_errno = 0`;
  let $run_bad= `SELECT @my_errno <> 0`;
@@ -238,7 +242,9 @@ let $run= 5;
 while ($run)
 {
  START TRANSACTION;
+ --disable_warnings
  --eval CALL tpcb.trans($rpl_format);
+ --enable_warnings
  eval SET @my_errno= $mysql_errno;
  let $run_good= `SELECT @my_errno = 0`;
  let $run_bad= `SELECT @my_errno <> 0`;

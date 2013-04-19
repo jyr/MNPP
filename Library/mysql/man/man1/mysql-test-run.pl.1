@@ -2,12 +2,12 @@
 .\"     Title: \fBmysql-test-run.pl\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/09/2011
+.\"      Date: 02/29/2012
 .\"    Manual: MySQL Database System
 .\"    Source: MySQL
 .\"  Language: English
 .\"
-.TH "\FBMYSQL\-TEST\-RUN\" "1" "08/09/2011" "MySQL" "MySQL Database System"
+.TH "\FBMYSQL\-TEST\-RUN\" "1" "02/29/2012" "MySQL" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -168,7 +168,8 @@ and
 \fB\-\-skip\-grant\-tables\fR
 options\&. If MySQL was configured with the
 \fB\-\-disable\-grant\-options\fR
-option,
+option (only MySQL 5\&.1) or with the compiler flag
+\fB\-DDISABLE_GRANT_OPTIONS\fR, then
 \fB\-\-bootstrap\fR,
 \fB\-\-skip\-grant\-tables\fR, and
 \fB\-\-init\-file\fR
@@ -182,19 +183,7 @@ The
 init_file
 test will fail if
 \fB\-\-init\-file\fR
-is disabled\&. This is an expected failure that can be handled as follows:
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-shell> \fBexport MYSQLD_BOOTSTRAP\fR
-shell> \fBMYSQLD_BOOTSTRAP=/full/path/to/mysqld\fR
-shell> \fBmake test force="\-\-skip\-test=init_file"\fR
-.fi
-.if n \{\
-.RE
-.\}
+is disabled\&. This is an expected failure in this case\&.
 .PP
 To run
 \fBmysql\-test\-run\&.pl\fR
@@ -236,6 +225,9 @@ T}:T{
 Meaning
 T}
 .T&
+l l
+l l
+l l
 l l
 l l
 l l
@@ -301,6 +293,23 @@ T}:T{
 Full path name to \fBmysqld\fR that has all options enabled
 T}
 T{
+MYSQLD_BOOTSTRAP_CMD
+T}:T{
+Full command line used for initial database setup for this test batch
+T}
+T{
+MYSQLD
+T}:T{
+Full path to server executable used in tests\&. Supported from MySQL
+                5\&.5\&.17\&.
+T}
+T{
+MYSQLD_CMD
+T}:T{
+Command line for starting server as used in tests, with the minimum set
+                of required arguments\&. Supported from MySQL 5\&.5\&.17\&.
+T}
+T{
 MYSQLTEST_VARDIR
 T}:T{
 Path name to the var directory that is used for
@@ -335,6 +344,13 @@ exec $MYSQL_TEST\&.
 .PP
 Other tests may refer to the last three variables listed in the preceding table, to locate files to read or write\&. For example, tests that need to create files will typically put them in
 $MYSQL_TMP_DIR/\fIfile_name\fR\&.
+.PP
+The variable
+$MYSQLD_CMD
+will include any server options added with the
+\fB\-\-mysqld\fR
+option to
+\fBmysql\-test\-run\&.pl\fR, but will not include server options added specifically for the currently running test\&.
 .PP
 If you are running
 \fBmysql\-test\-run\&.pl\fR
@@ -385,6 +401,63 @@ BIG_TEST
 is set to 1\&.
 .sp
 This is typically done for tests that take very long to run, or that use very much resources, so that they are not suitable for running as part of a normal test suite run\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql-test-run.pl: boot-dbx option
+.\" boot-dbx option: mysql-test-run.pl
+\fB\-\-boot\-dbx\fR
+.sp
+Run the
+\fBmysqld\fR
+server used for bootstrapping the database through the
+\fBdbx\fR
+debugger\&. This option is available from MySQL 5\&.5\&.17\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql-test-run.pl: boot-ddd option
+.\" boot-ddd option: mysql-test-run.pl
+\fB\-\-boot\-ddd\fR
+.sp
+Run the
+\fBmysqld\fR
+server used for bootstrapping the database through the
+\fBddd\fR
+debugger\&. This option is available from MySQL 5\&.5\&.17\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql-test-run.pl: boot-gdb option
+.\" boot-gdb option: mysql-test-run.pl
+\fB\-\-boot\-gdb\fR
+.sp
+Run the
+\fBmysqld\fR
+server used for bootstrapping the database through the
+\fBgdb\fR
+debugger\&. This option is available from MySQL 5\&.5\&.17\&.
 .RE
 .sp
 .RS 4
@@ -1780,6 +1853,27 @@ option for details\&.
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysql-test-run.pl: skip-test-list option
+.\" skip-test-list option: mysql-test-run.pl
+\fB\-\-skip\-test\-list=\fR\fB\fIfile\fR\fR
+.sp
+Specify a file listing tests that should be skipped (disabled)\&.
+.sp
+The file has the same format as the
+disabled\&.def
+file listing disabled tests\&. With this option, disabling can be done on a case by case basis\&. The
+\fB\-\-skip\-test\-list\fR
+option is supported from MySQL 5\&.5\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 \fB\-\-skip\-*\fR
 .sp
 \fB\-\-skip\-*\fR
@@ -1959,6 +2053,30 @@ Create
 \fBstrace\fR
 output for
 \fBmysqltest\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysql-test-run.pl: stress option
+.\" stress option: mysql-test-run.pl
+\fB\-\-stress=\fR\fB\fIstress options\fR\fR
+.sp
+Start a server, but instead of running a test, run
+\fBmysql\-stress\-test\&.pl\fR
+with the supplied arguments\&. Arguments needed to communicate with the server will be automatically provided, the rest should be given as arguments to this option\&. Command line options for
+\fBmysql\-stress\-test\&.pl\fR
+should be separeted by a comma\&.
+.sp
+The
+\fBstress\fR
+option was added in MySQL 5\&.5\&.17, it is not a direct replacement for the option of the same name that exists in version 1 of
+\fBmysql\-test\-run\&.pl\fR\&.
 .RE
 .sp
 .RS 4
@@ -2376,7 +2494,7 @@ in their name\&.
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

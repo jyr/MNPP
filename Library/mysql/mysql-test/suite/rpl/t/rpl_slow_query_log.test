@@ -28,8 +28,8 @@
 source include/master-slave.inc;
 source include/have_binlog_format_statement.inc;
 
-CALL mtr.add_suppression("Unsafe statement binlogged in statement format since BINLOG_FORMAT = STATEMENT");
-
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+call mtr.add_suppression("Slave SQL.*Request to stop slave SQL Thread received while applying a group that has non-transactional changes; waiting for completion of the group");
 
 # Prepare slave for different long_query_time we need to stop the slave 
 # and restart it as long_query_time variable is dynamic and, after 
@@ -175,6 +175,7 @@ TRUNCATE mysql.slow_log;
 # clean up: drop tables, reset the variables back to the previous value,
 #           disconnect extra connections
 connection extra2;
+
 SET GLOBAL slow_query_log= @old_slow_query_log;
 
 connection master;
@@ -232,7 +233,7 @@ let $master_slow_query= `SELECT count(*) = 1 FROM mysql.slow_log WHERE sql_text 
 -- sync_slave_with_master
 let $slave_slow_query= `SELECT count(*) = 1 FROM mysql.slow_log WHERE sql_text like '$slow_query'`;
 
-if (`SELECT $master_slow_query != $slave_slow_query`)
+if ($master_slow_query != $slave_slow_query)
 {
   -- connection master
   -- echo ***********************************************
@@ -249,7 +250,7 @@ if (`SELECT $master_slow_query != $slave_slow_query`)
   -- die "Assertion failed! Master and slave slow log contents differ. Bailing out!"
 }
 
-if (`SELECT $master_slow_query = $slave_slow_query`)
+if ($master_slow_query == $slave_slow_query)
 {
   -- echo ### Assertion is good. Both Master and Slave exhibit the 
   -- echo ### same number of queries in slow log: $master_slow_query
@@ -275,7 +276,7 @@ let $master_slow_query= `SELECT count(*) = 1 FROM mysql.slow_log WHERE sql_text 
 -- sync_slave_with_master
 let $slave_slow_query= `SELECT count(*) = 1 FROM mysql.slow_log WHERE sql_text like '$slow_query'`;
 
-if (`SELECT $master_slow_query != $slave_slow_query`)
+if ($master_slow_query != $slave_slow_query)
 {
   -- connection master
   -- echo ***********************************************
@@ -292,7 +293,7 @@ if (`SELECT $master_slow_query != $slave_slow_query`)
   -- die "Assertion failed! Master and slave slow log contents differ. Bailing out!"
 }
 
-if (`SELECT $master_slow_query = $slave_slow_query`)
+if ($master_slow_query == $slave_slow_query)
 {
   -- echo ### Assertion is good. Both Master and Slave exhibit the 
   -- echo ### same number of queries in slow log: $master_slow_query

@@ -21,6 +21,5 @@ sync_slave_with_master;
 SELECT * FROM t1 ORDER BY id;
 connection master;
 DROP TABLE t1;
-sync_slave_with_master;
 
 --source include/rpl_end.inc

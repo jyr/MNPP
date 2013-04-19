@@ -191,6 +191,24 @@
 }
 
 {
+   libz longest_match called from btr_store_big_rec_extern_fields
+   Memcheck:Cond
+   fun:longest_match
+   fun:deflate_slow
+   fun:deflate
+   fun:btr_store_big_rec_extern_fields
+}
+
+{
+   libz longest_match called from page_zip_compress
+   Memcheck:Cond
+   fun:longest_match
+   fun:deflate_slow
+   fun:deflate
+   fun:page_zip_compress
+}
+
+{
    libz longest_match2
    Memcheck:Cond
    fun:longest_match
@@ -745,6 +763,78 @@
    fun:buf_buddy_relocate
 }
 
+#
+# See related Bug#56666
+# Race condition between the server main thread and the kill server thread.
+#
+# Because of this race condition, the call to shutdown_performance_schema()
+# was commented in sql/mysqld.cc, causing the reported leaks.
+#
+
+{
+   missing shutdown_performance_schema 1
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z10pfs_mallocmi
+}
+
+{
+   missing shutdown_performance_schema 2
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:_lf_alloc_new
+   fun:lf_hash_insert
+}
+
+#
+# Note that initialize_bucket() is reccursive,
+# can't provide more stack context.
+#
+{
+   missing shutdown_performance_schema 3
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:initialize_bucket
+}
+
+{
+   missing shutdown_performance_schema 4
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:_lf_dynarray_lvalue
+   fun:_lf_pinbox_get_pins
+}
+
+{
+   missing shutdown_performance_schema 5
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:_lf_dynarray_lvalue
+   fun:lf_hash_insert
+}
+
+{
+   missing shutdown_performance_schema 6
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:_lf_dynarray_lvalue
+   fun:lf_hash_delete
+}
+
+{
+   missing shutdown_performance_schema 7
+   Memcheck:Leak
+   fun:malloc
+   fun:my_malloc
+   fun:_lf_dynarray_lvalue
+   fun:lf_hash_search
+}
+
 {
    Bug 59874 Valgrind warning in InnoDB compression code
    Memcheck:Cond
@@ -767,16 +857,15 @@
    fun:*
    fun:deflate
    fun:page_zip_compress
-   fun:page_cur_insert_rec_zip_reorg
-   fun:page_cur_insert_rec_zip
-   fun:page_cur_tuple_insert
-   fun:btr_cur_optimistic_insert
-   fun:row_ins_index_entry_low
-   fun:row_ins_index_entry
-   fun:row_ins_index_entry_step
-   fun:row_ins
-   fun:row_ins_step
-   fun:row_insert_for_mysql
+}
+
+{
+   In page0zip.c we have already checked that the memory is initialized before calling deflate()
+   Memcheck:Cond
+   fun:*
+   fun:*
+   fun:deflate
+   fun:page_zip_compress_deflate
 }
 
 {
@@ -786,8 +875,56 @@
    fun:buf_buddy_relocate
    fun:buf_buddy_free_low
    fun:buf_buddy_free
-   fun:buf_LRU_block_remove_hashed_page
-   fun:buf_LRU_invalidate_tablespace
-   fun:fil_delete_tablespace
-   fun:row_drop_table_for_mysql
+}
+{
+   zlib longest_match false positive
+   Memcheck:Cond
+   fun:longest_match
+   fun:deflate_slow
+   fun:deflate
+   fun:compress
+   fun:my_compress_alloc
+}
+
+# Note the wildcard in the (mangled) function signatures of
+# write_keys() and find_all_keys().
+# They both return ha_rows, which is platform dependent.
+#
+# The '...' wildcards are for 'fun:inline_mysql_file_write' which *may*
+# be inlined.
+{
+   Bug#12856915 VALGRIND FAILURE IN FILESORT/CREATE_SORT_INDEX / one
+   Memcheck:Param
+   write(buf)
+   obj:*/libpthread*.so
+   fun:my_write
+   ...
+   fun:my_b_flush_io_cache
+   fun:_my_b_write
+   fun:_Z*10write_keysP13st_sort_paramPPhjP11st_io_cacheS4_
+   fun:_Z*13find_all_keysP13st_sort_paramP10SQL_SELECTPPhP11st_io_cacheS6_
+   fun:_Z8filesortP3THDP5TABLEP13st_sort_fieldjP10SQL_SELECTybPy
+}
+
+{
+   Bug#12856915 VALGRIND FAILURE IN FILESORT/CREATE_SORT_INDEX / two
+   Memcheck:Param
+   write(buf)
+   obj:*/libpthread*.so
+   fun:my_write
+   ...
+   fun:my_b_flush_io_cache
+   fun:_Z15merge_many_buffP13st_sort_paramPhP10st_buffpekPjP11st_io_cache
+   fun:_Z8filesortP3THDP5TABLEP13st_sort_fieldjP10SQL_SELECTybPy
+}
+
+{
+   Bug#12856915 VALGRIND FAILURE IN FILESORT/CREATE_SORT_INDEX / three
+   Memcheck:Param
+   write(buf)
+   obj:*/libpthread*.so
+   fun:my_write
+   ...
+   fun:my_b_flush_io_cache
+   fun:_Z8filesortP3THDP5TABLEP13st_sort_fieldjP10SQL_SELECTybPy
 }

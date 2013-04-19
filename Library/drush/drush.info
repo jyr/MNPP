@@ -1,7 +1,0 @@
-drush_version=5.0-dev
-
-; Information added by drupal.org packaging script on 2011-12-06
-version = "All-versions-5.x-dev"
-project = "drush"
-datestamp = "1323130454"
-

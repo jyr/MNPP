@@ -5,22 +5,50 @@
 -- source include/have_partition.inc
 
 --disable_warnings
-drop table if exists t1;
+drop table if exists t1, t2;
 --enable_warnings
 
 let $MYSQLD_DATADIR= `SELECT @@datadir`;
 
 --echo #
+--echo # Bug#13608188 - 64038: CRASH IN HANDLER::HA_THD ON ALTER TABLE AFTER
+--echo #                       REPAIR NON-EXISTING PARTITION
+--echo #
+CREATE TABLE t1 ( a INT, b INT );
+INSERT INTO t1 VALUES (5,3),(5,6);
+ALTER TABLE t1 PARTITION BY KEY(b) PARTITIONS 3 ;
+ALTER TABLE t1 REPAIR PARTITION p1, p3;
+ALTER TABLE t1 ORDER BY b;
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#13593865 - 64037: CRASH IN HA_PARTITION::CREATE_HANDLERS ON
+--echo #                       ALTER TABLE AFTER DROP PARTITION
+--echo #
+
+CREATE TABLE t1 (a INT)
+PARTITION BY RANGE (a)
+(PARTITION p0 VALUES LESS THAN (0),
+ PARTITION p1 VALUES LESS THAN MAXVALUE ) ;
+
+ALTER TABLE t1 DROP PARTITION p1;
+ALTER TABLE t1 ANALYZE PARTITION p0, p1;
+
+ALTER TABLE t1 COMMENT 'altered';
+
+DROP TABLE t1;
+
+--echo #
 --echo # Bug#57924: crash when creating partitioned table with
 --echo #            multiple columns in the partition key
 --echo #
---error ER_FIELD_NOT_FOUND_PART_ERROR
+--error ER_SAME_NAME_PARTITION_FIELD
 CREATE TABLE t1 (a INT, b INT, PRIMARY KEY (a,b))
 PARTITION BY KEY(a, b, a);
 CREATE TABLE t1 (a INT, b INT, PRIMARY KEY (a,b))
 PARTITION BY KEY(A, b);
 DROP TABLE t1;
---error ER_FIELD_NOT_FOUND_PART_ERROR
+--error ER_SAME_NAME_PARTITION_FIELD
 CREATE TABLE t1 (a INT, b INT, PRIMARY KEY (a,b))
 PARTITION BY KEY(a, b, A);
 
@@ -222,26 +250,23 @@ PARTITION BY HASH (WEEKDAY(a));
 --error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
 CREATE TABLE t1 (a INT)
 PARTITION BY HASH (WEEKDAY(a));
---echo # TO_SECONDS() is added in 5.5.
 
---error ER_PARSE_ERROR
+--echo # TO_SECONDS() is added in 5.5.
+--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
 CREATE TABLE t1 (a TIME)
 PARTITION BY HASH (TO_SECONDS(a));
-#--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
-#CREATE TABLE t1 (a TIME)
-#PARTITION BY HASH (TO_SECONDS(a));
-#CREATE TABLE t1 (a DATE)
-#PARTITION BY HASH (TO_SECONDS(a));
-#DROP TABLE t1;
-#CREATE TABLE t1 (a DATETIME)
-#PARTITION BY HASH (TO_SECONDS(a));
-#DROP TABLE t1;
-#--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
-#CREATE TABLE t1 (a VARCHAR(10))
-#PARTITION BY HASH (TO_SECONDS(a));
-#--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
-#CREATE TABLE t1 (a INT)
-#PARTITION BY HASH (TO_SECONDS(a));
+CREATE TABLE t1 (a DATE)
+PARTITION BY HASH (TO_SECONDS(a));
+DROP TABLE t1;
+CREATE TABLE t1 (a DATETIME)
+PARTITION BY HASH (TO_SECONDS(a));
+DROP TABLE t1;
+--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
+CREATE TABLE t1 (a VARCHAR(10))
+PARTITION BY HASH (TO_SECONDS(a));
+--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
+CREATE TABLE t1 (a INT)
+PARTITION BY HASH (TO_SECONDS(a));
 
 CREATE TABLE t1 (a TIME)
 PARTITION BY HASH (TIME_TO_SEC(a));
@@ -689,22 +714,63 @@ CREATE TABLE t1 (a INT)
 PARTITION BY HASH (TIME_TO_SEC(a));
 
 --echo #
---echo # Bug#49161: Out of memory; restart server and try again (needed 2 bytes)
---echo #
-CREATE TABLE t1 (a INT) PARTITION BY HASH (a);
-FLUSH TABLES;
---remove_file $MYSQLD_DATADIR/test/t1.par
---replace_result $MYSQLD_DATADIR ./
-CHECK TABLE t1;
---error ER_UNKNOWN_ERROR
-SELECT * FROM t1;
---echo # Note that it is currently impossible to drop a partitioned table
---echo # without the .par file
---error ER_BAD_TABLE_ERROR
+--echo # Bug#50036: Inconsistent errors when using TIMESTAMP
+--echo #            columns/expressions
+
+--echo # 1. correct and appropriate errors in light of
+--echo #    the fix for BUG#42849:
+--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY RANGE (TO_DAYS(c))
+(PARTITION p0 VALUES LESS THAN (10000),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+CREATE TABLE t2 (c TIMESTAMP);
+--error ER_WRONG_EXPR_IN_PARTITION_FUNC_ERROR
+ALTER TABLE t2
+PARTITION BY RANGE (TO_DAYS(c))
+(PARTITION p0 VALUES LESS THAN (10000),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+
+--error ER_FIELD_TYPE_NOT_ALLOWED_AS_PARTITION_FIELD
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY RANGE COLUMNS(c)
+(PARTITION p0 VALUES LESS THAN ('2000-01-01 00:00:00'),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+--error ER_FIELD_TYPE_NOT_ALLOWED_AS_PARTITION_FIELD
+ALTER TABLE t2 PARTITION BY RANGE COLUMNS(c)
+(PARTITION p0 VALUES LESS THAN ('2000-01-01 00:00:00'),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+DROP TABLE t2;
+
+--echo # 2. These errors where questionable before the fix:
+
+--echo # VALUES clause are checked first, clearified the error message.
+--error ER_VALUES_IS_NOT_INT_TYPE_ERROR
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY RANGE (c)
+(PARTITION p0 VALUES LESS THAN ('2000-01-01 00:00:00'),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+
+--echo # TIMESTAMP is not INT (e.g. UNIX_TIMESTAMP).
+--error ER_VALUES_IS_NOT_INT_TYPE_ERROR
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY RANGE (UNIX_TIMESTAMP(c))
+(PARTITION p0 VALUES LESS THAN ('2000-01-01 00:00:00'),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
+
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY RANGE (UNIX_TIMESTAMP(c))
+(PARTITION p0 VALUES LESS THAN (UNIX_TIMESTAMP('2000-01-01 00:00:00')),
+ PARTITION p1 VALUES LESS THAN (MAXVALUE));
 DROP TABLE t1;
---remove_file $MYSQLD_DATADIR/test/t1.frm
---remove_file $MYSQLD_DATADIR/test/t1#P#p0.MYI
---remove_file $MYSQLD_DATADIR/test/t1#P#p0.MYD
+
+--echo # Changed error from ER_INCONSISTENT_TYPE_OF_FUNCTIONS_ERROR
+--error ER_FIELD_TYPE_NOT_ALLOWED_AS_PARTITION_FIELD
+CREATE TABLE t1 (c TIMESTAMP)
+PARTITION BY HASH (c) PARTITIONS 4;
+
+--echo # Moved to partition_myisam, since it was MyISAM specific
+--echo # Added test with existing TIMESTAMP partitioning (when it was allowed).
 
 --echo #
 --echo # Bug#49477: Assertion `0' failed in ha_partition.cc:5530
@@ -714,30 +780,41 @@ CREATE TABLE t1 (a INT) PARTITION BY HASH(a);
 --error ER_PARTITION_NO_TEMPORARY
 CREATE TEMPORARY TABLE tmp_t1 LIKE t1;
 DROP TABLE t1;
-
 --echo #
---echo # Bug#50392: insert_id is not reset for partitioned tables
---echo #            auto_increment on duplicate entry
-CREATE TABLE t1 (a INT AUTO_INCREMENT PRIMARY KEY);
-SET INSERT_ID= 13;
-INSERT INTO t1 VALUES (NULL);
-SET INSERT_ID= 12;
---error ER_DUP_ENTRY
-INSERT INTO t1 VALUES (NULL), (NULL), (NULL);
+--echo # Bug#42954: SQL MODE 'NO_DIR_IN_CREATE' does not work with
+--echo #            subpartitions
+SET @org_mode=@@sql_mode;
+SET @@sql_mode='NO_DIR_IN_CREATE';
+SELECT @@sql_mode;
+CREATE TABLE t1 (id INT, purchased DATE)
+PARTITION BY RANGE(YEAR(purchased))
+SUBPARTITION BY HASH(TO_DAYS(purchased))
+(PARTITION p0 VALUES LESS THAN MAXVALUE
+  DATA DIRECTORY = '/tmp/not-existing' 
+  INDEX DIRECTORY = '/tmp/not-existing');
+--replace_result MyISAM <curr_engine> InnoDB <curr_engine>
 SHOW CREATE TABLE t1;
-INSERT INTO t1 VALUES (NULL);
-SELECT * FROM t1;
 DROP TABLE t1;
-CREATE TABLE t1 (a INT AUTO_INCREMENT PRIMARY KEY) PARTITION BY KEY(a);
-SET INSERT_ID= 13;
-INSERT INTO t1 VALUES (NULL);
-SET INSERT_ID= 12;
---error ER_DUP_ENTRY
-INSERT INTO t1 VALUES (NULL), (NULL), (NULL);
+CREATE TABLE t1 (id INT, purchased DATE)
+PARTITION BY RANGE(YEAR(purchased))
+SUBPARTITION BY HASH(TO_DAYS(purchased)) SUBPARTITIONS 2
+(PARTITION p0 VALUES LESS THAN MAXVALUE
+ (SUBPARTITION sp0
+   DATA DIRECTORY = '/tmp/not-existing' 
+   INDEX DIRECTORY = '/tmp/not-existing',
+  SUBPARTITION sp1));
+--replace_result MyISAM <curr_engine> InnoDB <curr_engine>
 SHOW CREATE TABLE t1;
-INSERT INTO t1 VALUES (NULL);
-SELECT * FROM t1;
 DROP TABLE t1;
+CREATE TABLE t1 (id INT, purchased DATE)
+PARTITION BY RANGE(YEAR(purchased))
+(PARTITION p0 VALUES LESS THAN MAXVALUE
+  DATA DIRECTORY = '/tmp/not-existing' 
+  INDEX DIRECTORY = '/tmp/not-existing');
+--replace_result MyISAM <curr_engine> InnoDB <curr_engine>
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+SET @@sql_mode= @org_mode;
 
 #
 # Bug#38719: Partitioning returns a different error code for a
@@ -751,24 +828,6 @@ PARTITION BY KEY (a) PARTITIONS 2;
 -- error ER_DUP_ENTRY
 INSERT INTO t1 VALUES (1),(1);
 DROP TABLE t1;
-
-#
-# Bug#31931: Mix of handlers error message
-#
---error ER_MIX_HANDLER_ERROR
-CREATE TABLE t1 (a INT)
-PARTITION BY HASH (a)
-( PARTITION p0 ENGINE=MyISAM,
-  PARTITION p1);
---error ER_MIX_HANDLER_ERROR
-CREATE TABLE t1 (a INT)
-PARTITION BY LIST (a)
-SUBPARTITION BY HASH (a)
-( PARTITION p0 VALUES IN (0)
-( SUBPARTITION s0, SUBPARTITION s1 ENGINE=MyISAM, SUBPARTITION s2),
-  PARTITION p1 VALUES IN (1)
-( SUBPARTITION s3 ENGINE=MyISAM, SUBPARTITION s4, SUBPARTITION s5 ENGINE=MyISAM));
-
 
 #
 # Bug 29368:
@@ -786,7 +845,7 @@ PARTITION BY RANGE (a)
 #
 # Partition by key stand-alone error
 #
---error 1064
+--error ER_PARSE_ERROR
 partition by list (a)
 partitions 3
 (partition x1 values in (1,2,9,4) tablespace ts1,
@@ -823,7 +882,7 @@ partitions 3
 #
 # Partition by key, partition function not allowed
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -838,7 +897,7 @@ partitions 3
 #
 # Partition by key, no partition name
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -869,7 +928,7 @@ select load_file('$MYSQLD_DATADIR/test/t1.par');
 #
 # Partition by hash, invalid field in function
 #
---error 1054
+--error ER_BAD_FIELD_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -899,7 +958,7 @@ partitions 3
 #
 # Partition by key specified 3 partitions but only defined 2 => error
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -910,9 +969,9 @@ partitions 3
 (partition x1, partition x2);
 
 #
-# Partition by key specified 3 partitions but only defined 2 => error
+# Partition by hash, random function
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -923,9 +982,9 @@ partitions 2
 (partition x1, partition x2);
 
 #
-# Partition by key specified 3 partitions but only defined 2 => error
+# Partition by range, random function
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -936,9 +995,9 @@ partitions 2
 (partition x1 values less than (0), partition x2 values less than (2));
 
 #
-# Partition by key specified 3 partitions but only defined 2 => error
+# Partition by list, random function
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1074,7 +1133,7 @@ select load_file('$MYSQLD_DATADIR/test/t1.par');
 #
 # Subpartition by hash, no partitions defined, wrong subpartition function
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1101,7 +1160,7 @@ select load_file('$MYSQLD_DATADIR/test/t1.par');
 #
 # Subpartition by hash, no partitions defined, wrong subpartition function
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1142,7 +1201,7 @@ subpartition by hash (3+4);
 #
 # Subpartition by hash, no partitions defined, wrong subpartition function
 #
---error 1054
+--error ER_BAD_FIELD_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1168,7 +1227,7 @@ select load_file('$MYSQLD_DATADIR/test/t1.par');
 #
 # Partition by range, invalid field in function
 #
---error 1054
+--error ER_BAD_FIELD_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1182,7 +1241,7 @@ partitions 2
 #
 # Partition by range, inconsistent partition function and constants
 #
---error 1064
+--error ER_VALUES_IS_NOT_INT_TYPE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1252,7 +1311,7 @@ partitions 2
 #
 # Partition by range, missing parenthesis
 #
---error 1064
+--error ER_PARTITION_WRONG_VALUES_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1266,7 +1325,7 @@ partitions 2
 #
 # Partition by range, maxvalue in wrong place
 #
---error 1064
+--error ER_PARTITION_MAXVALUE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1280,7 +1339,7 @@ partitions 2
 #
 # Partition by range, maxvalue in several places
 #
---error 1064
+--error ER_PARTITION_MAXVALUE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1322,7 +1381,7 @@ partitions 2
 #
 # Subpartition by hash, wrong number of subpartitions
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1342,7 +1401,7 @@ subpartitions 3
 #
 # Subpartition by hash, wrong number of subpartitions
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1362,7 +1421,7 @@ subpartition by hash (a+b)
 #
 # Subpartition by list => error
 #
---error 1064 
+--error ER_PARSE_ERROR 
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1381,7 +1440,7 @@ subpartition by list (a+b)
 #
 # Subpartition by list => error
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1425,7 +1484,7 @@ partitions 2
 #
 # Partition by list, invalid field in function
 #
---error 1054
+--error ER_BAD_FIELD_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1495,7 +1554,7 @@ partitions 2
 #
 # Partition by list, wrong constant result type (not INT)
 #
---error 1064
+--error ER_VALUES_IS_NOT_INT_TYPE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1509,7 +1568,7 @@ partitions 2
 #
 # Partition by list, missing parenthesis
 #
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (
 a int not null,
 b int not null,
@@ -1523,7 +1582,7 @@ partitions 2
 #
 # Bug #13439: Crash when LESS THAN (non-literal)
 #
---error 1054
+--error ER_BAD_FIELD_ERROR
 CREATE TABLE t1 (a int)
 PARTITION BY RANGE (a)
 (PARTITION p0 VALUES LESS THAN (x1));
@@ -1550,13 +1609,13 @@ partition by range (ascii(v))
 (partition p0 values less than (10));
 #drop table t1;
 
--- error 1064
+-- error ER_PARSE_ERROR
 create table t1 (a int)
 partition by hash (rand(a));
--- error 1064
+-- error ER_PARSE_ERROR
 create table t1 (a int)
 partition by hash(CURTIME() + a);
--- error 1064
+-- error ER_PARSE_ERROR
 create table t1 (a int)
 partition by hash (NOW()+a);
 -- error ER_PARTITION_FUNCTION_IS_NOT_ALLOWED
@@ -1585,13 +1644,13 @@ PARTITION pmax VALUES LESS THAN MAXVALUE);
 # Check that allowed arithmetic/math functions involving TIMESTAMP values result
 # in ER_PARTITION_FUNC_NOT_ALLOWED_ERROR when used as a partitioning function
 
---error ER_PARTITION_FUNC_NOT_ALLOWED_ERROR
+--error ER_FIELD_TYPE_NOT_ALLOWED_AS_PARTITION_FIELD
 CREATE TABLE new (a TIMESTAMP NOT NULL PRIMARY KEY)
 PARTITION BY RANGE (a) (
 PARTITION p VALUES LESS THAN (20080819),
 PARTITION pmax VALUES LESS THAN MAXVALUE);
 
---error ER_PARTITION_FUNC_NOT_ALLOWED_ERROR
+--error ER_FIELD_TYPE_NOT_ALLOWED_AS_PARTITION_FIELD
 ALTER TABLE old
 PARTITION BY RANGE (a) (
 PARTITION p VALUES LESS THAN (20080819),

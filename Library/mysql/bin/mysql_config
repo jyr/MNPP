@@ -1,6 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2000-2008 MySQL AB, 2008 Sun Microsystems, Inc.
-# Use is subject to license terms.
+# Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,23 +78,29 @@ me=`get_full_path $0`
 
 basedir=`echo $me | sed -e 's;/bin/mysql_config;;'`
 
-ldata='/Applications/MNPP/Library/mysql/var'
-execdir='/Applications/MNPP/Library/mysql/libexec'
+ldata='/Applications/MNPP/Library/mysql/data'
+execdir='/Applications/MNPP/Library/mysql/bin'
 bindir='/Applications/MNPP/Library/mysql/bin'
 
 # If installed, search for the compiled in directory first (might be "lib64")
-pkglibdir='/Applications/MNPP/Library/mysql/lib/mysql'
+pkglibdir='/Applications/MNPP/Library/mysql/lib'
 pkglibdir_rel=`echo $pkglibdir | sed -e "s;^$basedir/;;"`
 fix_path pkglibdir $pkglibdir_rel lib/mysql lib
 
 plugindir='/Applications/MNPP/Library/mysql/lib/mysql/plugin'
+plugindir_rel=`echo $plugindir | sed -e "s;^$basedir/;;"`
+fix_path plugindir $plugindir_rel lib/mysql/plugin lib/plugin
 
-pkgincludedir='/Applications/MNPP/Library/mysql/include/mysql'
-fix_path pkgincludedir include/mysql include
+pkgincludedir='/Applications/MNPP/Library/mysql/include'
+if [ -f "$basedir/include/mysql/mysql.h" ]; then
+  pkgincludedir="$basedir/include/mysql"
+elif [ -f "$basedir/include/mysql.h" ]; then
+  pkgincludedir="$basedir/include"
+fi
 
-version='5.1.59'
-socket='/Applications/MNPP/tmp/mysql/mysql.sock'
-ldflags=' '
+version='5.5.30'
+socket='/tmp/mysql.sock'
+ldflags=''
 
 if [ 0 -eq 0 ]; then
   port=0
@@ -105,10 +110,10 @@ fi
 
 # Create options 
 # We intentionally add a space to the beginning and end of lib strings, simplifies replace later
-libs=" $ldflags -L$pkglibdir -lmysqlclient -lz -lm "
+libs=" $ldflags -L$pkglibdir -lmysqlclient  -lz "
 libs="$libs   "
-libs_r=" $ldflags -L$pkglibdir -lmysqlclient_r -lz -lm    "
-embedded_libs=" $ldflags -L$pkglibdir -lmysqld -ldl  -lz -lm      "
+libs_r=" $ldflags -L$pkglibdir -lmysqlclient_r  -lz   "
+embedded_libs=" $ldflags -L$pkglibdir -lmysqld      "
 
 if [ -r "$pkglibdir/libmygcc.a" ]; then
   # When linking against the static library with a different version of GCC
@@ -120,7 +125,7 @@ if [ -r "$pkglibdir/libmygcc.a" ]; then
   embedded_libs="$embedded_libs -lmygcc "
 fi
 
-cflags="-I$pkgincludedir  -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer   -D_P1003_1B_VISIBLE -DSIGNAL_WITH_VIO_CLOSE -DSIGNALS_DONT_BREAK_READ -DIGNORE_SIGHUP_SIGQUIT  -DDONT_DECLARE_CXA_PURE_VIRTUAL " #note: end space!
+cflags="-I$pkgincludedir -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -O2 -g -DNDEBUG -DDBUG_OFF " #note: end space!
 include="-I$pkgincludedir"
 
 # Remove some options that a client doesn't have to care about
@@ -128,8 +133,7 @@ include="-I$pkgincludedir"
 #       and -xstrconst to make --cflags usable for Sun Forte C++
 # FIXME until we have a --cxxflags, we need to remove -AC99
 #       to make --cflags usable for HP C++ (aCC)
-for remove in DDBUG_OFF DSAFEMALLOC USAFEMALLOC DSAFE_MUTEX \
-              DPEDANTIC_SAFEMALLOC DUNIV_MUST_NOT_INLINE DFORCE_INIT_OF_VARS \
+for remove in DDBUG_OFF DSAFE_MUTEX DUNIV_MUST_NOT_INLINE DFORCE_INIT_OF_VARS \
               DEXTRA_DEBUG DHAVE_purify O 'O[0-9]' 'xO[0-9]' 'W[-A-Za-z]*' \
               'mtune=[-A-Za-z0-9]*' 'mcpu=[-A-Za-z0-9]*' 'march=[-A-Za-z0-9]*' \
               Xa xstrconst "xc99=none" AC99 \
@@ -168,6 +172,10 @@ Options:
         --port           [$port]
         --version        [$version]
         --libmysqld-libs [$embedded_libs]
+        --variable=VAR   VAR is one of:
+                pkgincludedir [$pkgincludedir]
+                pkglibdir     [$pkglibdir]
+                plugindir     [$plugindir]
 EOF
         exit 1
 }
@@ -185,6 +193,15 @@ while test $# -gt 0; do
         --port)    echo "$port" ;;
         --version) echo "$version" ;;
         --embedded-libs | --embedded | --libmysqld-libs) echo "$embedded_libs" ;;
+        --variable=*)
+          var=`echo "$1" | sed 's,^[^=]*=,,'`
+          case "$var" in
+            pkgincludedir) echo "$pkgincludedir" ;;
+            pkglibdir) echo "$pkglibdir" ;;
+            plugindir) echo "$plugindir" ;;
+            *) usage ;;
+          esac
+          ;;
         *)         usage ;;
         esac
 

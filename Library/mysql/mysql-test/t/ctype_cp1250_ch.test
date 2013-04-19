@@ -79,6 +79,6 @@ drop table t1;
 #            (triggered by Valgrind tests)
 #  (see also ctype_eucjpms.test, ctype_cp1250.test, ctype_cp1251.test)
 #
---error 1193
+--error 1649
 set global LC_MESSAGES=convert((@@global.log_bin_trust_function_creators) 
     using cp1250);

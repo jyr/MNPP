@@ -99,6 +99,8 @@ return i;
 end|
 set @error_in_func:= 0|
 insert into t1 values (bug10015_6(5)), (bug10015_6(6))|
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 select @error_in_func|
 @error_in_func
 1
@@ -524,6 +526,8 @@ until done end repeat;
 close c;
 end|
 call bug14210()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select count(*) from t4|
 count(*)
 256
@@ -533,9 +537,7 @@ set @@session.max_heap_table_size=default|
 CREATE DATABASE db_bug7787|
 use db_bug7787|
 CREATE PROCEDURE p1()
-SHOW INNODB STATUS; |
-Warnings:
-Warning	1287	'SHOW INNODB STATUS' is deprecated and will be removed in a future release. Please use 'SHOW ENGINE INNODB STATUS' instead
+SHOW ENGINE INNODB STATUS; |
 GRANT EXECUTE ON PROCEDURE p1 TO user_bug7787@localhost|
 DROP DATABASE db_bug7787|
 drop user user_bug7787@localhost|
@@ -556,3 +558,93 @@ f1	bug13575(f1)
 3	ccc
 drop function bug13575|
 drop table t3|
+SELECT @@GLOBAL.storage_engine INTO @old_engine|
+SET @@GLOBAL.storage_engine=InnoDB|
+SET @@SESSION.storage_engine=InnoDB|
+SHOW GLOBAL VARIABLES LIKE 'storage_engine'|
+Variable_name	Value
+storage_engine	InnoDB
+SHOW SESSION VARIABLES LIKE 'storage_engine'|
+Variable_name	Value
+storage_engine	InnoDB
+CREATE PROCEDURE bug11758414()
+BEGIN
+SET @@GLOBAL.storage_engine="MyISAM";
+SET @@SESSION.storage_engine="MyISAM"; 
+# show defaults at execution time / that setting them worked
+SHOW GLOBAL VARIABLES LIKE 'storage_engine';
+SHOW SESSION VARIABLES LIKE 'storage_engine';
+CREATE TABLE t1 (id int);
+CREATE TABLE t2 (id int) ENGINE=InnoDB;
+# show we're heeding the default (at run-time, not parse-time!)
+ SHOW CREATE TABLE t1;
+ # show that we didn't break explicit override with ENGINE=...
+SHOW CREATE TABLE t2;
+END;
+|
+CALL bug11758414|
+Variable_name	Value
+storage_engine	MyISAM
+Variable_name	Value
+storage_engine	MyISAM
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `id` int(11) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
+SHOW GLOBAL VARIABLES LIKE 'storage_engine'|
+Variable_name	Value
+storage_engine	MyISAM
+SHOW SESSION VARIABLES LIKE 'storage_engine'|
+Variable_name	Value
+storage_engine	MyISAM
+DROP PROCEDURE bug11758414|
+DROP TABLE t1, t2|
+SET @@GLOBAL.storage_engine=@old_engine|
+#
+# End of 5.1 tests
+#
+# 
+# Bug #35877 Update .. WHERE with function, constraint violation, crash 
+#           
+DROP TABLE IF EXISTS t1_aux|
+DROP TABLE IF EXISTS t1_not_null|
+DROP FUNCTION IF EXISTS f1_two_inserts|
+# MyISAM test
+CREATE TABLE t1_not_null (f1 BIGINT, f2 BIGINT NOT NULL)|
+CREATE TABLE t1_aux (f1 BIGINT, f2 BIGINT)|
+INSERT INTO t1_aux VALUES (1,1)|
+CREATE FUNCTION f1_two_inserts() returns INTEGER
+BEGIN
+INSERT INTO t1_not_null SET f1 = 10, f2 = NULL;
+RETURN 1;
+END|
+UPDATE t1_aux SET f2 = 2 WHERE f1 = f1_two_inserts()|
+ERROR 23000: Column 'f2' cannot be null
+# InnoDB test
+ALTER TABLE t1_not_null ENGINE = InnoDB|
+ALTER TABLE t1_aux ENGINE = InnoDB|
+UPDATE t1_aux SET f2 = 2 WHERE f1 = f1_two_inserts()|
+ERROR 23000: Column 'f2' cannot be null
+DROP TABLE t1_aux, t1_not_null|
+DROP FUNCTION f1_two_inserts|
+#
+# Bug#49938: Failing assertion: inode or deadlock in fsp/fsp0fsp.c
+#
+DROP PROCEDURE IF EXISTS p1|
+DROP TABLE IF EXISTS t1|
+CREATE TABLE t1 (a INT) ENGINE=INNODB|
+CREATE PROCEDURE p1()
+BEGIN
+TRUNCATE TABLE t1;
+END|
+LOCK TABLES t1 WRITE|
+CALL p1()|
+FLUSH TABLES;
+UNLOCK TABLES|
+CALL p1()|
+DROP PROCEDURE p1|
+DROP TABLE t1|

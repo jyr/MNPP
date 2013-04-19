@@ -1,5 +1,4 @@
-/*
-   Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -12,19 +11,32 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
-*/
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
 #ifndef _my_plugin_h
 #define _my_plugin_h
 
-
 /*
   On Windows, exports from DLL need to be declared
+  Also, plugin needs to be declared as extern "C" because MSVC 
+  unlike other compilers, uses C++ mangling for variables not only
+  for functions.
 */
-#if (defined(_WIN32) && defined(MYSQL_DYNAMIC_PLUGIN))
-#define MYSQL_PLUGIN_EXPORT extern "C" __declspec(dllexport)
-#else
+#if defined(_MSC_VER)
+#if defined(MYSQL_DYNAMIC_PLUGIN)
+  #ifdef __cplusplus
+    #define MYSQL_PLUGIN_EXPORT extern "C" __declspec(dllexport)
+  #else
+    #define MYSQL_PLUGIN_EXPORT __declspec(dllexport)
+  #endif
+#else /* MYSQL_DYNAMIC_PLUGIN */
+  #ifdef __cplusplus
+    #define  MYSQL_PLUGIN_EXPORT extern "C"
+  #else
+    #define MYSQL_PLUGIN_EXPORT 
+  #endif
+#endif /*MYSQL_DYNAMIC_PLUGIN */
+#else /*_MSC_VER */
 #define MYSQL_PLUGIN_EXPORT
 #endif
 
@@ -36,15 +48,7 @@ class Item;
 #define MYSQL_THD void*
 #endif
 
-#ifndef _m_string_h
-/* This definition must match the one given in m_string.h */
-struct st_mysql_lex_string
-{
-  char *str;
-  unsigned int length;
-};
-#endif /* _m_string_h */
-typedef struct st_mysql_lex_string MYSQL_LEX_STRING;
+#include <mysql/services.h>
 
 #define MYSQL_XIDDATASIZE 128
 /**
@@ -67,7 +71,7 @@ typedef struct st_mysql_xid MYSQL_XID;
   Plugin API. Common for all plugin types.
 */
 
-#define MYSQL_PLUGIN_INTERFACE_VERSION 0x0100
+#define MYSQL_PLUGIN_INTERFACE_VERSION 0x0103
 
 /*
   The allowable types of plugins
@@ -77,7 +81,10 @@ typedef struct st_mysql_xid MYSQL_XID;
 #define MYSQL_FTPARSER_PLUGIN        2  /* Full-text parser plugin      */
 #define MYSQL_DAEMON_PLUGIN          3  /* The daemon/raw plugin type */
 #define MYSQL_INFORMATION_SCHEMA_PLUGIN  4  /* The I_S plugin type */
-#define MYSQL_MAX_PLUGIN_TYPE_NUM    5  /* The number of plugin types   */
+#define MYSQL_AUDIT_PLUGIN           5  /* The Audit plugin type        */
+#define MYSQL_REPLICATION_PLUGIN     6	/* The replication plugin type */
+#define MYSQL_AUTHENTICATION_PLUGIN  7  /* The authentication plugin type */
+#define MYSQL_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types   */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
@@ -97,9 +104,9 @@ typedef struct st_mysql_xid MYSQL_XID;
 
 #ifndef MYSQL_DYNAMIC_PLUGIN
 #define __MYSQL_DECLARE_PLUGIN(NAME, VERSION, PSIZE, DECLS)                   \
-int VERSION= MYSQL_PLUGIN_INTERFACE_VERSION;                                  \
-int PSIZE= sizeof(struct st_mysql_plugin);                                    \
-struct st_mysql_plugin DECLS[]= {
+MYSQL_PLUGIN_EXPORT int VERSION= MYSQL_PLUGIN_INTERFACE_VERSION;                                  \
+MYSQL_PLUGIN_EXPORT int PSIZE= sizeof(struct st_mysql_plugin);                                    \
+MYSQL_PLUGIN_EXPORT struct st_mysql_plugin DECLS[]= {
 #else
 #define __MYSQL_DECLARE_PLUGIN(NAME, VERSION, PSIZE, DECLS)                   \
 MYSQL_PLUGIN_EXPORT int _mysql_plugin_interface_version_= MYSQL_PLUGIN_INTERFACE_VERSION;         \
@@ -113,7 +120,7 @@ __MYSQL_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _sizeof_struct_st_plugin, \
                  builtin_ ## NAME ## _plugin)
 
-#define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0,0}}
+#define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0,0,0}}
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -122,7 +129,8 @@ enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE
+  SHOW_ARRAY, SHOW_FUNC, SHOW_DOUBLE,
+  SHOW_always_last
 };
 
 struct st_mysql_show_var {
@@ -133,6 +141,14 @@ struct st_mysql_show_var {
 
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
 typedef int (*mysql_show_var_func)(MYSQL_THD, struct st_mysql_show_var*, char *);
+
+
+/*
+  Constants for plugin flags.
+ */
+
+#define PLUGIN_OPT_NO_INSTALL   1UL   /* Not dynamically loadable */
+#define PLUGIN_OPT_NO_UNINSTALL 2UL   /* Not dynamically unloadable */
 
 
 /*
@@ -407,196 +423,13 @@ struct st_mysql_plugin
   struct st_mysql_show_var *status_vars;
   struct st_mysql_sys_var **system_vars;
   void * __reserved1;   /* reserved for dependency checking             */
+  unsigned long flags;  /* flags for plugin */
 };
 
 /*************************************************************************
   API for Full-text parser plugin. (MYSQL_FTPARSER_PLUGIN)
 */
-
-#define MYSQL_FTPARSER_INTERFACE_VERSION 0x0100
-
-/* Parsing modes. Set in  MYSQL_FTPARSER_PARAM::mode */
-enum enum_ftparser_mode
-{
-/*
-  Fast and simple mode.  This mode is used for indexing, and natural
-  language queries.
-
-  The parser is expected to return only those words that go into the
-  index. Stopwords or too short/long words should not be returned. The
-  'boolean_info' argument of mysql_add_word() does not have to be set.
-*/
-  MYSQL_FTPARSER_SIMPLE_MODE= 0,
-
-/*
-  Parse with stopwords mode.  This mode is used in boolean searches for
-  "phrase matching."
-
-  The parser is not allowed to ignore words in this mode.  Every word
-  should be returned, including stopwords and words that are too short
-  or long.  The 'boolean_info' argument of mysql_add_word() does not
-  have to be set.
-*/
-  MYSQL_FTPARSER_WITH_STOPWORDS= 1,
-
-/*
-  Parse in boolean mode.  This mode is used to parse a boolean query string.
-
-  The parser should provide a valid MYSQL_FTPARSER_BOOLEAN_INFO
-  structure in the 'boolean_info' argument to mysql_add_word().
-  Usually that means that the parser should recognize boolean operators
-  in the parsing stream and set appropriate fields in
-  MYSQL_FTPARSER_BOOLEAN_INFO structure accordingly.  As for
-  MYSQL_FTPARSER_WITH_STOPWORDS mode, no word should be ignored.
-  Instead, use FT_TOKEN_STOPWORD for the token type of such a word.
-*/
-  MYSQL_FTPARSER_FULL_BOOLEAN_INFO= 2
-};
-
-/*
-  Token types for boolean mode searching (used for the type member of
-  MYSQL_FTPARSER_BOOLEAN_INFO struct)
-
-  FT_TOKEN_EOF: End of data.
-  FT_TOKEN_WORD: Regular word.
-  FT_TOKEN_LEFT_PAREN: Left parenthesis (start of group/sub-expression).
-  FT_TOKEN_RIGHT_PAREN: Right parenthesis (end of group/sub-expression).
-  FT_TOKEN_STOPWORD: Stopword.
-*/
-
-enum enum_ft_token_type
-{
-  FT_TOKEN_EOF= 0,
-  FT_TOKEN_WORD= 1,
-  FT_TOKEN_LEFT_PAREN= 2,
-  FT_TOKEN_RIGHT_PAREN= 3,
-  FT_TOKEN_STOPWORD= 4
-};
-
-/*
-  This structure is used in boolean search mode only. It conveys
-  boolean-mode metadata to the MySQL search engine for every word in
-  the search query. A valid instance of this structure must be filled
-  in by the plugin parser and passed as an argument in the call to
-  mysql_add_word (the callback function in the MYSQL_FTPARSER_PARAM
-  structure) when a query is parsed in boolean mode.
-
-  type: The token type.  Should be one of the enum_ft_token_type values.
-
-  yesno: Whether the word must be present for a match to occur:
-    >0 Must be present
-    <0 Must not be present
-    0  Neither; the word is optional but its presence increases the relevance
-  With the default settings of the ft_boolean_syntax system variable,
-  >0 corresponds to the '+' operator, <0 corrresponds to the '-' operator,
-  and 0 means neither operator was used.
-
-  weight_adjust: A weighting factor that determines how much a match
-  for the word counts.  Positive values increase, negative - decrease the
-  relative word's importance in the query.
-
-  wasign: The sign of the word's weight in the query. If it's non-negative
-  the match for the word will increase document relevance, if it's
-  negative - decrease (the word becomes a "noise word", the less of it the
-  better).
-
-  trunc: Corresponds to the '*' operator in the default setting of the
-  ft_boolean_syntax system variable.
-*/
-
-typedef struct st_mysql_ftparser_boolean_info
-{
-  enum enum_ft_token_type type;
-  int yesno;
-  int weight_adjust;
-  char wasign;
-  char trunc;
-  /* These are parser state and must be removed. */
-  char prev;
-  char *quot;
-} MYSQL_FTPARSER_BOOLEAN_INFO;
-
-/*
-  The following flag means that buffer with a string (document, word)
-  may be overwritten by the caller before the end of the parsing (that is
-  before st_mysql_ftparser::deinit() call). If one needs the string
-  to survive between two successive calls of the parsing function, she
-  needs to save a copy of it. The flag may be set by MySQL before calling
-  st_mysql_ftparser::parse(), or it may be set by a plugin before calling
-  st_mysql_ftparser_param::mysql_parse() or
-  st_mysql_ftparser_param::mysql_add_word().
-*/
-#define MYSQL_FTFLAGS_NEED_COPY 1
-
-/*
-  An argument of the full-text parser plugin. This structure is
-  filled in by MySQL server and passed to the parsing function of the
-  plugin as an in/out parameter.
-
-  mysql_parse: A pointer to the built-in parser implementation of the
-  server. It's set by the server and can be used by the parser plugin
-  to invoke the MySQL default parser.  If plugin's role is to extract
-  textual data from .doc, .pdf or .xml content, it might extract
-  plaintext from the content, and then pass the text to the default
-  MySQL parser to be parsed.
-
-  mysql_add_word: A server callback to add a new word.  When parsing
-  a document, the server sets this to point at a function that adds
-  the word to MySQL full-text index.  When parsing a search query,
-  this function will add the new word to the list of words to search
-  for.  The boolean_info argument can be NULL for all cases except
-  when mode is MYSQL_FTPARSER_FULL_BOOLEAN_INFO.
-
-  ftparser_state: A generic pointer. The plugin can set it to point
-  to information to be used internally for its own purposes.
-
-  mysql_ftparam: This is set by the server.  It is used by MySQL functions
-  called via mysql_parse() and mysql_add_word() callback.  The plugin
-  should not modify it.
-
-  cs: Information about the character set of the document or query string.
-
-  doc: A pointer to the document or query string to be parsed.
-
-  length: Length of the document or query string, in bytes.
-
-  flags: See MYSQL_FTFLAGS_* constants above.
-
-  mode: The parsing mode.  With boolean operators, with stopwords, or
-  nothing.  See  enum_ftparser_mode above.
-*/
-
-typedef struct st_mysql_ftparser_param
-{
-  int (*mysql_parse)(struct st_mysql_ftparser_param *,
-                     char *doc, int doc_len);
-  int (*mysql_add_word)(struct st_mysql_ftparser_param *,
-                        char *word, int word_len,
-                        MYSQL_FTPARSER_BOOLEAN_INFO *boolean_info);
-  void *ftparser_state;
-  void *mysql_ftparam;
-  struct charset_info_st *cs;
-  char *doc;
-  int length;
-  int flags;
-  enum enum_ftparser_mode mode;
-} MYSQL_FTPARSER_PARAM;
-
-/*
-  Full-text parser descriptor.
-
-  interface_version is, e.g., MYSQL_FTPARSER_INTERFACE_VERSION.
-  The parsing, initialization, and deinitialization functions are
-  invoked per SQL statement for which the parser is used.
-*/
-
-struct st_mysql_ftparser
-{
-  int interface_version;
-  int (*parse)(MYSQL_FTPARSER_PARAM *param);
-  int (*init)(MYSQL_FTPARSER_PARAM *param);
-  int (*deinit)(MYSQL_FTPARSER_PARAM *param);
-};
+#include "plugin_ftparser.h"
 
 /*************************************************************************
   API for Storage Engine plugin. (MYSQL_DAEMON_PLUGIN)
@@ -605,12 +438,34 @@ struct st_mysql_ftparser
 /* handlertons of different MySQL releases are incompatible */
 #define MYSQL_DAEMON_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
 
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_daemon
+{
+  int interface_version;
+};
+
+
 /*************************************************************************
   API for I_S plugin. (MYSQL_INFORMATION_SCHEMA_PLUGIN)
 */
 
 /* handlertons of different MySQL releases are incompatible */
 #define MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_information_schema
+{
+  int interface_version;
+};
+
 
 /*************************************************************************
   API for Storage Engine plugin. (MYSQL_STORAGE_ENGINE_PLUGIN)
@@ -632,28 +487,20 @@ struct st_mysql_storage_engine
 
 struct handlerton;
 
+
 /*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
+  API for Replication plugin. (MYSQL_REPLICATION_PLUGIN)
 */
+ #define MYSQL_REPLICATION_INTERFACE_VERSION 0x0100
+ 
+ /**
+    Replication plugin descriptor
+ */
+ struct Mysql_replication {
+   int interface_version;
+ };
 
-struct st_mysql_daemon
-{
-  int interface_version;
-};
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_information_schema
-{
-  int interface_version;
-};
-
-
-/*
+/*************************************************************************
   st_mysql_value struct for reading values from mysqld.
   Used by server variables framework to parse user-provided values.
   Will be used for arguments when implementing UDFs.
@@ -673,6 +520,7 @@ struct st_mysql_value
   const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
   int (*val_real)(struct st_mysql_value *, double *realbuf);
   int (*val_int)(struct st_mysql_value *, long long *intbuf);
+  int (*is_unsigned)(struct st_mysql_value *);
 };
 
 
@@ -690,6 +538,7 @@ long long thd_test_options(const MYSQL_THD thd, long long test_options);
 int thd_sql_command(const MYSQL_THD thd);
 const char *thd_proc_info(MYSQL_THD thd, const char *info);
 void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
+void thd_storage_lock_wait(MYSQL_THD thd, long long value);
 int thd_tx_isolation(const MYSQL_THD thd);
 char *thd_security_context(MYSQL_THD thd, char *buffer, unsigned int length,
                            unsigned int max_query_len);
@@ -709,6 +558,8 @@ int thd_opt_slow_log();
 #define EXTENDED_SLOWLOG
 
 #define EXTENDED_FOR_USERSTAT
+
+#define EXTENDED_FOR_COMMIT_ORDERED
 
 /**
   Create a temporary file.
@@ -748,54 +599,6 @@ int thd_killed(const MYSQL_THD thd);
   @return  thread id
 */
 unsigned long thd_get_thread_id(const MYSQL_THD thd);
-
-
-/**
-  Allocate memory in the connection's local memory pool
-
-  @details
-  When properly used in place of @c my_malloc(), this can significantly
-  improve concurrency. Don't use this or related functions to allocate
-  large chunks of memory. Use for temporary storage only. The memory
-  will be freed automatically at the end of the statement; no explicit
-  code is required to prevent memory leaks.
-
-  @see alloc_root()
-*/
-void *thd_alloc(MYSQL_THD thd, unsigned int size);
-/**
-  @see thd_alloc()
-*/
-void *thd_calloc(MYSQL_THD thd, unsigned int size);
-/**
-  @see thd_alloc()
-*/
-char *thd_strdup(MYSQL_THD thd, const char *str);
-/**
-  @see thd_alloc()
-*/
-char *thd_strmake(MYSQL_THD thd, const char *str, unsigned int size);
-/**
-  @see thd_alloc()
-*/
-void *thd_memdup(MYSQL_THD thd, const void* str, unsigned int size);
-
-/**
-  Create a LEX_STRING in this connection's local memory pool
-
-  @param thd      user thread connection handle
-  @param lex_str  pointer to LEX_STRING object to be initialized
-  @param str      initializer to be copied into lex_str
-  @param size     length of str, in bytes
-  @param allocate_lex_string  flag: if TRUE, allocate new LEX_STRING object,
-                              instead of using lex_str value
-  @return  NULL on failure, or pointer to the LEX_STRING object
-
-  @see thd_alloc()
-*/
-MYSQL_LEX_STRING *thd_make_lex_string(MYSQL_THD thd, MYSQL_LEX_STRING *lex_str,
-                                      const char *str, unsigned int size,
-                                      int allocate_lex_string);
 
 /**
   Get the XID for this connection's transaction
@@ -850,7 +653,7 @@ void thd_set_ha_data(MYSQL_THD thd, const struct handlerton *hton,
 
 int thd_command(const MYSQL_THD thd);
 long long thd_start_time(const MYSQL_THD thd);
-void thd_kill(MYSQL_THD thd);
+void thd_kill(unsigned long id);
 #define EXTENDED_FOR_KILLIDLE
 
 #ifdef __cplusplus

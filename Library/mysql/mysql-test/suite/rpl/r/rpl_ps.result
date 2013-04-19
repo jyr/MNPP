@@ -22,6 +22,7 @@ from-master-2-'',
 from-var-from-master-3
 drop table t1;
 stop slave;
+include/wait_for_slave_to_stop.inc
 
 ########################################################################
 #

@@ -33,28 +33,23 @@ let $tmp_table_stm= CREATE TEMPORARY TABLE tt1(c1 INT) ENGINE = InnoDB;
 source extra/rpl_tests/rpl_stop_slave.test;
 
 --echo
---echo # CREATE TEMPORARY TABLE with MyISAM engine
---echo # -----------------------------------------
-let $tmp_table_stm= CREATE TEMPORARY TABLE tt1(c1 INT) ENGINE = MyISAM;
-source extra/rpl_tests/rpl_stop_slave.test;
-
---echo
 --echo # CREATE TEMPORARY TABLE ... SELECT with InnoDB engine
 --echo # ----------------------------------------------------
 let $tmp_table_stm= CREATE TEMPORARY TABLE tt1(c1 INT) ENGINE = InnoDB
                     SELECT c1 FROM t2;
 source extra/rpl_tests/rpl_stop_slave.test;
 
---echo
---echo # CREATE TEMPORARY TABLE ... SELECT with MyISAM engine
---echo # ----------------------------------------------------
-let $tmp_table_stm= CREATE TEMPORARY TABLE tt1(c1 INT) ENGINE = MyISAM
-                    SELECT 1 AS c1;
-source extra/rpl_tests/rpl_stop_slave.test;
+# Don't need to verify 'CREATE TEMPORARY TABLE' with MyIASM engine, as it
+# never is binlogged into a transaction since 5.5.
 
+--echo
 --echo # Test end
 SET GLOBAL debug= '$debug_save';
 source include/restart_slave_sql.inc;
+
+connection slave;
+call mtr.add_suppression("Slave SQL.*Request to stop slave SQL Thread received while applying a group that has non-transactional changes; waiting for completion of the group");
+connection master;
 
 --source include/rpl_connection_master.inc
 DROP TABLE t1, t2;

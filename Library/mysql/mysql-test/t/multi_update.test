@@ -6,6 +6,8 @@
 source include/not_embedded.inc;
 source include/have_log_bin.inc;
 
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT.");
+
 --disable_warnings
 drop table if exists t1,t2,t3;
 drop database if exists mysqltest;
@@ -138,6 +140,7 @@ INSERT INTO t2(ParId) VALUES(1), (2), (3);
 
 select * from t2;
 
+--disable_warnings ONCE
 UPDATE t2, t1 SET t2.tst = t1.tst, t2.tst1 = t1.tst1 WHERE t2.ParId = t1.Id;
 
 select * from t2;
@@ -295,6 +298,7 @@ drop table t1,t2;
 
 create table t1 (a int not null auto_increment primary key, b int not null);
 insert into t1 (b) values (1),(2),(3),(4);
+--disable_warnings ONCE
 update t1, t1 as t2 set t1.b=t2.b+1 where t1.a=t2.a;
 select * from t1;
 drop table t1;
@@ -352,6 +356,7 @@ create table `t2` (`c2_id` int(10) unsigned NULL auto_increment, `c2_p_id` int(1
 insert into t1 values (0,'A01-Comp',1);
 insert into t1 values (0,'B01-Comp',1);
 insert into t2 values (0,1,'A Note',1);
+--disable_warnings ONCE
 update t1 left join t2 on p_id = c2_p_id set c2_note = 'asdf-1' where p_id = 2;
 select * from t1;
 select * from t2;
@@ -474,7 +479,8 @@ drop table t1,t2;
 
 #
 # Test alter table and a concurrent multi update
-# (This will force update to reopen tables)
+# (Before we have introduced data-lock-aware metadata locks
+#  this test case forced update to reopen tables).
 #
 
 create table t1 (a int, b int);
@@ -494,9 +500,9 @@ send alter table t1 add column c int default 100 after a;
 connect (updater,localhost,root,,test);
 connection updater;
 # Wait till "alter table t1 ..." of session changer is in work.
-# = There is one session is in state "Locked".
+# = There is one session waiting.
 let $wait_condition= select count(*)= 1 from information_schema.processlist
-                     where state= 'Locked';
+                     where state= 'Waiting for table metadata lock';
 --source include/wait_condition.inc
 send update t1, v1 set t1.b=t1.a+t1.b+v1.b where t1.a=v1.a;
 
@@ -505,9 +511,9 @@ connection locker;
 # - "alter table t1 ..." of session changer and
 # - "update t1, v1 ..." of session updater
 # are in work.
-# = There are two session is in state "Locked".
+# = There are two session waiting.
 let $wait_condition= select count(*)= 2 from information_schema.processlist
-                     where state= 'Locked';
+                     where state= 'Waiting for table metadata lock';
 --source include/wait_condition.inc
 unlock tables;
 
@@ -585,8 +591,7 @@ reset master;
 UPDATE t2,t1 SET t2.a=t1.a+2;
 # check
 select * from t2 /* must be (3,1), (4,4) */;
-let wait_binlog_event= UPDATE;
-source include/wait_for_binlog_event.inc;
+source include/show_binlog_events.inc;
 
 # B. testing multi_update::send_error() ineffective update
 # (as there is a policy described at mysql_update() still go to binlog)
@@ -597,8 +602,7 @@ insert into t2 values (1,2),(3,4),(4,4);
 reset master;
 --error ER_DUP_ENTRY
 UPDATE t2,t1  SET t2.a=t2.b where t2.a=t1.a;
-let wait_binlog_event= UPDATE;
-source include/wait_for_binlog_event.inc;
+source include/show_binlog_events.inc;
 
 # cleanup
 drop table t1, t2;
@@ -684,4 +688,70 @@ UPDATE (SELECT 1 FROM t1 WHERE f1 = (SELECT f1() FROM t1)) x, t1 SET f1 = 1;
 DROP FUNCTION f1;
 DROP TABLE t1;
 
---echo end of tests
+--echo #
+--echo # BUG#57373: Multi update+InnoDB reports ER_KEY_NOT_FOUND if a
+--echo #            table is updated twice
+--echo #
+
+# Results differ between storage engines.
+# See multi_update_innodb.test for the InnoDB variant of this test
+CREATE TABLE t1(
+  pk INT,
+  a INT,
+  PRIMARY KEY (pk)
+) ENGINE=MyISAM;
+
+INSERT INTO t1 VALUES (0,0);
+UPDATE t1 AS A, t1 AS B SET A.pk = 1, B.a = 2;
+--echo
+--echo # Should be (1,2)
+SELECT * FROM t1;
+DROP TABLE t1;
+
+--echo #
+--echo # BUG#11882110: UPDATE REPORTS ER_KEY_NOT_FOUND IF TABLE IS 
+--echo #               UPDATED TWICE
+--echo #
+
+# Results differ between storage engines. This test is to verify that
+# the bugfix did NOT change behavior for MyISAM.
+# See multi_update_innodb.test for the InnoDB variant of this test
+CREATE TABLE t1 ( 
+  col_int_key int, 
+  pk int, 
+  col_int int, 
+  key(col_int_key), 
+  primary key (pk)
+) ENGINE=MyISAM;
+INSERT INTO t1 VALUES (1,2,3);
+
+--echo
+CREATE TABLE t2 ( 
+  col_int_key int, 
+  pk_1 int, 
+  pk_2 int, 
+  col_int int, 
+  key(col_int_key), 
+  primary key (pk_1,pk_2)
+) ENGINE=MyISAM;
+INSERT INTO t2 VALUES (1,2,3,4);
+
+--echo
+UPDATE t1 AS A NATURAL JOIN t1 B SET A.pk=5,B.pk=7;
+
+--echo
+SELECT * FROM t1;
+
+--echo
+UPDATE t2 AS A NATURAL JOIN t2 B SET A.pk_1=5,B.pk_1=7;
+--echo
+UPDATE t2 AS A NATURAL JOIN t2 B SET A.pk_2=10,B.pk_2=11;
+
+--echo
+SELECT * FROM t2;
+
+DROP TABLE t1,t2;
+
+
+
+

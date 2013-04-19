@@ -1,1 +1,1 @@
---log-output=table,file --log-slow-queries
+--log-slow-queries

@@ -235,8 +235,10 @@ insert into t1 values (1,11), (2,22);
 insert into t2 values (1,12), (2,24);
 --error 1393
 insert into v1 (f1) values (3) on duplicate key update f3= f3 + 10;
+--error 1393
 insert into v1 (f1) values (3) on duplicate key update f1= f3 + 10;
 select * from t1;
+--error 1393
 insert into v1 (f1) values (3) on duplicate key update f1= f3 + 10;
 select * from t1;
 drop view v1;
@@ -420,9 +422,6 @@ INSERT INTO t1(a,c) VALUES (1.87e-3, 1.87e-3);
 INSERT INTO t1(a,c) VALUES (-1.87e-2, -1.87e-2);
 INSERT INTO t1(a,c) VALUES (5000e+0, 5000e+0);
 INSERT INTO t1(a,c) VALUES (-5000e+0, -5000e+0);
-# Expected results are "12.2" and "1.2e+78", but Windows returns "12.3" and
-# "1.3e+78" due to different rounding rules
---replace_result 12.3 12.2 1.3e+78 1.2e+78
 SELECT * FROM t1;
 
 DROP TABLE t1;
@@ -457,9 +456,6 @@ INSERT INTO t1(a,c) VALUES (-1.87e-2, -1.87e-2);
 INSERT INTO t1(a,c) VALUES (5000e+0, 5000e+0);
 INSERT INTO t1(a,c) VALUES (-5000e+0, -5000e+0);
 
-# Expected results are "12.2" and "1.2e+78", but Windows returns "12.3" and
-# "1.3e+78" due to different rounding rules
---replace_result 12.3 12.2 1.3e+78 1.2e+78
 SELECT * FROM t1;
 
 DROP TABLE t1;
@@ -499,6 +495,36 @@ DROP TABLE t1, t2;
 
 --echo End of 5.0 tests.
 
+--echo #
+--echo # Bug#34898 "mysql_info() reports 0 warnings while
+--echo # mysql_warning_count() reports 1"
+--echo # Check that the number of warnings reported by
+--echo # mysql_info() is correct.
+--echo #
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+create table t1 (data varchar(4) not null);
+
+set sql_mode='error_for_division_by_zero';
+--echo #
+--echo # Demonstrate that the number of warnings matches
+--echo # the information in mysql_info().
+--echo #
+--enable_info
+insert t1 (data) values ('letter'), (1/0);
+update t1 set data='envelope' where 1/0 or 1;
+insert t1 (data) values (default), (1/0), ('dead beef');
+--disable_info
+
+set sql_mode=default;
+drop table t1;
+
+--echo #
+--echo # End of 5.4 tests
+--echo #
 
 --echo #
 --echo # Bug#54106 assert in Protocol::end_statement,

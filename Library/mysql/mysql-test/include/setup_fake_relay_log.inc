@@ -44,9 +44,16 @@ let $_fake_relay_log_printable= `SELECT REPLACE('$fake_relay_log', '$MYSQL_TEST_
 --echo Setting up fake replication from $_fake_relay_log_printable
 
 # Sanity check.
+let $running= 0;
 let $_sql_running= query_get_value(SHOW SLAVE STATUS, Slave_SQL_Running, 1);
 let $_io_running= query_get_value(SHOW SLAVE STATUS, Slave_IO_Running, 1);
-if (`SELECT "$_sql_running" = "Yes" OR "$_io_running" = "Yes"`) {
+if ($_sql_running == Yes) {
+  let $running= 1;
+}
+if ($_io_running == Yes) {
+  let $running= 1;
+}
+if ($running) {
   --echo Error: Slave was running when test case sourced
   --echo include/setup_fake_replication.inc
   --echo Slave_IO_Running = $_io_running; Slave_SQL_Running = $_sql_running
@@ -66,10 +73,27 @@ let $_fake_relay_index= $_fake_datadir/$_fake_filename.index;
 # CHANGE MASTER modifies it (see the manual for CHANGE MASTER).
 let $_fake_relay_log_purge= `SELECT @@global.relay_log_purge`;
 
+RESET SLAVE;
+let $_orphan_relay_file= query_get_value(SHOW SLAVE STATUS, Relay_Log_File, 1);
+
 # Create relay log file.
-copy_file $fake_relay_log $_fake_relay_log;
+--copy_file $fake_relay_log $_fake_relay_log
+
 # Create relay log index.
---let $write_var= $_fake_filename-fake.000001\n
+
+# After patch for BUG#12190, the filename used in CHANGE MASTER
+# RELAY_LOG_FILE will be automatically added the directory of the
+# relay log before comparison, thus we need to added the directory
+# part (./ on unix .\ on windows) when faking the relay-log-bin.index.
+
+# mysqltest currently parses backslash escapes wrong, so any sequence
+# of N backslashes is collapsed to just one backslash. So we use the
+# SQL function CHAR() to generate a backslash character instead. Since
+# the string is interpreted in SQL context, we to escape it, so we use
+# two backslashes.
+
+--let $_fake_dir= `select IF(convert(@@version_compile_os using latin1) IN ("Win32","Win64","Windows"), CONCAT('.', CHAR(92), CHAR(92)), './')`
+--let $write_var= $_fake_dir$_fake_filename-fake.000001\n
 --let $write_to_file= $_fake_relay_index
 --source include/write_var_to_file.inc
 
@@ -79,6 +103,8 @@ copy_file $fake_relay_log $_fake_relay_log;
 # Setup replication from existing relay log.
 eval CHANGE MASTER TO MASTER_HOST='dummy.localdomain', RELAY_LOG_FILE='$_fake_filename-fake.000001', RELAY_LOG_POS=4;
 
+# remove the orphan log file (became spurious)
+-- remove_file $_fake_datadir/$_orphan_relay_file
 
 --let $include_filename= setup_fake_relay_log.inc
 --source include/end_include_file.inc

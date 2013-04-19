@@ -28,7 +28,6 @@ select * from bug38999_2;
 
 drop table bug38999_1,bug38999_2;
 
-
 --echo #
 --echo # Bug#54475 improper error handling causes cascading crashing failures in innodb/ndb
 --echo #
@@ -37,4 +36,3 @@ INSERT INTO t1 VALUES(1);
 --error ER_OPERAND_COLUMNS
 UPDATE (SELECT ((SELECT 1 FROM t1), 1) FROM t1 WHERE (SELECT 1 FROM t1)) x, (SELECT 1) AS d SET d.f1 = 1;
 DROP TABLE t1;
-

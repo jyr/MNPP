@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2011 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        | 
@@ -17,7 +17,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: zend_hash.h 306939 2011-01-01 02:19:59Z felipe $ */
+/* $Id$ */
 
 #ifndef ZEND_HASH_H
 #define ZEND_HASH_H
@@ -331,7 +331,7 @@ END_EXTERN_C()
 				if (idx-1 > LONG_MAX) { /* overflow */						\
 					break;													\
 				}															\
-				idx = (ulong)(-(long)idx);									\
+				idx = 0 - idx;               									\
 			} else if (idx > LONG_MAX) { /* overflow */						\
 				break;														\
 			}																\

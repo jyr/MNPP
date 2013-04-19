@@ -333,13 +333,37 @@ rows_examined	sql_text
 2	INSERT INTO t1 SELECT b+sleep(.01) from t2
 4	UPDATE t1 SET a=a+sleep(.01) WHERE a>2
 8	UPDATE t1 SET a=a+sleep(.01) ORDER BY a DESC
-2	UPDATE t2 set b=b+sleep(.01) limit 1
+1	UPDATE t2 set b=b+sleep(.01) limit 1
 4	UPDATE t1 SET a=a+sleep(.01) WHERE a in (SELECT b from t2)
 6	DELETE FROM t1 WHERE a=a+sleep(.01) ORDER BY a LIMIT 2
 DROP TABLE t1,t2;
 TRUNCATE TABLE mysql.slow_log;
 # end of bug#49756
 End of 5.1 tests
+
+# --
+# -- Bug#38124: "general_log_file" variable silently unset when
+# --             using expression
+# --
+SET GLOBAL general_log_file = DEFAULT;
+SELECT @@general_log_file INTO @my_glf;
+SET GLOBAL general_log_file = 'BUG38124.LOG';
+SELECT @@general_log_file;
+@@general_log_file
+BUG38124.LOG
+SET GLOBAL general_log_file = concat('BUG38124-2.LOG');
+SELECT @@general_log_file;
+@@general_log_file
+BUG38124-2.LOG
+SET GLOBAL general_log_file = substr('BUG38124-2.LOG',3,6);
+SELECT @@general_log_file;
+@@general_log_file
+G38124
+SET GLOBAL general_log_file = DEFAULT;
+SELECT @@general_log_file = @my_glf;
+@@general_log_file = @my_glf
+1
+SET GLOBAL general_log_file = @old_general_log_file;
 # Close connection con1
 SET GLOBAL long_query_time = DEFAULT;
 SET GLOBAL log_output = @old_log_output;

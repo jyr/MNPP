@@ -22,8 +22,8 @@ f1
 GRANT SELECT ON t1 to user_1@localhost;
 select * from information_schema.table_privileges;
 GRANTEE	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	PRIVILEGE_TYPE	IS_GRANTABLE
-'user_1'@'localhost'	NULL	d1	T1	SELECT	NO
-'user_1'@'localhost'	NULL	d1	t1	SELECT	NO
+'user_1'@'localhost'	def	d1	T1	SELECT	NO
+'user_1'@'localhost'	def	d1	t1	SELECT	NO
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM user_1@localhost;
 DROP USER user_1@localhost;
 DROP DATABASE d1;
@@ -55,3 +55,11 @@ DROP USER user_1@localhost;
 DROP USER USER_1@localhost;
 DROP DATABASE db1;
 use test;
+#
+# Extra test coverage for Bug#56595 RENAME TABLE causes assert on OS X
+#
+CREATE TABLE t1(a INT);
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW SET new.a= 1;
+RENAME TABLE t1 TO T1;
+ALTER TABLE T1 RENAME t1;
+DROP TABLE t1;

@@ -61,7 +61,7 @@ grp	sum
 NULL	NULL
 1	7
 2	20.25
-3	45.4831632475944
+3	45.48316324759439
 create table t2 (grp int, a bigint unsigned, c char(10));
 insert into t2 select grp,max(a)+max(grp),max(c) from t1 group by grp;
 replace into t2 select grp, a, c from t1 limit 2,1;
@@ -891,7 +891,7 @@ select 1e8 * sum(distinct df) from t1;
 330000000
 select 1e8 * min(df) from t1;
 1e8 * min(df)
-110000000
+110000000.00000001
 create table t3 (ifl int);
 insert into t3 values(1), (2);
 select cast(min(ifl) as decimal(5,2)) from t3;
@@ -1186,7 +1186,7 @@ std(s1/s2)
 0.21325764
 select std(o1/o2) from bug22555;
 std(o1/o2)
-0.213257635866493
+0.2132576358664934
 select std(e1/e2) from bug22555;
 std(e1/e2)
 0.21325764
@@ -1209,13 +1209,13 @@ i	count(*)	std(e1/e2)
 3	4	0.000000000000000000000000000000
 select round(std(s1/s2), 17) from bug22555;
 round(std(s1/s2), 17)
-0.21325763586649341
+0.21325763586649340
 select std(o1/o2) from bug22555;
 std(o1/o2)
-0.213257635866493
+0.2132576358664934
 select round(std(e1/e2), 17) from bug22555;
 round(std(e1/e2), 17)
-0.21325763586649341
+0.21325763586649340
 set div_precision_increment=20;
 select i, count(*), std(s1/s2) from bug22555 group by i order by i;
 i	count(*)	std(s1/s2)
@@ -1234,13 +1234,13 @@ i	count(*)	std(e1/e2)
 3	4	0.000000000000000000000000000000
 select round(std(s1/s2), 17) from bug22555;
 round(std(s1/s2), 17)
-0.21325763586649341
+0.21325763586649340
 select std(o1/o2) from bug22555;
 std(o1/o2)
-0.213257635866493
+0.2132576358664934
 select round(std(e1/e2), 17) from bug22555;
 round(std(e1/e2), 17)
-0.21325763586649341
+0.21325763586649340
 set @@div_precision_increment=@saved_div_precision_increment;
 drop table bug22555;
 create table bug22555 (s smallint, o double, e decimal);
@@ -1524,6 +1524,8 @@ DROP TABLE t1;
 # Bug#43668: Wrong comparison and MIN/MAX for YEAR(2)
 #
 create table t1 (f1 year(2), f2 year(4), f3 date, f4 datetime);
+Warnings:
+Note	1287	'YEAR(2)' is deprecated and will be removed in a future release. Please use YEAR(4) instead
 insert into t1 values
 (98,1998,19980101,"1998-01-01 00:00:00"),
 (00,2000,20000101,"2000-01-01 00:00:01"),
@@ -1758,3 +1760,49 @@ MAX(f1)
 DROP TABLE t1;
 #
 End of 5.1 tests
+#
+# Bug#52123 Assertion failed: aggregator == aggr->Aggrtype(),
+#           file .\item_sum.cc, line 587
+#
+CREATE TABLE t1(a int, KEY(a));
+INSERT INTO t1 VALUES (1), (2);
+SELECT 1 FROM t1 ORDER BY AVG(DISTINCT a);
+1
+1
+DROP TABLE t1;
+#
+# Bug#55648: Server crash on MIN/MAX on maximum time value
+#
+CREATE TABLE t1(c1 TIME NOT NULL);
+INSERT INTO t1 VALUES('837:59:59');
+INSERT INTO t1 VALUES('838:59:59');
+SELECT MAX(c1) FROM t1;
+MAX(c1)
+838:59:59
+DROP TABLE t1;
+# End of the bug#55648
+#
+# Bug#56120: Failed assertion on MIN/MAX on negative time value
+#
+CREATE TABLE t1(c1 TIME NOT NULL);
+INSERT INTO t1 VALUES('-00:00:01');
+SELECT MAX(c1),MIN(c1) FROM t1;
+MAX(c1)	MIN(c1)
+-00:00:01	-00:00:01
+DROP TABLE t1;
+# End of the bug#56120
+#
+# Bug#57932 "query with AVG(DISTINCT) returns NULL if last
+# aggregated value was NULL"
+#
+CREATE TABLE t1 (col_int_nokey int(11));
+INSERT INTO t1 VALUES (7),(8),(NULL);
+SELECT AVG(DISTINCT col_int_nokey) FROM t1;
+AVG(DISTINCT col_int_nokey)
+7.5000
+SELECT AVG(DISTINCT outr.col_int_nokey) FROM t1 AS outr LEFT JOIN t1 AS outr2 ON
+outr.col_int_nokey = outr2.col_int_nokey;
+AVG(DISTINCT outr.col_int_nokey)
+7.5000
+DROP TABLE t1;
+# End of the bug#57932

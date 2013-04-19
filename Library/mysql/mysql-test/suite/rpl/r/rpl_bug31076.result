@@ -1,5 +1,7 @@
 include/master-slave.inc
 [connection master]
+SET @saved_slave_type_conversions = @@slave_type_conversions;
+SET GLOBAL SLAVE_TYPE_CONVERSIONS = 'ALL_NON_LOSSY';
 CREATE DATABASE track;
 USE track;
 CREATE TABLE `visits` (
@@ -33,6 +35,7 @@ KEY `event_id` (`event_id`),
 KEY `visit_id` (`visit_id`),
 KEY `data` (`data`)
 ) ENGINE=MyISAM AUTO_INCREMENT=33900731 DEFAULT CHARSET=latin1;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/;
 /*!40019 SET @@session.max_insert_delayed_threads=0*/;
 /*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/;
 BINLOG '
@@ -45,6 +48,7 @@ Bk3vRhe0AQAAWgAAABEMyQkQAJlXFwIAAAEABv/AIE4AvvVDAQZN70YAK0Rvd25sb2Fkcy9NeVNR
 TC00LjEvbXlzcWwtNC4xLjEyYS13aW4zMi56aXBPaAIC
 '/*!*/;
 SET INSERT_ID=21231039/*!*/;
+/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/;
 use track/*!*/;
 SET TIMESTAMP=1190087942/*!*/;
 SET @@session.foreign_key_checks=1, @@session.sql_auto_is_null=1, @@session.unique_checks=1/*!*/;
@@ -61,6 +65,7 @@ visits_id	myid	src	ip	cc	org	ref	time	host	entry	visit_exit	user_id	visit_start
 SELECT * FROM visits_events;
 event_id	visit_id	timestamp	src	data	visits_events_id
 20000	21231038	2007-09-18 03:59:02		Downloads/MySQL-4.1/mysql-4.1.12a-win32.zip	33712207
+SET GLOBAL SLAVE_TYPE_CONVERSIONS = @saved_slave_type_conversions;
 DROP DATABASE track;
 End of 5.1 tests
 include/rpl_end.inc

@@ -1989,7 +1989,7 @@ DROP TABLE t1;
 #
 
 create table t1 (a int(11) unsigned, b int(11) unsigned);
-insert into t1 values (1,0), (1,1), (1,2);
+insert into t1 values (1,0), (1,1), (18446744073709551615,0);
 select a-b  from t1 order by 1;
 select a-b , (a-b < 0)  from t1 order by 1;
 select a-b as d, (a-b >= 0), b from t1 group by b having d >= 0;
@@ -2910,6 +2910,7 @@ DROP TABLE t1,t2;
 # cases to prevent fixing this accidently. It is intended behaviour)
 #
 
+SET SQL_MODE='NO_UNSIGNED_SUBTRACTION';
 CREATE TABLE t1 (i TINYINT UNSIGNED NOT NULL);
 INSERT t1 SET i = 0;
 UPDATE t1 SET i = -1;
@@ -2919,6 +2920,7 @@ SELECT * FROM t1;
 UPDATE t1 SET i = i - 1;
 SELECT * FROM t1;
 DROP TABLE t1;
+SET SQL_MODE=default;
 
 # BUG#17379
 
@@ -3767,7 +3769,7 @@ INSERT INTO t1 VALUES (2),(3);
 --echo # Should not crash
 --error ER_SUBQUERY_NO_1_ROW
 SELECT 1 FROM t1 WHERE a <> 1 AND NOT
-ROW(a,a) <=> ROW((SELECT 1 FROM t1 WHERE 1=2),(SELECT 1 FROM t1))
+ROW(1,a) <=> ROW(1,(SELECT 1 FROM t1))
 INTO @var0;
 
 DROP TABLE t1;
@@ -4022,6 +4024,39 @@ SELECT table1 .`time_key` field2  FROM B table1  LEFT JOIN  BB JOIN A table5 ON 
 drop table A,AA,B,BB;
 --echo #end of test for bug#45266
 
+--echo #
+--echo # Bug#33546: Slowdown on re-evaluation of constant expressions.
+--echo #
+CREATE TABLE t1 (a INT);
+INSERT INTO t1 VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+CREATE TABLE t2 (b INT);
+INSERT INTO t2 VALUES (2);
+SELECT * FROM t1 WHERE a = 1 + 1;
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a = 1 + 1;
+SELECT * FROM t1 HAVING a = 1 + 1;
+EXPLAIN EXTENDED SELECT * FROM t1 HAVING a = 1 + 1;
+SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+EXPLAIN EXTENDED SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+EXPLAIN EXTENDED SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a > UNIX_TIMESTAMP('2009-03-10 00:00:00');
+
+delimiter |;
+CREATE FUNCTION f1() RETURNS INT DETERMINISTIC
+BEGIN
+  SET @cnt := @cnt + 1;
+  RETURN 1;
+END;|
+delimiter ;|
+
+SET @cnt := 0;
+SELECT * FROM t1 WHERE a = f1();
+SELECT @cnt;
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a = f1();
+DROP TABLE t1, t2;
+DROP FUNCTION f1;
+--echo # End of bug#33546
+
 --echo # 
 --echo # BUG#48052: Valgrind warning - uninitialized value in init_read_record()
 --echo # 
@@ -4088,4 +4123,165 @@ SELECT 1 FROM t1 ORDER BY a COLLATE latin1_german2_ci;
 DROP TABLE t1;
 
 
+
+--echo #
+--echo # Bug #58422: Incorrect result when OUTER JOIN'ing 
+--echo # with an empty table
+--echo #
+
+CREATE TABLE t_empty(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+CREATE TABLE t1(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+INSERT INTO t1 VALUES (1,1), (2,2), (3,3);
+CREATE TABLE t2(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+INSERT INTO t2 VALUES (1,1), (2,2), (3,3);
+
+EXPLAIN
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 INNER JOIN t_empty ON TRUE)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 INNER JOIN t_empty ON TRUE)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+
+EXPLAIN
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 CROSS JOIN t_empty)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 CROSS JOIN t_empty)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+
+EXPLAIN
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 INNER JOIN t_empty ON t_empty.i=t2.i)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+SELECT *
+  FROM 
+    t1
+  LEFT OUTER JOIN
+    (t2 INNER JOIN t_empty ON t_empty.i=t2.i)
+  ON t1.pk=t2.pk
+  WHERE t2.pk <> 2;
+
+
+
+DROP TABLE t1,t2,t_empty;
+
+
 --echo End of 5.1 tests
+
+--echo #
+--echo # Bug#54515: Crash in opt_range.cc::get_best_group_min_max on 
+--echo #            SELECT from VIEW with GROUP BY
+--echo #
+
+CREATE TABLE t1 (
+  col_int_key int DEFAULT NULL,
+  KEY int_key (col_int_key)
+) ;
+
+INSERT INTO t1 VALUES (1),(2);
+
+CREATE VIEW view_t1 AS 
+  SELECT t1.col_int_key AS col_int_key
+  FROM t1;
+
+SELECT col_int_key FROM view_t1 GROUP BY col_int_key;
+
+DROP VIEW view_t1;
+DROP TABLE t1;
+
+--echo # End of test BUG#54515
+
+--echo #
+--echo # Bug #57203 Assertion `field_length <= 255' failed.
+--echo #
+
+SELECT coalesce((avg(distinct (geomfromtext("point(25379 -22010)"))))) 
+UNION ALL 
+SELECT coalesce((avg(distinct (geomfromtext("point(25379 -22010)")))))
+AS foo
+;
+
+CREATE table t1(a text);
+INSERT INTO t1 VALUES (''), ('');
+SELECT avg(distinct(t1.a)) FROM t1, t1 t2
+GROUP BY t2.a ORDER BY t1.a;
+
+DROP TABLE t1;
+
+--echo # End of test BUG#57203
+
+--echo #
+--echo # Bug#63020: Function "format"'s 'locale' argument is not considered
+--echo #	     when creating a "view'
+--echo #
+
+CREATE TABLE t1 (f1 DECIMAL(10,2));
+INSERT INTO t1 VALUES (11.67),(17865.3),(12345678.92);
+CREATE VIEW view_t1 AS SELECT FORMAT(f1,1,'sk_SK') AS f1 FROM t1;
+SHOW CREATE VIEW view_t1;
+SELECT * FROM view_t1;
+
+DROP TABLE t1;
+DROP VIEW view_t1;
+
+--echo # End of test  BUG#63020
+
+
+--echo #
+--echo # Bug#12713907: STRANGE OPTIMIZE & WRONG RESULT UNDER ORDER BY 
+--echo # COUNT(*) LIMIT.
+--echo #
+
+CREATE TABLE t1 (
+id BIGINT(20) ,
+member_id_to INT(11) ,
+r_date DATE ,
+PRIMARY KEY (id,r_date),
+KEY r_date_idx (r_date),
+KEY t1_idx01 (member_id_to)
+) ENGINE=InnoDB;
+
+INSERT INTO t1 VALUES 
+(107924526,518491,'2011-05-01'),
+(107924527,518491,'2011-05-01'),
+(107924534,518491,'2011-06-21'),
+(107924535,518491,'2011-06-21'),
+(107924542,1601319,'2011-06-21'),
+(107924543,1601319,'2011-06-21'),
+(107924544,1601319,'2011-06-21'),
+(107924545,1601319,'2011-06-21');
+
+SELECT member_id_to, COUNT(*) FROM t1 WHERE r_date =
+  '2011-06-21' GROUP BY member_id_to ORDER BY 2 LIMIT 1;
+
+DROP TABLE t1;
+
+--echo # End of test  BUG#12713907
+

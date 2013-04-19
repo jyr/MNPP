@@ -72,7 +72,7 @@ while test $# -gt 0 ; do
     echo_exec_prefix=yes
     ;;
   --version)
-    echo 12.2.6
+    echo 16.0.10
     exit 0
     ;;
   --ftversion)
@@ -144,7 +144,7 @@ if test "$echo_libs" = "yes" ; then
   if test "$enable_shared" = "yes" ; then
     eval "rpath=\"$hardcode_libdir_flag_spec\""
   fi
-  libs="-lfreetype -lz "
+  libs="-lfreetype -lz -lbz2 "
   if test "${SYSROOT}$libdir" != "/usr/lib" && test "${SYSROOT}$libdir" != "/usr/lib64"; then
     echo -L${SYSROOT}$libdir $libs
   else

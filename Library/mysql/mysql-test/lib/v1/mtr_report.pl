@@ -1,6 +1,5 @@
 # -*- cperl -*-
-# Copyright (c) 2004-2006 MySQL AB, 2008 Sun Microsystems, Inc.
-# Use is subject to license terms.
+# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -254,19 +253,8 @@ sub mtr_report_stats ($) {
             mtr_warning("can't read $errlog");
             next;
           }
-          my $leak_reports_expected= undef;
           while ( <ERR> )
           {
-            # There is a test case that purposely provokes a
-            # SAFEMALLOC leak report, even though there is no actual
-            # leak. We need to detect this, and ignore the warning in
-            # that case.
-            if (/Begin safemalloc memory dump:/) {
-              $leak_reports_expected= 1;
-            } elsif (/End safemalloc memory dump./) {
-              $leak_reports_expected= undef;
-            }
-
             # Skip some non fatal warnings from the log files
             if (
 		/\"SELECT UNIX_TIMESTAMP\(\)\" failed on master/ or
@@ -377,6 +365,9 @@ sub mtr_report_stats ($) {
 		/Slave: Can't DROP 'c7'.* 1091/ or
 		/Slave: Key column 'c6'.* 1072/ or
 
+    # Warnings generated until bug#42147 is properly resolved
+    /Found lock of type 6 that is write and read locked/ or
+
 		# rpl_idempotency.test produces warnings for the slave.
 		($testname eq 'rpl.rpl_idempotency' and
 		 (/Slave: Can\'t find record in \'t1\' Error_code: 1032/ or
@@ -424,9 +415,6 @@ sub mtr_report_stats ($) {
 	    }
             if ( /$pattern/ )
             {
-              if ($leak_reports_expected) {
-                next;
-              }
               $found_problems= 1;
               print WARN basename($errlog) . ": $testname: $_";
             }

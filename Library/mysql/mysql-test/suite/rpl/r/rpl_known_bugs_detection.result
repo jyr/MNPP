@@ -1,8 +1,11 @@
 include/master-slave.inc
 [connection master]
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT.");
 CREATE TABLE t1 (a INT NOT NULL PRIMARY KEY AUTO_INCREMENT, b INT,
 UNIQUE(b));
 INSERT INTO t1(b) VALUES(1),(1),(2) ON DUPLICATE KEY UPDATE t1.b=10;
+Warnings:
+Note	1592	Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. INSERT... ON DUPLICATE KEY UPDATE  on a table with more than one UNIQUE KEY is unsafe
 SELECT * FROM t1;
 a	b
 1	10
@@ -13,10 +16,12 @@ Last_SQL_Error = 'Error 'master may suffer from http://bugs.mysql.com/bug.php?id
 SELECT * FROM t1;
 a	b
 stop slave;
+include/wait_for_slave_to_stop.inc
 reset slave;
 reset master;
 drop table t1;
 start slave;
+include/wait_for_slave_to_start.inc
 CREATE TABLE t1 (
 id bigint(20) unsigned NOT NULL auto_increment,
 field_1 int(10) unsigned NOT NULL,
@@ -40,12 +45,18 @@ SELECT t2.field_a, t2.field_b, t2.field_c
 FROM t2
 ON DUPLICATE KEY UPDATE
 t1.field_3 = t2.field_c;
+Warnings:
+Note	1592	Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. INSERT... SELECT... ON DUPLICATE KEY UPDATE is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are updated. This order cannot be predicted and may differ on master and the slave.
+Note	1592	Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. Statements writing to a table with an auto-increment column after selecting from another table are unsafe because the order in which rows are retrieved determines what (if any) rows will be written. This order cannot be predicted and may differ on master and the slave.
 INSERT INTO t2 (field_a, field_b, field_c) VALUES (6, 'f', '6f');
 INSERT INTO t1 (field_1, field_2, field_3)
 SELECT t2.field_a, t2.field_b, t2.field_c
 FROM t2
 ON DUPLICATE KEY UPDATE
 t1.field_3 = t2.field_c;
+Warnings:
+Note	1592	Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. INSERT... SELECT... ON DUPLICATE KEY UPDATE is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are updated. This order cannot be predicted and may differ on master and the slave.
+Note	1592	Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT. Statements writing to a table with an auto-increment column after selecting from another table are unsafe because the order in which rows are retrieved determines what (if any) rows will be written. This order cannot be predicted and may differ on master and the slave.
 SELECT * FROM t1;
 id	field_1	field_2	field_3
 1	1	a	1a

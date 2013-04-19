@@ -45,16 +45,10 @@ if(!`select LENGTH('$log_error_')`)
   # does not know the location of its .err log, use default location
   let $log_error_ = $MYSQLTEST_VARDIR/log/mysqld.1.err;
 }
-# Assign env variable LOG_ERROR
-let LOG_ERROR=$log_error_;
 
-perl;
-  my $log_file= $ENV{'LOG_ERROR'} or die "LOG_ERROR not set\n";
-  open(FILE, "$log_file") or die("Unable to open $log_error: $!\n");
-  my $count= () = grep(/Too many connections/g,<FILE>);
-  print "Occurences: $count\n";
-  close(FILE);
-  # Clean log error file
-  open(FILE, '>', $log_file);
-  close(FILE);
-EOF
+--let log_error=$log_error_
+--let log_file=percona.log_connection_error.err
+--let log_file_full_path=$log_error
+--let grep_pattern= Too many connections
+--source include/log_grep.inc
+

@@ -42,7 +42,7 @@ source include/wait_for_slave_param.inc;
 
 let $_wfsse_errno= query_get_value(SHOW SLAVE STATUS, Last_SQL_Errno, 1);
 
-if (!$slave_sql_errno) {
+if ($slave_sql_errno == '') {
   --echo !!!ERROR IN TEST: you must set \$slave_sql_errno before you source
   --echo !!!wait_for_slave_sql_error.inc. The error we got this time was '$_wfsse_errno',
   --echo !!!so you probably want to add the following line to your test case:

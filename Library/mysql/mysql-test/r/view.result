@@ -839,7 +839,7 @@ ERROR HY000: View 'test.v1' references invalid table(s) or column(s) or function
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 t1	MyISAM	10	Fixed	0	0	0	#	1024	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-v1	NULL	NULL	NULL	NULL	NULL	NULL	#	NULL	NULL	NULL	#	#	NULL	NULL	NULL	NULL	View 'test.v1' references invalid table(s) or column(s) or function(s) or define
+v1	NULL	NULL	NULL	NULL	NULL	NULL	#	NULL	NULL	NULL	#	#	NULL	NULL	NULL	NULL	View 'test.v1' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them
 Warnings:
 Warning	1356	View 'test.v1' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them
 drop view v1;
@@ -1104,6 +1104,7 @@ select * from v1;
 a
 select * from t2;
 ERROR HY000: Table 't2' was not locked with LOCK TABLES
+unlock tables;
 drop view v1;
 drop table t1, t2;
 create table t1 (a int);
@@ -1113,8 +1114,8 @@ insert into v1 values(3);
 ERROR HY000: CHECK OPTION failed 'test.v1'
 insert ignore into v1 values (2),(3),(0);
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1;
 a
 1
@@ -1127,8 +1128,8 @@ create table t2 (a int);
 insert into t2 values (2),(3),(0);
 insert ignore into v1 SELECT a from t2;
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1 order by a desc;
 a
 1
@@ -1150,7 +1151,7 @@ a
 update v1 set a=a+1;
 update ignore v1,t2 set v1.a=v1.a+1 where v1.a=t2.a;
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1;
 a
 1
@@ -1184,7 +1185,7 @@ insert into v1 values (1) on duplicate key update a=2;
 ERROR HY000: CHECK OPTION failed 'test.v1'
 insert ignore into v1 values (1) on duplicate key update a=2;
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1;
 a
 1
@@ -1285,7 +1286,7 @@ insert ignore into v1 values (6);
 ERROR HY000: CHECK OPTION failed 'test.v1'
 insert ignore into v1 values (6),(3);
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1;
 s1
 3
@@ -1330,9 +1331,9 @@ delete from t1;
 load data infile '../../std_data/loaddata3.dat' ignore into table v1 fields terminated by '' enclosed by '' ignore 1 lines;
 Warnings:
 Warning	1366	Incorrect integer value: 'error      ' for column 'a' at row 3
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 Warning	1366	Incorrect integer value: 'wrong end  ' for column 'a' at row 4
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 select * from t1 order by a,b;
 a	b
 1	row 1
@@ -1356,7 +1357,7 @@ concat('|',a,'|')	concat('|',b,'|')
 delete from t1;
 load data infile '../../std_data/loaddata2.dat' ignore into table v1 fields terminated by ',' enclosed by '''';
 Warnings:
-Error	1369	CHECK OPTION failed 'test.v1'
+Warning	1369	CHECK OPTION failed 'test.v1'
 Warning	1261	Row 2 doesn't contain data for all columns
 select concat('|',a,'|'), concat('|',b,'|') from t1;
 concat('|',a,'|')	concat('|',b,'|')
@@ -2087,7 +2088,7 @@ CREATE TABLE t1 ( bug_table_seq   INTEGER NOT NULL);
 CREATE OR REPLACE VIEW v1 AS SELECT * from t1;
 DROP PROCEDURE IF EXISTS p1;
 Warnings:
-Note	1305	PROCEDURE p1 does not exist
+Note	1305	PROCEDURE test.p1 does not exist
 CREATE PROCEDURE p1 ( )
 BEGIN
 DO (SELECT  @next := IFNULL(max(bug_table_seq),0) + 1 FROM v1);
@@ -2344,11 +2345,11 @@ CREATE VIEW v2 AS SELECT t3.* FROM t1,t3 WHERE t1.a=t3.a;
 EXPLAIN SELECT t1.* FROM t1 JOIN t2 WHERE t1.a=t2.a AND t1.b=t2.b AND t1.a=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	5	const	1	Using where; Using index
-1	SIMPLE	t2	ref	a	a	10	const,test.t1.b	2	Using where; Using index
+1	SIMPLE	t2	ref	a	a	10	const,test.t1.b	1	Using where; Using index
 EXPLAIN SELECT * FROM v1 WHERE a=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	5	const	1	Using where; Using index
-1	SIMPLE	t2	ref	a	a	10	const,test.t1.b	2	Using where; Using index
+1	SIMPLE	t2	ref	a	a	10	const,test.t1.b	1	Using where; Using index
 EXPLAIN SELECT * FROM v2 WHERE a=1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	5	const	1	Using where; Using index
@@ -2589,7 +2590,7 @@ CREATE VIEW v1 AS SELECT SQRT(a) my_sqrt FROM t1;
 SELECT my_sqrt FROM v1 ORDER BY my_sqrt;
 my_sqrt
 1
-1.4142135623731
+1.4142135623730951
 DROP VIEW v1;
 DROP TABLE t1;
 CREATE TABLE t1 (id int PRIMARY KEY);
@@ -3686,7 +3687,7 @@ c1	c2
 2	2
 CREATE VIEW v1 AS SELECT c1, c2 FROM t1;
 SHOW INDEX FROM v1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
 SELECT * FROM v1 USE INDEX (PRIMARY) WHERE c1=2;
 ERROR 42000: Key 'PRIMARY' doesn't exist in table 'v1'
 SELECT * FROM v1 FORCE INDEX (PRIMARY) WHERE c1=2;
@@ -3701,6 +3702,117 @@ SELECT * FROM v1 IGNORE INDEX (c2) WHERE c2=2;
 ERROR 42000: Key 'c2' doesn't exist in table 'v1'
 DROP VIEW v1;
 DROP TABLE t1;
+# 
+# Bug #45806 crash when replacing into a view with a join!
+# 
+CREATE TABLE t1(a INT UNIQUE);
+CREATE VIEW v1 AS SELECT t1.a FROM t1, t1 AS a;
+INSERT INTO t1 VALUES (1), (2);
+REPLACE INTO v1(a) SELECT 1 FROM t1,t1 AS c;
+SELECT * FROM v1;
+a
+1
+2
+1
+2
+REPLACE INTO v1(a) SELECT 3 FROM t1,t1 AS c;
+SELECT * FROM v1;
+a
+1
+2
+3
+1
+2
+3
+1
+2
+3
+DELETE FROM t1 WHERE a=3;
+INSERT INTO v1(a) SELECT 1 FROM t1,t1 AS c
+ON DUPLICATE KEY UPDATE `v1`.`a`= 1;
+SELECT * FROM v1;
+a
+1
+2
+1
+2
+CREATE VIEW v2 AS SELECT t1.a FROM t1, v1 AS a;
+REPLACE INTO v2(a) SELECT 1 FROM t1,t1 AS c;
+SELECT * FROM v2;
+a
+1
+2
+1
+2
+1
+2
+1
+2
+REPLACE INTO v2(a) SELECT 3 FROM t1,t1 AS c;
+SELECT * FROM v2;
+a
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+INSERT INTO v2(a) SELECT 1 FROM t1,t1 AS c
+ON DUPLICATE KEY UPDATE `v2`.`a`= 1;
+SELECT * FROM v2;
+a
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+1
+2
+3
+DROP VIEW v1;
+DROP VIEW v2;
+DROP TABLE t1;
+# -- End of test case for Bug#45806
 # -----------------------------------------------------------------
 # -- Bug#40825: Error 1356 while selecting from a view 
 # --            with a "HAVING" clause though query works
@@ -3836,6 +3948,8 @@ create view a as select 1;
 end|
 call p();
 call p();
+Warnings:
+Error	1050	Table 'a' already exists
 drop view a;
 drop procedure p;
 #
@@ -3844,6 +3958,7 @@ drop procedure p;
 CREATE TABLE t1 (a INT);
 CREATE VIEW v1 AS SELECT a FROM t1;
 ALTER TABLE v1;
+ERROR HY000: 'test.v1' is not BASE TABLE
 DROP VIEW v1;
 DROP TABLE t1;
 #
@@ -3909,3 +4024,88 @@ DROP TABLE t1;
 # -----------------------------------------------------------------
 # -- End of 5.1 tests.
 # -----------------------------------------------------------------
+drop table if exists t_9801;
+drop view if exists v_9801;
+create table t_9801 (s1 int);
+create view v_9801 as
+select sum(s1) from t_9801 with check option;
+ERROR HY000: CHECK OPTION on non-updatable view 'test.v_9801'
+create view v_9801 as
+select sum(s1) from t_9801 group by s1 with check option;
+ERROR HY000: CHECK OPTION on non-updatable view 'test.v_9801'
+create view v_9801 as
+select sum(s1) from t_9801 group by s1 with rollup with check option;
+ERROR HY000: CHECK OPTION on non-updatable view 'test.v_9801'
+drop table t_9801;
+#
+# Bug #47335 assert in get_table_share
+#
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS v1;
+CREATE TEMPORARY TABLE t1 (id INT);
+ALTER VIEW t1 AS SELECT 1 AS f1;
+ERROR 42S02: Table 'test.t1' doesn't exist
+DROP TABLE t1;
+CREATE VIEW v1 AS SELECT 1 AS f1;
+CREATE TEMPORARY TABLE v1 (id INT);
+ALTER VIEW v1 AS SELECT 2 AS f1;
+DROP TABLE v1;
+SELECT * FROM v1;
+f1
+2
+DROP VIEW v1;
+#
+# Bug #47635 assert in start_waiting_global_read_lock 
+#            during CREATE VIEW
+#
+DROP TABLE IF EXISTS t1, t2;
+DROP VIEW IF EXISTS t2;
+CREATE TABLE t1 (f1 integer);
+CREATE TEMPORARY TABLE IF NOT EXISTS t1 (f1 integer);
+CREATE TEMPORARY TABLE t2 (f1 integer);
+DROP TABLE t1;
+FLUSH TABLES WITH READ LOCK;
+CREATE VIEW t2 AS SELECT * FROM t1;
+ERROR HY000: Can't execute the query because you have a conflicting read lock
+UNLOCK TABLES;
+DROP TABLE t1, t2;
+#
+# Bug#48315 Metadata lock is not taken for merged views that
+#           use an INFORMATION_SCHEMA table
+#
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS v1;
+DROP PROCEDURE IF EXISTS p1;
+# Connection default
+CREATE VIEW v1 AS SELECT schema_name FROM information_schema.schemata;
+CREATE TABLE t1 (str VARCHAR(50));
+CREATE PROCEDURE p1() INSERT INTO t1 SELECT * FROM v1;
+# CALL p1() so the view is merged.
+CALL p1();
+# Connection 3
+LOCK TABLE t1 READ;
+# Connection default
+# Try to CALL p1() again, this time it should block for t1.
+# Sending:
+CALL p1();
+# Connection 2
+# ... then try to drop the view. This should block.
+# Sending:
+DROP VIEW v1;
+# Connection 3
+# Now allow CALL p1() to complete
+UNLOCK TABLES;
+# Connection default
+# Reaping: CALL p1()
+# Connection 2
+# Reaping: DROP VIEW v1
+# Connection default
+DROP PROCEDURE p1;
+DROP TABLE t1;
+#
+# Bug#12626844: WRONG ERROR MESSAGE WHILE CREATING A VIEW ON A
+#               NON EXISTING DATABASE
+#
+DROP DATABASE IF EXISTS nodb;
+CREATE VIEW nodb.a AS SELECT 1;
+ERROR 42000: Unknown database 'nodb'

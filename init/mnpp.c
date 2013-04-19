@@ -1,91 +1,48 @@
 #include <stdio.h>
-#include <string.h>
 
 int main(int argc, char *argv[]) {
 
-  if(argc == 1 || argc == 2 || argc > 3) {
-    usage();
-  }else if ( (strcmp(argv[1], "--php52") == 0) || (strcmp(argv[1], "--php53") == 0) ){
-    /* init php versions */
-    if((strcmp(argv[2], "--start") == 0) || (strcmp(argv[2], "--stop") == 0)){
-      mnpp(argv[1], argv[2], "");
-    }else{
-      usage();
-    }
-  } else if( (strcmp(argv[1], "--start") == 0) || (strcmp(argv[1], "--stop") == 0) ){
-    /* init individual services */
-    if((strcmp(argv[2], "php52") == 0) || (strcmp(argv[2], "php53") == 0) || (strcmp(argv[2], "percona") == 0) || (strcmp(argv[2], "nginx") == 0) || (strcmp(argv[2], "uwsgi") == 0)){
-      mnpp("", argv[1], argv[2]);
-    }else{
-      usage();
-    }
-   
-  }
-  
+	if( argc <= 2){
+		usage();
+	}else if( ((strcmp(argv[1], "start") == 0) || (strcmp(argv[1], "restart") == 0) || (strcmp(argv[1], "stop") == 0)) \
+									&& ((strcmp(argv[2], "52") == 0) || (strcmp(argv[2], "53") == 0) || (strcmp(argv[2], "54") == 0) )){
+		mnpp(argv[1], argv[2]);
+	}else if( ((strcmp(argv[1], "nginx") == 0) || (strcmp(argv[1], "percona") == 0))){
+		manager(argv[1], argv[2], NULL);
+	}else if( (strcmp(argv[1], "php") == 0) && argc == 4 \
+									&& ((strcmp(argv[2], "52") == 0) || (strcmp(argv[2], "53") == 0) || (strcmp(argv[2], "54") == 0) )){
+		manager(argv[1], argv[2], argv[3]);
+	}else{
+		usage();
+	}
+
+	return 0;
 }
 
-int mnpp(char phpVersion[], char proccess[], char service[]) {
+int usage(){
+  printf("Usage: \n\t All");
+  printf("\n\t\t sudo mnpp [Option] [Version]");
+  printf("\n\t Only one service");
+  printf("\n\t\t sudo mnpp [Service] [Option]");
+  printf("\n\t For php");
+  printf("\n\t\t sudo mnpp php [Option] [Version]");
+  printf("\nVersion: \n\t 52 | 53 | 54 \n");
+  printf("\nService: \n\t nginx | percona | php \n");
+  printf("\nOption: \n\t start | stop | restart \n");
+}
+
+int mnpp(char proccess[], char version[]) {
   char command[50];
-  int version;
-
-  if ( (strcmp(phpVersion, "--php52") == 0) || (strcmp(service, "php52") == 0)) {
-    version = 52;
-  }else if((strcmp(phpVersion, "--php53") == 0) || (strcmp(service, "php53") == 0)) {
-    version = 53;
-  }
-
-  if ((strcmp(phpVersion, "") == 0)) {
-    /* init php versions */
-    if (strcmp(proccess,"--start") == 0) {
-
-      if((strcmp(service, "php52") == 0) || (strcmp(service, "php53") == 0)) {
-        sprintf(command, "sh /Applications/MNPP/init/php.sh %i start", version);
-      }else {
-        /* init start individual services */
-        sprintf(command, "sh /Applications/MNPP/init/%s.sh start", service);
-      }
-      system(command);
-      
-    } else if( strcmp(proccess,"--stop") == 0){
-
-      if((strcmp(service, "php52") == 0) || (strcmp(service, "php53") == 0)) {
-        sprintf(command, "sh /Applications/MNPP/init/php.sh %i stop", version);
-      }else{
-        /* init stop individual services */
-        sprintf(command, "sh /Applications/MNPP/init/%s.sh stop", service);
-      }
-      system(command);
-    }
-  } else {
-    /* init all services */
-    if (strcmp(proccess,"--start") == 0) {      
-      sprintf(command, "sh /Applications/MNPP/init/start.sh %i", version);
-      system(command);
-
-    } else if( strcmp(proccess,"--stop") == 0){
-      sprintf(command, "sh /Applications/MNPP/init/stop.sh %i", version);
-      system(command);
-
-    }
-  }
-  //printf("command %s", command);
-  
-  return(0);
+  sprintf(command, "sh /Applications/MNPP/init/%s.sh %s", proccess, version);
+  system(command);
 }
 
-int usage() {
-  printf("Usage: \n\t Start");
-  printf("\n\t\t sudo mnpp --php[Version] --start");
-  printf("\n\t Start only one service");
-  printf("\n\t\t sudo mnpp --start [service]");
-  printf("\n\t For php");
-  printf("\n\t\t sudo mnpp --start php[Version]");
-  printf("\n\t Stop");
-  printf("\n\t\t sudo mnpp --php[Version] --stop");
-  printf("\n\t Stop only one service");
-  printf("\n\t\t sudo mnpp --stop [service]");
-  printf("\n\t For php");
-  printf("\n\t\t sudo mnpp --stop php[Version]");
-  printf("\nVersion: \n\t 52 | 53 \n");
-  printf("\nService: \n\t nginx | percona | uwsgi \n");
+int manager(char service[], char proccess[], char version[]){
+  char command[50];
+	if(version == NULL){
+	  sprintf(command, "sh /Applications/MNPP/init/%s.sh %s", service, proccess);
+	}else{
+	  sprintf(command, "sh /Applications/MNPP/init/%s.sh %s %s", service, version, proccess);
+	}
+  system(command);
 }

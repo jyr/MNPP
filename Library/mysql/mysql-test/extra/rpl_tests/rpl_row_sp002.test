@@ -17,7 +17,6 @@
 -- source include/have_binlog_format_row.inc
 -- source include/master-slave.inc
 
-
 # Begin test section 1
 
 eval CREATE TABLE test.t1 (a INT AUTO_INCREMENT KEY, t CHAR(6)) ENGINE=$engine_type;

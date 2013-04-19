@@ -107,8 +107,9 @@ SELECT cid, CONCAT(firstname, ' ', surname), COUNT(call_id) FROM t1 LEFT JOIN t2
 cid	CONCAT(firstname, ' ', surname)	COUNT(call_id)
 SELECT HIGH_PRIORITY cid, CONCAT(firstname, ' ', surname), COUNT(call_id) FROM t1 LEFT JOIN t2 ON cid=contact_id WHERE firstname like '%foo%' GROUP BY cid ORDER BY surname, firstname;
 cid	CONCAT(firstname, ' ', surname)	COUNT(call_id)
-drop table t1,t2;
+drop table t2;
 unlock tables;
+drop table t1;
 CREATE TABLE t1 (
 bug_id mediumint(9) NOT NULL auto_increment,
 groupset bigint(20) DEFAULT '0' NOT NULL,
@@ -1675,7 +1676,7 @@ c	(SELECT a FROM t1 WHERE b = c)
 SELECT b c, (SELECT a FROM t1 WHERE b = c)
 FROM t1 
 HAVING b = 10;
-ERROR 42000: non-grouping field 'b' is used in HAVING clause
+ERROR 42000: Non-grouping field 'b' is used in HAVING clause
 SELECT MAX(b) c, (SELECT a FROM t1 WHERE b = c)
 FROM t1 
 HAVING b = 10;
@@ -1891,4 +1892,65 @@ a	AVG(t1.b)	t11c	t12c
 1	4.0000	6	6
 2	2.0000	7	7
 DROP TABLE t1;
+#
+# Bug#11765254 (58200): Assertion failed: param.sort_length when grouping
+# by functions
+#
+SET SQL_BIG_TABLES=1;
+CREATE TABLE t1(a INT);
+INSERT INTO t1 VALUES (0),(0);
+SELECT 1 FROM t1 GROUP BY IF(`a`,'','');
+1
+1
+SELECT 1 FROM t1 GROUP BY TRIM(LEADING RAND() FROM '');
+1
+1
+SELECT 1 FROM t1 GROUP BY SUBSTRING('',SLEEP(0),'');
+1
+1
+Warnings:
+Warning	1292	Truncated incorrect INTEGER value: ''
+Warning	1292	Truncated incorrect INTEGER value: ''
+Warning	1292	Truncated incorrect INTEGER value: ''
+SELECT 1 FROM t1 GROUP BY SUBSTRING(SYSDATE() FROM 'K' FOR 'jxW<');
+1
+1
+Warnings:
+Warning	1292	Truncated incorrect INTEGER value: 'K'
+Warning	1292	Truncated incorrect INTEGER value: 'jxW<'
+Warning	1292	Truncated incorrect INTEGER value: 'K'
+Warning	1292	Truncated incorrect INTEGER value: 'jxW<'
+Warning	1292	Truncated incorrect INTEGER value: 'K'
+Warning	1292	Truncated incorrect INTEGER value: 'jxW<'
+DROP TABLE t1;
+SET SQL_BIG_TABLES=0;
 # End of 5.1 tests
+#
+# Bug#49771: Incorrect MIN (date) when minimum value is 0000-00-00
+#
+CREATE TABLE t1 (f1 int, f2 DATE);
+INSERT INTO t1 VALUES (1,'2004-04-19'), (1,'0000-00-00'), (1,'2004-04-18'),
+(2,'2004-05-19'), (2,'0001-01-01'), (3,'2004-04-10');
+SELECT MIN(f2),MAX(f2) FROM t1;
+MIN(f2)	MAX(f2)
+0000-00-00	2004-05-19
+SELECT f1,MIN(f2),MAX(f2) FROM t1 GROUP BY 1;
+f1	MIN(f2)	MAX(f2)
+1	0000-00-00	2004-04-19
+2	0001-01-01	2004-05-19
+3	2004-04-10	2004-04-10
+DROP TABLE t1;
+CREATE TABLE t1 ( f1 int, f2 time);
+INSERT INTO t1 VALUES (1,'01:27:35'), (1,'06:11:01'), (2,'19:53:05'),
+(2,'21:44:25'), (3,'10:55:12'), (3,'05:45:11'), (4,'00:25:00');
+SELECT MIN(f2),MAX(f2) FROM t1;
+MIN(f2)	MAX(f2)
+00:25:00	21:44:25
+SELECT f1,MIN(f2),MAX(f2) FROM t1 GROUP BY 1;
+f1	MIN(f2)	MAX(f2)
+1	01:27:35	06:11:01
+2	19:53:05	21:44:25
+3	05:45:11	10:55:12
+4	00:25:00	00:25:00
+DROP TABLE t1;
+#End of test#49771

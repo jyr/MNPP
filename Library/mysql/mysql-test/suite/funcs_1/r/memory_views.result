@@ -54,6 +54,8 @@ f107 year(4) not null default 2000,
 f108 enum("1enum","2enum") not null default "1enum",
 f109 set("1set","2set") not null default "1set"
 ) engine = memory;
+Warnings:
+Note	1287	'YEAR(3)' is deprecated and will be removed in a future release. Please use YEAR(4) instead
 load data infile '<MYSQLTEST_VARDIR>/std_data/funcs_1/memory_tb2.txt'
 into table tb2 ;
 DROP DATABASE IF EXISTS test1;
@@ -113,6 +115,8 @@ f107 year(4) not null default 2000,
 f108 enum("1enum","2enum") not null default "1enum",
 f109 set("1set","2set") not null default "1set"
 ) engine = memory;
+Warnings:
+Note	1287	'YEAR(3)' is deprecated and will be removed in a future release. Please use YEAR(4) instead
 load data infile '<MYSQLTEST_VARDIR>/std_data/funcs_1/memory_tb2.txt'
 into table tb2 ;
 USE test;
@@ -3522,6 +3526,7 @@ RENAME TABLE v1 TO v2;
 RENAME VIEW  v2 TO v1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VIEW  v2 TO v1' at line 1
 ALTER TABLE v2 RENAME AS v1;
+ERROR HY000: 'test.v2' is not BASE TABLE
 ALTER VIEW  v1 RENAME AS v2;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'RENAME AS v2' at line 1
 DROP TABLE IF EXISTS t1, t2 ;
@@ -3547,11 +3552,11 @@ CREATE VIEW v1 or REPLACE AS Select * from tb2 my_table;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'or REPLACE AS Select * from tb2 my_table' at line 1
 CREATE VIEW v1 WITH CASCADED CHECK OPTION AS Select *
 from tb2 my_table limit 50;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'WITH CASCADED CHECK OPTION AS Select *
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CASCADED CHECK OPTION AS Select *
 from tb2 my_table limit 50' at line 1
 CREATE VIEW v1 WITH LOCAL CHECK OPTION AS Select *
 from tb2 my_table limit 50;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'WITH LOCAL CHECK OPTION AS Select *
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'LOCAL CHECK OPTION AS Select *
 from tb2 my_table limit 50' at line 1
 SELECT * FROM tb2 my_table CREATE VIEW As v1;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CREATE VIEW As v1' at line 1
@@ -3581,7 +3586,7 @@ FROM test.tb2 my_table CHECK OPTION WITH CASCADED;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CHECK OPTION WITH CASCADED' at line 2
 CREATE OR REPLACE VIEW v1 WITH CASCADED CHECK OPTION
 AS SELECT F59, F60 FROM test.tb2 my_table;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'WITH CASCADED CHECK OPTION
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CASCADED CHECK OPTION
 AS SELECT F59, F60 FROM test.tb2 my_table' at line 1
 CREATE OR REPLACE AS SELECT F59, F60
 FROM test.tb2 my_table VIEW v1 WITH CASCADED CHECK OPTION;
@@ -3610,7 +3615,7 @@ FROM test.tb2 my_table CHECK OPTION WITH LOCAL;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CHECK OPTION WITH LOCAL' at line 2
 CREATE OR REPLACE VIEW v1 WITH CASCADED CHECK OPTION
 AS SELECT F59, F60 FROM test.tb2 my_table;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'WITH CASCADED CHECK OPTION
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'CASCADED CHECK OPTION
 AS SELECT F59, F60 FROM test.tb2 my_table' at line 1
 CREATE OR REPLACE AS SELECT F59, F60
 FROM test.tb2 my_table VIEW v1 WITH LOCAL CHECK OPTION;
@@ -22826,7 +22831,7 @@ f1	f2
 ABC	3
 SELECT * FROM v1 order by 2;
 f1	my_sqrt
-ABC	1.73205080756888
+ABC	1.7320508075688772
 ALTER TABLE t1 CHANGE COLUMN f2 f2 VARCHAR(30);
 INSERT INTO t1   SET f1 = 'ABC', f2 = 'DEF';
 DESCRIBE t1;
@@ -22844,7 +22849,10 @@ ABC	DEF
 SELECT * FROM v1 order by 2;
 f1	my_sqrt
 ABC	0
-ABC	1.73205080756888
+ABC	1.7320508075688772
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
 SELECT SQRT('DEF');
 SQRT('DEF')
 0
@@ -22864,27 +22872,36 @@ my_sqrt	double	YES		NULL
 SELECT * FROM v2 order by 2;
 f1	my_sqrt
 ABC	0
-ABC	1.73205080756888
+ABC	1.7320508075688772
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
 CREATE TABLE t2 AS SELECT f1, SQRT(f2) my_sqrt FROM t1;
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
 SELECT * FROM t2 order by 2;
 f1	ABC
 my_sqrt	0
 f1	ABC
-my_sqrt	1.73205080756888
+my_sqrt	1.7320508075688772
 DROP TABLE t2;
 CREATE TABLE t2 AS SELECT * FROM v1;
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
 SELECT * FROM t2 order by 2;
 f1	ABC
 my_sqrt	0
 f1	ABC
-my_sqrt	1.73205080756888
+my_sqrt	1.7320508075688772
 DROP TABLE t2;
 CREATE TABLE t2 AS SELECT * FROM v2;
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: 'DEF'
 SELECT * FROM t2 order by 2;
 f1	ABC
 my_sqrt	0
 f1	ABC
-my_sqrt	1.73205080756888
+my_sqrt	1.7320508075688772
 DROP TABLE t1;
 DROP TABLE t2;
 DROP VIEW  v1;

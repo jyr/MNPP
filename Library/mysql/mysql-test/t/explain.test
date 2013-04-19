@@ -199,11 +199,21 @@ INSERT INTO t2 VALUES (NULL), (0);
 EXPLAIN EXTENDED SELECT (SELECT 1 FROM t2 WHERE d = c) FROM t1;
 DROP TABLE t1, t2;
 
+--echo #
+--echo # Bug#30302: Tables that were optimized away are printed in the
+--echo #            EXPLAIN EXTENDED warning.
+--echo #
+create table t1(f1 int);
+create table t2(f2 int);
+insert into t1 values(1);
+insert into t2 values(1),(2);
+explain extended select * from t1 where f1=1;
+explain extended select * from t1 join t2 on f1=f2 where f1=1;
+drop table t1,t2;
 
 --echo #
 --echo # Bug #48419: another explain crash..
 --echo #
-
 CREATE TABLE t1 (a INT);
 CREATE TABLE t2 (b BLOB, KEY b(b(100)));
 INSERT INTO t2 VALUES ('1'), ('2'), ('3');
@@ -266,3 +276,24 @@ DEALLOCATE PREPARE stmt;
 DROP TABLE t1;
 
 --echo End of 5.1 tests.
+
+--echo #
+--echo # Bug#11829785 EXPLAIN EXTENDED CRASH WITH RIGHT OUTER JOIN, SUBQUERIES
+--echo #
+
+CREATE TABLE t1(a INT);
+
+INSERT INTO t1 VALUES (0), (0);
+
+PREPARE s FROM 
+'EXPLAIN EXTENDED
+SELECT SUBSTRING(1, (SELECT 1 FROM t1 a1 RIGHT OUTER JOIN t1 ON 0)) AS d
+FROM t1 WHERE 0 > ANY (SELECT @a FROM t1)';
+
+--error ER_SUBQUERY_NO_1_ROW
+EXECUTE s;
+
+DEALLOCATE PREPARE s;
+DROP TABLE t1;
+
+--echo #

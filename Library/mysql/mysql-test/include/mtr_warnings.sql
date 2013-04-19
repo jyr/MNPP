@@ -31,6 +31,12 @@ CREATE TABLE test_suppressions (
 -- no invalid patterns can be inserted
 -- into test_suppressions
 --
+SET @character_set_client_saved = @@character_set_client||
+SET @character_set_results_saved = @@character_set_results||
+SET @collation_connection_saved = @@collation_connection||
+SET @@character_set_client = latin1||
+SET @@character_set_results = latin1||
+SET @@collation_connection = latin1_swedish_ci||
 /*!50002
 CREATE DEFINER=root@localhost TRIGGER ts_insert
 BEFORE INSERT ON test_suppressions
@@ -39,6 +45,9 @@ FOR EACH ROW BEGIN
   SELECT "" REGEXP NEW.pattern INTO dummy;
 END
 */||
+SET @@character_set_client = @character_set_client_saved||
+SET @@character_set_results = @character_set_results_saved||
+SET @@collation_connection = @collation_connection_saved||
 
 
 --
@@ -53,6 +62,12 @@ CREATE TABLE global_suppressions (
 -- no invalid patterns can be inserted
 -- into global_suppressions
 --
+SET @character_set_client_saved = @@character_set_client||
+SET @character_set_results_saved = @@character_set_results||
+SET @collation_connection_saved = @@collation_connection||
+SET @@character_set_client = latin1||
+SET @@character_set_results = latin1||
+SET @@collation_connection = latin1_swedish_ci||
 /*!50002
 CREATE DEFINER=root@localhost TRIGGER gs_insert
 BEFORE INSERT ON global_suppressions
@@ -61,6 +76,9 @@ FOR EACH ROW BEGIN
   SELECT "" REGEXP NEW.pattern INTO dummy;
 END
 */||
+SET @@character_set_client = @character_set_client_saved||
+SET @@character_set_results = @character_set_results_saved||
+SET @@collation_connection = @collation_connection_saved||
 
 
 
@@ -152,6 +170,15 @@ INSERT INTO global_suppressions VALUES
 
  ("The slave I.O thread stops because a fatal error is encountered when it try to get the value of SERVER_ID variable from master."),
 
+ /* Added 2009-08-XX after fixing Bug #42408 */
+
+ ("Although a path was specified for the .* option, log tables are used"),
+ ("Backup: Operation aborted"),
+ ("Restore: Operation aborted"),
+ ("Restore: The grant .* was skipped because the user does not exist"),
+ ("The path specified for the variable .* is not a directory or cannot be written:"),
+ ("Master server does not support or not configured semi-sync replication, fallback to asynchronous"),
+ (": The MySQL server is running with the --secure-backup-file-priv option so it cannot execute this statement"),
  ("Slave: Unknown table 't1' Error_code: 1051"),
 
  /* Messages from valgrind */
@@ -168,9 +195,14 @@ INSERT INTO global_suppressions VALUES
     write()/read(). Bug #50414 */
  ("==[0-9]*== Warning: invalid file descriptor -1 in syscall write()"),
  ("==[0-9]*== Warning: invalid file descriptor -1 in syscall read()"),
- 
- /* Suppress innodb_buffer_pool_shm_key warning */
- ("InnoDB: Warning: The innodb_buffer_pool_shm_key option has been specified."),
+
+ /*
+   BUG#42147 - Concurrent DML and LOCK TABLE ... READ for InnoDB 
+   table cause warnings in errlog
+   Note: This is a temporary suppression until Bug#42147 can be 
+   fixed properly. See bug page for more information.
+  */
+ ("Found lock of type 6 that is write and read locked"),
 
  ("THE_LAST_SUPPRESSION")||
 

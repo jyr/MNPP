@@ -1,7 +1,5 @@
 --source include/have_innodb.inc
 
-SELECT @@expand_fast_index_creation;
-
 ########################################################################
 # Bug #857590: Fast index creation does not update index statistics
 ########################################################################
@@ -37,6 +35,7 @@ SELECT @@expand_fast_index_creation;
 --enable_info
 ALTER TABLE t1 ADD KEY (a);
 --disable_info
+
 --vertical_results
 EXPLAIN SELECT COUNT(*) FROM t1, t1 t2 WHERE t1.a = t2.a AND t1.b = t2.b;
 --horizontal_results

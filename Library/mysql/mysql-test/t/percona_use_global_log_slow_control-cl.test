@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'use_global_log_slow_control';
-SHOW GLOBAL VARIABLES LIKE 'use_global_log_slow_control';

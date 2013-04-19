@@ -4,6 +4,11 @@
 #                                                            #
 ##############################################################
 
+# This test checks some limits which are related to MAX_INDEXES constant
+# which could be set to non-default value at build time.
+# We just skip the test in this case.
+--source include/have_64_keys.inc
+
 #    
 # NOTE: PLEASE SEE THE DETAILED DESCRIPTION AT THE BOTTOM OF THIS FILE
 #       BEFORE ADDING NEW TEST CASES HERE !!!
@@ -458,9 +463,6 @@ prepare stmt1 from ' analyze table t1 ' ;
 prepare stmt1 from ' checksum table t1 ' ;
 prepare stmt1 from ' repair table t1 ' ;
 
---replace_result $MYSQLTEST_VARDIR <MYSQLTEST_VARDIR>
---error ER_UNSUPPORTED_PS
-eval prepare stmt1 from ' restore table t1 from ''$datafile'' ' ;
 --remove_file $datafile
 
 ## handler

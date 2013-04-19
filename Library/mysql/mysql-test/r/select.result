@@ -2086,10 +2086,10 @@ fld6	char(4)	latin1_swedish_ci	NO				#
 show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 show keys from t2;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
-t2	0	PRIMARY	1	auto	A	1199	NULL	NULL		BTREE	
-t2	0	fld1	1	fld1	A	1199	NULL	NULL		BTREE	
-t2	1	fld3	1	fld3	A	NULL	NULL	NULL		BTREE	
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
+t2	0	PRIMARY	1	auto	A	1199	NULL	NULL		BTREE		
+t2	0	fld1	1	fld1	A	1199	NULL	NULL		BTREE		
+t2	1	fld3	1	fld3	A	NULL	NULL	NULL		BTREE		
 drop table t4, t3, t2, t1;
 DO 1;
 DO benchmark(100,1+1),1,1;
@@ -2196,10 +2196,10 @@ a	a
 select * from (t1 as t2 left join t1 as t3 using (a)) inner join t1 on t1.a>1;
 a	a
 1	2
-1	3
 2	2
-2	3
 3	2
+1	3
+2	3
 3	3
 select * from t1 inner join (t1 as t2 left join t1 as t3 using (a)) on t1.a>1;
 a	a
@@ -2426,27 +2426,28 @@ city
 London
 DROP TABLE t1;
 create table t1 (a int(11) unsigned, b int(11) unsigned);
-insert into t1 values (1,0), (1,1), (1,2);
+insert into t1 values (1,0), (1,1), (18446744073709551615,0);
+Warnings:
+Warning	1264	Out of range value for column 'a' at row 3
 select a-b  from t1 order by 1;
 a-b
 0
 1
-18446744073709551615
+4294967295
 select a-b , (a-b < 0)  from t1 order by 1;
 a-b	(a-b < 0)
 0	0
 1	0
-18446744073709551615	0
+4294967295	0
 select a-b as d, (a-b >= 0), b from t1 group by b having d >= 0;
 d	(a-b >= 0)	b
 1	1	0
 0	1	1
-18446744073709551615	1	2
 select cast((a - b) as unsigned) from t1 order by 1;
 cast((a - b) as unsigned)
 0
 1
-18446744073709551615
+4294967295
 drop table t1;
 create table t1 (a int(11));
 select all all * from t1;
@@ -2784,26 +2785,26 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 select max(key1) from t1 where key1 <= 0.6158;
 max(key1)
-0.615800023078918
+0.6158000230789185
 select max(key2) from t2 where key2 <= 1.6158;
 max(key2)
-1.61580002307892
+1.6158000230789185
 select min(key1) from t1 where key1 >= 0.3762;
 min(key1)
-0.376199990510941
+0.37619999051094055
 select min(key2) from t2 where key2 >= 1.3762;
 min(key2)
-1.37619996070862
+1.3761999607086182
 select max(key1), min(key2) from t1, t2
 where key1 <= 0.6158 and key2 >= 1.3762;
 max(key1)	min(key2)
-0.615800023078918	1.37619996070862
+0.6158000230789185	1.3761999607086182
 select max(key1) from t1 where key1 <= 0.6158 and rand() + 0.5 >= 0.5;
 max(key1)
-0.615800023078918
+0.6158000230789185
 select min(key1) from t1 where key1 >= 0.3762 and rand() + 0.5 >= 0.5;
 min(key1)
-0.376199990510941
+0.37619999051094055
 DROP TABLE t1,t2;
 CREATE TABLE t1 (i BIGINT UNSIGNED NOT NULL);
 INSERT INTO t1 VALUES (10);
@@ -3419,6 +3420,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	const	PRIMARY	PRIMARY	4	const	1	
 1	SIMPLE	t1	range	PRIMARY	PRIMARY	4	NULL	2	Using where
 DROP TABLE t1,t2;
+SET SQL_MODE='NO_UNSIGNED_SUBTRACTION';
 CREATE TABLE t1 (i TINYINT UNSIGNED NOT NULL);
 INSERT t1 SET i = 0;
 UPDATE t1 SET i = -1;
@@ -3438,8 +3440,9 @@ Warnings:
 Warning	1264	Out of range value for column 'i' at row 1
 SELECT * FROM t1;
 i
-255
+0
 DROP TABLE t1;
+SET SQL_MODE=default;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, b int, c int, e int, primary key(a,b,c));
@@ -4168,9 +4171,10 @@ str_to_date('2007-10-00','%Y-%m-%d') between '2007/09/01 00:00:00'
 set SQL_MODE=TRADITIONAL;
 select str_to_date('2007-10-00 12:34','%Y-%m-%d %H:%i') = '2007-10-00 12:34';
 str_to_date('2007-10-00 12:34','%Y-%m-%d %H:%i') = '2007-10-00 12:34'
-0
+NULL
 Warnings:
 Warning	1292	Truncated incorrect datetime value: '2007-10-00 12:34'
+Warning	1411	Incorrect datetime value: '2007-10-00 12:34' for function str_to_date
 select str_to_date('2007-10-01 12:34','%Y-%m-%d %H:%i') = '2007-10-00 12:34';
 str_to_date('2007-10-01 12:34','%Y-%m-%d %H:%i') = '2007-10-00 12:34'
 0
@@ -4178,17 +4182,16 @@ Warnings:
 Warning	1292	Truncated incorrect datetime value: '2007-10-00 12:34'
 select str_to_date('2007-10-00 12:34','%Y-%m-%d %H:%i') = '2007-10-01 12:34';
 str_to_date('2007-10-00 12:34','%Y-%m-%d %H:%i') = '2007-10-01 12:34'
-0
+NULL
 Warnings:
-Warning	1292	Truncated incorrect datetime value: '2007-10-00 12:34:00'
+Warning	1411	Incorrect datetime value: '2007-10-00 12:34' for function str_to_date
 select str_to_date('2007-10-00','%Y-%m-%d') between '2007/09/01'
                                                 and '2007/10/20';
 str_to_date('2007-10-00','%Y-%m-%d') between '2007/09/01'
                                                 and '2007/10/20'
-0
+NULL
 Warnings:
-Warning	1292	Incorrect datetime value: '2007-10-00' for column '2007/09/01' at row 1
-Warning	1292	Incorrect datetime value: '2007-10-00' for column '2007/10/20' at row 1
+Warning	1411	Incorrect datetime value: '2007-10-00' for function str_to_date
 set SQL_MODE=DEFAULT;
 select str_to_date('2007-10-00','%Y-%m-%d') between '' and '2007/10/20';
 str_to_date('2007-10-00','%Y-%m-%d') between '' and '2007/10/20'
@@ -4335,6 +4338,7 @@ SHOW STATUS LIKE 'Handler_read%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	2
+Handler_read_last	0
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -4423,7 +4427,7 @@ CREATE TABLE t1(a INT);
 INSERT INTO t1 VALUES (2),(3);
 # Should not crash
 SELECT 1 FROM t1 WHERE a <> 1 AND NOT
-ROW(a,a) <=> ROW((SELECT 1 FROM t1 WHERE 1=2),(SELECT 1 FROM t1))
+ROW(1,a) <=> ROW(1,(SELECT 1 FROM t1))
 INTO @var0;
 ERROR 21000: Subquery returns more than 1 row
 DROP TABLE t1;
@@ -4454,7 +4458,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01' AND a='2001-01-01 00:00:0
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a` from `test`.`t1` where 1
+Note	1003	select '2001-01-01 00:00:00' AS `a` from dual where 1
 DROP TABLE t1;
 CREATE TABLE t1(a DATE NOT NULL);
 INSERT INTO t1 VALUES('2001-01-01');
@@ -4465,7 +4469,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01' AND a='2001-01-01 00:00:0
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01' AS `a` from `test`.`t1` where 1
+Note	1003	select '2001-01-01' AS `a` from dual where 1
 DROP TABLE t1;
 CREATE TABLE t1(a TIMESTAMP NOT NULL);
 INSERT INTO t1 VALUES('2001-01-01');
@@ -4476,7 +4480,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01' AND a='2001-01-01 00:00:0
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a` from `test`.`t1` where 1
+Note	1003	select '2001-01-01 00:00:00' AS `a` from dual where 1
 DROP TABLE t1;
 CREATE TABLE t1(a DATETIME NOT NULL, b DATE NOT NULL);
 INSERT INTO t1 VALUES('2001-01-01', '2001-01-01');
@@ -4487,7 +4491,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01' AND a=b AND b='2001-01-01
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from `test`.`t1` where 1
+Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from dual where 1
 DROP TABLE t1;
 CREATE TABLE t1(a DATETIME NOT NULL, b VARCHAR(20) NOT NULL);
 INSERT INTO t1 VALUES('2001-01-01', '2001-01-01');
@@ -4497,7 +4501,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01' AND a=b AND b='2001-01-01
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from `test`.`t1` where 0
+Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from dual where 0
 SELECT * FROM t1 WHERE a='2001-01-01 00:00:00' AND a=b AND b='2001-01-01';
 a	b
 2001-01-01 00:00:00	2001-01-01
@@ -4505,7 +4509,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE a='2001-01-01 00:00:00' AND a=b AND b='2
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from `test`.`t1` where 1
+Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01' AS `b` from dual where 1
 DROP TABLE t1;
 CREATE TABLE t1(a DATETIME NOT NULL, b DATE NOT NULL);
 INSERT INTO t1 VALUES('2001-01-01', '2001-01-01');
@@ -4524,7 +4528,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	y	system	NULL	NULL	NULL	NULL	1	100.00	
 1	SIMPLE	z	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01 00:00:00' AS `a`,'2001-01-01 00:00:00' AS `a` from `test`.`t1` `x` join `test`.`t1` `y` join `test`.`t1` `z` where 1
+Note	1003	select '2001-01-01 00:00:00' AS `a`,'2001-01-01 00:00:00' AS `a`,'2001-01-01 00:00:00' AS `a` from dual where 1
 DROP TABLE t1;
 #
 # Bug #49897: crash in ptr_compare when char(0) NOT NULL 
@@ -4638,7 +4642,7 @@ EXPLAIN EXTENDED SELECT * FROM t1 WHERE (a=a AND a=a) OR b > 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select '1' AS `a`,'1' AS `b` from `test`.`t1` where 1
+Note	1003	select '1' AS `a`,'1' AS `b` from dual where 1
 SELECT * FROM t1 WHERE (a=a AND a=a) OR b > 2;
 a	b
 1	1
@@ -4739,6 +4743,72 @@ field2
 15:13:38
 drop table A,AA,B,BB;
 #end of test for bug#45266
+#
+# Bug#33546: Slowdown on re-evaluation of constant expressions.
+#
+CREATE TABLE t1 (a INT);
+INSERT INTO t1 VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+CREATE TABLE t2 (b INT);
+INSERT INTO t2 VALUES (2);
+SELECT * FROM t1 WHERE a = 1 + 1;
+a
+2
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a = 1 + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` = <cache>((1 + 1)))
+SELECT * FROM t1 HAVING a = 1 + 1;
+a
+2
+EXPLAIN EXTENDED SELECT * FROM t1 HAVING a = 1 + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` having (`test`.`t1`.`a` = <cache>((1 + 1)))
+SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+a	b
+4	2
+EXPLAIN EXTENDED SELECT * FROM t1, t2 WHERE a = b + (1 + 1);
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t2	system	NULL	NULL	NULL	NULL	1	100.00	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a`,'2' AS `b` from `test`.`t1` where (`test`.`t1`.`a` = <cache>(('2' + (1 + 1))))
+SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+b	a
+2	3
+EXPLAIN EXTENDED SELECT * FROM t2 LEFT JOIN t1 ON a = b + 1;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t2	system	NULL	NULL	NULL	NULL	1	100.00	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	
+Warnings:
+Note	1003	select '2' AS `b`,`test`.`t1`.`a` AS `a` from `test`.`t1` where 1
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a > UNIX_TIMESTAMP('2009-03-10 00:00:00');
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` > <cache>(unix_timestamp('2009-03-10 00:00:00')))
+CREATE FUNCTION f1() RETURNS INT DETERMINISTIC
+BEGIN
+SET @cnt := @cnt + 1;
+RETURN 1;
+END;|
+SET @cnt := 0;
+SELECT * FROM t1 WHERE a = f1();
+a
+1
+SELECT @cnt;
+@cnt
+1
+EXPLAIN EXTENDED SELECT * FROM t1 WHERE a = f1();
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
+Warnings:
+Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` = <cache>(`f1`()))
+DROP TABLE t1, t2;
+DROP FUNCTION f1;
+# End of bug#33546
 # 
 # BUG#48052: Valgrind warning - uninitialized value in init_read_record()
 # 
@@ -4797,4 +4867,151 @@ SELECT 1 FROM t1 ORDER BY a COLLATE latin1_german2_ci;
 1
 1
 DROP TABLE t1;
+#
+# Bug #58422: Incorrect result when OUTER JOIN'ing 
+# with an empty table
+#
+CREATE TABLE t_empty(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+CREATE TABLE t1(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+INSERT INTO t1 VALUES (1,1), (2,2), (3,3);
+CREATE TABLE t2(pk INT PRIMARY KEY, i INT) ENGINE = MYISAM;
+INSERT INTO t2 VALUES (1,1), (2,2), (3,3);
+EXPLAIN
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 INNER JOIN t_empty ON TRUE)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 INNER JOIN t_empty ON TRUE)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+pk	i	pk	i	pk	i
+EXPLAIN
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 CROSS JOIN t_empty)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 CROSS JOIN t_empty)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+pk	i	pk	i	pk	i
+EXPLAIN
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 INNER JOIN t_empty ON t_empty.i=t2.i)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+SELECT *
+FROM 
+t1
+LEFT OUTER JOIN
+(t2 INNER JOIN t_empty ON t_empty.i=t2.i)
+ON t1.pk=t2.pk
+WHERE t2.pk <> 2;
+pk	i	pk	i	pk	i
+DROP TABLE t1,t2,t_empty;
 End of 5.1 tests
+#
+# Bug#54515: Crash in opt_range.cc::get_best_group_min_max on 
+#            SELECT from VIEW with GROUP BY
+#
+CREATE TABLE t1 (
+col_int_key int DEFAULT NULL,
+KEY int_key (col_int_key)
+) ;
+INSERT INTO t1 VALUES (1),(2);
+CREATE VIEW view_t1 AS 
+SELECT t1.col_int_key AS col_int_key
+FROM t1;
+SELECT col_int_key FROM view_t1 GROUP BY col_int_key;
+col_int_key
+1
+2
+DROP VIEW view_t1;
+DROP TABLE t1;
+# End of test BUG#54515
+#
+# Bug #57203 Assertion `field_length <= 255' failed.
+#
+SELECT coalesce((avg(distinct (geomfromtext("point(25379 -22010)"))))) 
+UNION ALL 
+SELECT coalesce((avg(distinct (geomfromtext("point(25379 -22010)")))))
+AS foo
+;
+coalesce((avg(distinct (geomfromtext("point(25379 -22010)")))))
+0.0000
+0.0000
+CREATE table t1(a text);
+INSERT INTO t1 VALUES (''), ('');
+SELECT avg(distinct(t1.a)) FROM t1, t1 t2
+GROUP BY t2.a ORDER BY t1.a;
+avg(distinct(t1.a))
+0
+DROP TABLE t1;
+# End of test BUG#57203
+#
+# Bug#63020: Function "format"'s 'locale' argument is not considered
+#	     when creating a "view'
+#
+CREATE TABLE t1 (f1 DECIMAL(10,2));
+INSERT INTO t1 VALUES (11.67),(17865.3),(12345678.92);
+CREATE VIEW view_t1 AS SELECT FORMAT(f1,1,'sk_SK') AS f1 FROM t1;
+SHOW CREATE VIEW view_t1;
+View	Create View	character_set_client	collation_connection
+view_t1	CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `view_t1` AS select format(`t1`.`f1`,1,'sk_SK') AS `f1` from `t1`	latin1	latin1_swedish_ci
+SELECT * FROM view_t1;
+f1
+11,7
+17 865,3
+12 345 678,9
+DROP TABLE t1;
+DROP VIEW view_t1;
+# End of test  BUG#63020
+#
+# Bug#12713907: STRANGE OPTIMIZE & WRONG RESULT UNDER ORDER BY 
+# COUNT(*) LIMIT.
+#
+CREATE TABLE t1 (
+id BIGINT(20) ,
+member_id_to INT(11) ,
+r_date DATE ,
+PRIMARY KEY (id,r_date),
+KEY r_date_idx (r_date),
+KEY t1_idx01 (member_id_to)
+) ENGINE=InnoDB;
+INSERT INTO t1 VALUES 
+(107924526,518491,'2011-05-01'),
+(107924527,518491,'2011-05-01'),
+(107924534,518491,'2011-06-21'),
+(107924535,518491,'2011-06-21'),
+(107924542,1601319,'2011-06-21'),
+(107924543,1601319,'2011-06-21'),
+(107924544,1601319,'2011-06-21'),
+(107924545,1601319,'2011-06-21');
+SELECT member_id_to, COUNT(*) FROM t1 WHERE r_date =
+'2011-06-21' GROUP BY member_id_to ORDER BY 2 LIMIT 1;
+member_id_to	COUNT(*)
+518491	2
+DROP TABLE t1;
+# End of test  BUG#12713907

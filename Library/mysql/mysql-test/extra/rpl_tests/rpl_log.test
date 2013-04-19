@@ -11,9 +11,11 @@
 # (otherwise RESET MASTER may come too early).
 sync_slave_with_master;
 source include/stop_slave.inc;
+--source include/wait_for_slave_to_stop.inc
 reset master;
 reset slave;
-source include/start_slave.inc;
+start slave;
+--source include/wait_for_slave_to_start.inc
 
 let $VERSION=`select version()`;
 
@@ -37,7 +39,7 @@ source include/show_binlog_events.inc;
 let $binlog_limit= 2;
 source include/show_binlog_events.inc;
 
-let $binlog_limit= 2,1;
+let $binlog_limit= 1,4;
 source include/show_binlog_events.inc;
 let $binlog_limit=;
 flush logs;

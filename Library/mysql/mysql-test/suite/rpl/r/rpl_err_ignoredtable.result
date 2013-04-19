@@ -1,6 +1,5 @@
 include/master-slave.inc
 [connection master]
-CALL mtr.add_suppression("Statement may not be safe to log in statement format.");
 create table t1 (a int primary key);
 create table t4 (a int primary key);
 insert into t1 values (1),(1);

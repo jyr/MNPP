@@ -24,6 +24,15 @@ source include/have_binlog_format_statement.inc;
 --let $rpl_server_number= 2
 --source include/rpl_connect.inc
 
+--disable_query_log
+--connection server_1
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT.*");
+--connection server_2
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT.*");
+--connection server_3
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT.*");
+--enable_query_log
+
 --connection master
 
 CREATE TABLE t1(c1 char(100));

@@ -115,7 +115,7 @@
 /* #undef uid_t */
 
 /* Define if lex declares yytext as a char * by default, not a char[].  */
-#define YYTEXT_POINTER 1
+/* #undef YYTEXT_POINTER */
 
 /* #undef uint */
 #define ulong unsigned long 
@@ -526,7 +526,7 @@
 #define HAVE_STRLCPY 1
 
 /* Define if you have the strnlen function.  */
-/* #undef HAVE_STRNLEN */
+#define HAVE_STRNLEN 1
 
 /* Define if you have the strpbrk function.  */
 /* #undef HAVE_STRPBRK */
@@ -1267,7 +1267,7 @@
 /* #undef HAVE_DSA_DEFAULT_METHOD */
 
 /*   */
-#define HAVE_OPENSSL_EXT 1
+/* #undef HAVE_OPENSSL_EXT */
 
 /* Whether to build pcre as dynamic module */
 /* #undef COMPILE_DL_PCRE */
@@ -1540,7 +1540,7 @@
 /* #undef HAVE_GD_IMAGEELLIPSE */
 
 /*   */
-#define HAVE_GD_FONTCACHESHUTDOWN 1
+/* #undef HAVE_GD_FONTCACHESHUTDOWN */
 
 /*   */
 /* #undef HAVE_GD_FONTMUTEX */
@@ -1642,13 +1642,13 @@
 #define HAVE_GD_GIF_CTX 1
 
 /*   */
-#define HAVE_GD_CACHE_CREATE 1
+/* #undef HAVE_GD_CACHE_CREATE */
 
 /*   */
-#define HAVE_GD_FONTCACHESHUTDOWN 1
+/* #undef HAVE_GD_FONTCACHESHUTDOWN */
 
 /*   */
-#define HAVE_GD_FREEFONTCACHE 1
+/* #undef HAVE_GD_FREEFONTCACHE */
 
 /*   */
 /* #undef HAVE_GD_FONTMUTEX */
@@ -1669,16 +1669,16 @@
 #define COMPILE_DL_GETTEXT 1
 
 /*   */
-#define HAVE_NGETTEXT 1
+/* #undef HAVE_NGETTEXT */
 
 /*   */
-#define HAVE_DNGETTEXT 1
+/* #undef HAVE_DNGETTEXT */
 
 /*   */
-#define HAVE_DCNGETTEXT 1
+/* #undef HAVE_DCNGETTEXT */
 
 /*   */
-#define HAVE_BIND_TEXTDOMAIN_CODESET 1
+/* #undef HAVE_BIND_TEXTDOMAIN_CODESET */
 
 /* Whether to build gmp as dynamic module */
 /* #undef COMPILE_DL_GMP */
@@ -1735,7 +1735,7 @@
 #define ICONV_SUPPORTS_ERRNO 1
 
 /* Path to iconv.h */
-#define PHP_ICONV_H_PATH </Applications/MNPP/Library/libiconv/include/iconv.h>
+#define PHP_ICONV_H_PATH </Applications/MNPP/Library/iconv/include/iconv.h>
 
 /* Whether to build iconv as dynamic module */
 /* #undef COMPILE_DL_ICONV */
@@ -2923,16 +2923,16 @@
 /* #undef PTHREADS */
 
 /* PHP build date */
-#define PHP_BUILD_DATE "2011-06-24"
+#define PHP_BUILD_DATE "2013-04-19"
 
 /* hardcode for each of the cross compiler host */
 #define PHP_OS "Darwin"
 
 /* hardcode for each of the cross compiler host */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair.local 12.0.0 Darwin Kernel Version 12.0.0: Sun Jun 24 23:00:16 PDT 2012; root:xnu-2050.7.9~1/RELEASE_X86_64 x86_64"
 
 /* uname -a output */
-#define PHP_UNAME "Darwin MacBook-Pro-de-Jair-Gaxiola.local 10.7.0 Darwin Kernel Version 10.7.0: Sat Jan 29 15:17:16 PST 2011; root:xnu-1504.9.37~1/RELEASE_I386 i386"
+#define PHP_UNAME "Darwin MacBook-Pro-de-Jair.local 12.0.0 Darwin Kernel Version 12.0.0: Sun Jun 24 23:00:16 PDT 2012; root:xnu-2050.7.9~1/RELEASE_X86_64 x86_64"
 
 /* uname output */
 #define PHP_OS "Darwin"

@@ -240,4 +240,4 @@ abcdefghá
 drop table t1;
 set global LC_MESSAGES=convert((@@global.log_bin_trust_function_creators) 
 using cp1250);
-ERROR HY000: Unknown system variable 'LC_MESSAGES'
+ERROR HY000: Unknown locale: '1'

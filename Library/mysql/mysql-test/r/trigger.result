@@ -821,7 +821,6 @@ drop trigger t1_bi;
 create trigger t1_bi after insert on t1 for each row insert into t3 values (new.id);
 execute stmt1;
 call p1();
-ERROR 42S02: Table 'test.t3' doesn't exist
 deallocate prepare stmt1;
 drop procedure p1;
 drop table t1, t2, t3;
@@ -1072,8 +1071,6 @@ SELECT @x;
 NULL
 SET @x=2;
 UPDATE t1 SET i1 = @x;
-Warnings:
-Error	1365	Division by 0
 SELECT @x;
 @x
 NULL
@@ -1085,9 +1082,6 @@ SELECT @x;
 NULL
 SET @x=4;
 UPDATE t1 SET i1 = @x;
-Warnings:
-Error	1365	Division by 0
-Error	1365	Division by 0
 SELECT @x;
 @x
 NULL
@@ -1190,16 +1184,14 @@ create trigger t4_bu before update on t4 for each row set @t4_bu_called:=1|
 insert into t1 values(10, 10)|
 set @a:=1/0|
 Warnings:
-Error	1365	Division by 0
+Warning	1365	Division by 0
 select 1/0 from t1|
 1/0
 NULL
 Warnings:
-Error	1365	Division by 0
+Warning	1365	Division by 0
 create trigger t1_bi before insert on t1 for each row set @a:=1/0|
 insert into t1 values(20, 20)|
-Warnings:
-Error	1365	Division by 0
 drop trigger t1_bi|
 create trigger t1_bi before insert on t1 for each row
 begin
@@ -1218,8 +1210,6 @@ set @a:=1/0;
 end|
 set @check=0, @t4_bi_called=0, @t4_bu_called=0|
 insert into t1 values(30, 30)|
-Warnings:
-Error	1365	Division by 0
 select @check, @t4_bi_called, @t4_bu_called|
 @check	@t4_bi_called	@t4_bu_called
 2	1	1
@@ -1420,9 +1410,7 @@ create trigger t1_ai after insert on t1 for each row set @a := 7;
 create table t2 (j int);
 insert into t2 values (1), (2);
 set @a:="";
-create table if not exists t1 select * from t2;
-Warnings:
-Note	1050	Table 't1' already exists
+insert into t1 select * from t2;
 select * from t1;
 i
 7
@@ -1434,9 +1422,7 @@ drop trigger t1_bi;
 drop trigger t1_ai;
 create table t3 (isave int);
 create trigger t1_bi before insert on t1 for each row insert into t3 values (new.i);
-create table if not exists t1 select * from t2;
-Warnings:
-Note	1050	Table 't1' already exists
+insert into t1 select * from t2;
 select * from t1;
 i
 7
@@ -1622,10 +1608,8 @@ After DELETE, old=REPLACE, inserting a new key
 After INSERT, new=REPLACE, deleting the duplicate
 truncate t1;
 truncate t1_op_log;
-create table if not exists t1
+insert into t1
 select NULL, "CREATE TABLE ... SELECT, inserting a new key";
-Warnings:
-Note	1050	Table 't1' already exists
 set @id=last_insert_id();
 select * from t1;
 id	operation
@@ -1635,10 +1619,8 @@ operation
 Before INSERT, new=CREATE TABLE ... SELECT, inserting a new key
 After INSERT, new=CREATE TABLE ... SELECT, inserting a new key
 truncate t1_op_log;
-create table if not exists t1 replace
+replace into t1
 select @id, "CREATE TABLE ... REPLACE SELECT, deleting a duplicate key";
-Warnings:
-Note	1050	Table 't1' already exists
 select * from t1;
 id	operation
 1	CREATE TABLE ... REPLACE SELECT, deleting a duplicate key
@@ -1817,24 +1799,28 @@ After DELETE, old=REPLACE, inserting a new key
 After INSERT, new=REPLACE, deleting the duplicate
 truncate t1;
 truncate t1_op_log;
-create table if not exists v1
+insert into v1
 select NULL, "CREATE TABLE ... SELECT, inserting a new key";
-Warnings:
-Note	1050	Table 'v1' already exists
 set @id=last_insert_id();
 select * from t1;
 id	operation
+1	CREATE TABLE ... SELECT, inserting a new key
 select * from t1_op_log;
 operation
+Before INSERT, new=CREATE TABLE ... SELECT, inserting a new key
+After INSERT, new=CREATE TABLE ... SELECT, inserting a new key
 truncate t1_op_log;
-create table if not exists v1 replace
+replace into v1
 select @id, "CREATE TABLE ... REPLACE SELECT, deleting a duplicate key";
-Warnings:
-Note	1050	Table 'v1' already exists
 select * from t1;
 id	operation
+1	CREATE TABLE ... REPLACE SELECT, deleting a duplicate key
 select * from t1_op_log;
 operation
+Before INSERT, new=CREATE TABLE ... REPLACE SELECT, deleting a duplicate key
+Before DELETE, old=CREATE TABLE ... SELECT, inserting a new key
+After DELETE, old=CREATE TABLE ... SELECT, inserting a new key
+After INSERT, new=CREATE TABLE ... REPLACE SELECT, deleting a duplicate key
 truncate t1;
 truncate t1_op_log;
 insert into v1 (id, operation)
@@ -2075,7 +2061,8 @@ BEGIN
 UPDATE a_nonextisting_table SET a = 1;
 END//
 CREATE TABLE IF NOT EXISTS t2 ( a INT, b INT ) SELECT a, b FROM t1;
-ERROR 42S02: Table 'test.a_nonextisting_table' doesn't exist
+Warnings:
+Note	1050	Table 't2' already exists
 SELECT * FROM t2;
 a	b
 DROP TABLE t1, t2;
@@ -2093,12 +2080,8 @@ SELECT 1 FROM t1 c WHERE
 END//
 SET @bug51650 = 1;
 INSERT IGNORE INTO t2 VALUES();
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 INSERT IGNORE INTO t1 SET b = '777';
 INSERT IGNORE INTO t2 SET a = '111';
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 SET @bug51650 = 1;
 INSERT IGNORE INTO t2 SET a = '777';
 DROP TRIGGER trg1;
@@ -2142,3 +2125,105 @@ b
 DROP DATABASE db1;
 USE test;
 End of 5.1 tests.
+#
+# Bug#34453 Can't change size of file (Errcode: 1224)
+#
+DROP TRIGGER IF EXISTS t1_bi;
+DROP TRIGGER IF EXISTS t1_bd;
+DROP TABLE IF EXISTS t1;
+DROP TEMPORARY TABLE IF EXISTS t2;
+CREATE TABLE t1 (s1 INT);
+CREATE TEMPORARY TABLE t2 (s1 INT);
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW INSERT INTO t2 VALUES (0);
+CREATE TRIGGER t1_bd BEFORE DELETE ON t1 FOR EACH ROW DELETE FROM t2;
+INSERT INTO t1 VALUES (0);
+INSERT INTO t1 VALUES (0);
+SELECT * FROM t1;
+s1
+0
+0
+SELECT * FROM t2;
+s1
+0
+0
+# Reported to give ERROR 14 (HY000): 
+# Can't change size of file (Errcode: 1224)
+# on Windows 
+DELETE FROM t1;
+DROP TABLE t1;
+DROP TEMPORARY TABLE t2;
+DROP TRIGGER IF EXISTS trg1;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT);
+CREATE TRIGGER trg1 BEFORE INSERT ON t1 FOR EACH ROW
+BEGIN
+DECLARE a CHAR;
+SELECT 'ab' INTO a;
+SELECT 'ab' INTO a;
+SELECT 'a' INTO a;
+END|
+INSERT INTO t1 VALUES (1);
+DROP TRIGGER trg1;
+DROP TABLE t1;
+DROP TRIGGER IF EXISTS trg1;
+DROP TRIGGER IF EXISTS trg2;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT);
+CREATE TRIGGER trg1 BEFORE INSERT ON t1 FOR EACH ROW
+BEGIN
+DECLARE trg1 CHAR;
+SELECT 'ab' INTO trg1;
+END|
+CREATE TRIGGER trg2 AFTER INSERT ON t1 FOR EACH ROW
+BEGIN
+DECLARE trg2 CHAR;
+SELECT 'ab' INTO trg2;
+END|
+INSERT INTO t1 VALUES (0);
+SELECT * FROM t1;
+a
+0
+SHOW WARNINGS;
+Level	Code	Message
+INSERT INTO t1 VALUES (1),(2);
+DROP TRIGGER trg1;
+DROP TRIGGER trg2;
+DROP TABLE t1;
+#
+# Bug #46747 "Crash in MDL_ticket::upgrade_shared_lock_to_exclusive
+#             on TRIGGER + TEMP table".
+#
+drop trigger if exists t1_bi;
+drop temporary table if exists t1;
+drop table if exists t1;
+create table t1 (i int);
+create trigger t1_bi before insert on t1 for each row set @a:=1;
+# Create temporary table which shadows base table with trigger.
+create temporary table t1 (j int);
+# Dropping of trigger should succeed.
+drop trigger t1_bi;
+select trigger_name from information_schema.triggers
+where event_object_schema = 'test' and event_object_table = 't1';
+trigger_name
+# Clean-up.
+drop temporary table t1;
+drop table t1;
+
+#
+# Bug #12362125: SP INOUT HANDLING IS BROKEN FOR TEXT TYPE.
+#
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1(c TEXT);
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW
+BEGIN
+DECLARE v TEXT;
+SET v = 'aaa';
+SET NEW.c = v;
+END|
+INSERT INTO t1 VALUES('qazwsxedc');
+SELECT c FROM t1;
+c
+aaa
+DROP TABLE t1;
+
+End of 5.5 tests.

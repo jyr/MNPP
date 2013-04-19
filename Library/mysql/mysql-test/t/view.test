@@ -1,9 +1,13 @@
+
 --disable_warnings
 drop table if exists t1,t2,t3,t4,t9,`t1a``b`,v1,v2,v3,v4,v5,v6;
 drop view if exists t1,t2,`t1a``b`,v1,v2,v3,v4,v5,v6;
 drop database if exists mysqltest;
 --enable_warnings
 use test;
+
+# Save the initial number of concurrent sessions.
+--source include/count_sessions.inc
 
 #
 # some basic test of views and its functionality
@@ -1016,6 +1020,7 @@ lock tables t1 read, v1 read;
 select * from v1;
 -- error ER_TABLE_NOT_LOCKED
 select * from t2;
+unlock tables;
 drop view v1;
 drop table t1, t2;
 
@@ -3680,6 +3685,38 @@ SELECT * FROM v1 IGNORE INDEX (c2) WHERE c2=2;
 DROP VIEW v1;
 DROP TABLE t1;
 
+--echo # 
+--echo # Bug #45806 crash when replacing into a view with a join!
+--echo # 
+CREATE TABLE t1(a INT UNIQUE);
+CREATE VIEW v1 AS SELECT t1.a FROM t1, t1 AS a;
+INSERT INTO t1 VALUES (1), (2);
+
+REPLACE INTO v1(a) SELECT 1 FROM t1,t1 AS c;
+SELECT * FROM v1;
+REPLACE INTO v1(a) SELECT 3 FROM t1,t1 AS c;
+SELECT * FROM v1;
+DELETE FROM t1 WHERE a=3;
+INSERT INTO v1(a) SELECT 1 FROM t1,t1 AS c
+ON DUPLICATE KEY UPDATE `v1`.`a`= 1;
+SELECT * FROM v1;
+
+CREATE VIEW v2 AS SELECT t1.a FROM t1, v1 AS a;
+
+REPLACE INTO v2(a) SELECT 1 FROM t1,t1 AS c;
+SELECT * FROM v2;
+REPLACE INTO v2(a) SELECT 3 FROM t1,t1 AS c;
+SELECT * FROM v2;
+INSERT INTO v2(a) SELECT 1 FROM t1,t1 AS c
+ON DUPLICATE KEY UPDATE `v2`.`a`= 1;
+SELECT * FROM v2;
+
+DROP VIEW v1;
+DROP VIEW v2;
+DROP TABLE t1;
+
+--echo # -- End of test case for Bug#45806
+
 --echo # -----------------------------------------------------------------
 --echo # -- Bug#40825: Error 1356 while selecting from a view 
 --echo # --            with a "HAVING" clause though query works
@@ -3865,6 +3902,7 @@ drop procedure p;
 --echo #
 CREATE TABLE t1 (a INT);
 CREATE VIEW v1 AS SELECT a FROM t1;
+--error ER_WRONG_OBJECT
 ALTER TABLE v1;
 DROP VIEW v1;
 DROP TABLE t1;
@@ -3956,3 +3994,159 @@ DROP TABLE t1;
 --echo # -----------------------------------------------------------------
 --echo # -- End of 5.1 tests.
 --echo # -----------------------------------------------------------------
+
+#
+# Bug#9801 (Views: imperfect error message)
+#
+
+--disable_warnings
+drop table if exists t_9801;
+drop view if exists v_9801;
+--enable_warnings
+
+create table t_9801 (s1 int);
+
+--error ER_VIEW_NONUPD_CHECK
+create view v_9801 as
+  select sum(s1) from t_9801 with check option;
+
+--error ER_VIEW_NONUPD_CHECK
+create view v_9801 as
+  select sum(s1) from t_9801 group by s1 with check option;
+
+ --error ER_VIEW_NONUPD_CHECK
+create view v_9801 as
+  select sum(s1) from t_9801 group by s1 with rollup with check option;
+
+drop table t_9801;
+
+--echo #
+--echo # Bug #47335 assert in get_table_share
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS v1;
+--enable_warnings
+
+CREATE TEMPORARY TABLE t1 (id INT);
+--error ER_NO_SUCH_TABLE
+ALTER VIEW t1 AS SELECT 1 AS f1;
+DROP TABLE t1;
+
+CREATE VIEW v1 AS SELECT 1 AS f1;
+CREATE TEMPORARY TABLE v1 (id INT);
+ALTER VIEW v1 AS SELECT 2 AS f1;
+DROP TABLE v1;
+SELECT * FROM v1;
+DROP VIEW v1;
+
+
+--echo #
+--echo # Bug #47635 assert in start_waiting_global_read_lock 
+--echo #            during CREATE VIEW
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1, t2;
+DROP VIEW IF EXISTS t2;
+--enable_warnings
+
+CREATE TABLE t1 (f1 integer);
+CREATE TEMPORARY TABLE IF NOT EXISTS t1 (f1 integer);
+CREATE TEMPORARY TABLE t2 (f1 integer);
+DROP TABLE t1;
+FLUSH TABLES WITH READ LOCK;
+--error ER_CANT_UPDATE_WITH_READLOCK
+CREATE VIEW t2 AS SELECT * FROM t1;
+
+UNLOCK TABLES;
+DROP TABLE t1, t2;
+
+
+--echo #
+--echo # Bug#48315 Metadata lock is not taken for merged views that
+--echo #           use an INFORMATION_SCHEMA table
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS v1;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+connect (con2, localhost, root);
+connect (con3, localhost, root);
+
+--echo # Connection default
+connection default;
+
+CREATE VIEW v1 AS SELECT schema_name FROM information_schema.schemata;
+CREATE TABLE t1 (str VARCHAR(50));
+CREATE PROCEDURE p1() INSERT INTO t1 SELECT * FROM v1;
+
+--echo # CALL p1() so the view is merged.
+CALL p1();
+
+--echo # Connection 3
+connection con3;
+LOCK TABLE t1 READ;
+
+--echo # Connection default
+connection default;
+--echo # Try to CALL p1() again, this time it should block for t1.
+--echo # Sending:
+--send CALL p1()
+
+--echo # Connection 2
+connection con2;
+let $wait_condition=
+  SELECT COUNT(*) = 1 from information_schema.processlist
+  WHERE state = "Waiting for table level lock" AND
+        info = "INSERT INTO t1 SELECT * FROM v1";
+--source include/wait_condition.inc
+--echo # ... then try to drop the view. This should block.
+--echo # Sending:
+--send DROP VIEW v1
+
+--echo # Connection 3
+connection con3;
+let $wait_condition=
+  SELECT COUNT(*) = 1 from information_schema.processlist
+  WHERE state = "Waiting for table metadata lock" AND info = "DROP VIEW v1";
+--source include/wait_condition.inc
+--echo # Now allow CALL p1() to complete
+UNLOCK TABLES;
+
+--echo # Connection default
+connection default;
+--echo # Reaping: CALL p1()
+--reap
+
+--echo # Connection 2
+connection con2;
+--echo # Reaping: DROP VIEW v1
+--reap
+
+--echo # Connection default
+connection default;
+DROP PROCEDURE p1;
+DROP TABLE t1;
+disconnect con2;
+disconnect con3;
+
+
+--echo #
+--echo # Bug#12626844: WRONG ERROR MESSAGE WHILE CREATING A VIEW ON A
+--echo #               NON EXISTING DATABASE
+--echo #
+
+--disable_warnings
+DROP DATABASE IF EXISTS nodb;
+--enable_warnings
+--error ER_BAD_DB_ERROR
+CREATE VIEW nodb.a AS SELECT 1;
+
+# Check that all connections opened by test cases in this file are really
+# gone so execution of other tests won't be affected by their presence.
+--source include/wait_until_count_sessions.inc

@@ -2,7 +2,7 @@
    +----------------------------------------------------------------------+
    | Zend Engine                                                          |
    +----------------------------------------------------------------------+
-   | Copyright (c) 1998-2011 Zend Technologies Ltd. (http://www.zend.com) |
+   | Copyright (c) 1998-2013 Zend Technologies Ltd. (http://www.zend.com) |
    +----------------------------------------------------------------------+
    | This source file is subject to version 2.00 of the Zend license,     |
    | that is bundled with this package in the file LICENSE, and is        |
@@ -18,7 +18,7 @@
    +----------------------------------------------------------------------+
 */
 
-/* $Id: zend_API.h 313662 2011-07-25 11:30:53Z felipe $ */
+/* $Id$ */
 
 #ifndef ZEND_API_H
 #define ZEND_API_H
@@ -170,6 +170,11 @@ typedef struct _zend_fcall_info_cache {
 		int _len = class_name_len;								\
 		class_container.name = zend_strndup(class_name, _len);	\
 		class_container.name_length = _len;						\
+		INIT_CLASS_ENTRY_INIT_METHODS(class_container, functions, handle_fcall, handle_propget, handle_propset, handle_propunset, handle_propisset) \
+	}
+
+#define INIT_CLASS_ENTRY_INIT_METHODS(class_container, functions, handle_fcall, handle_propget, handle_propset, handle_propunset, handle_propisset) \
+	{															\
 		class_container.builtin_functions = functions;			\
 		class_container.constructor = NULL;						\
 		class_container.destructor = NULL;						\
@@ -263,9 +268,9 @@ ZEND_API void zend_class_implements(zend_class_entry *class_entry TSRMLS_DC, int
 ZEND_API int zend_register_class_alias_ex(const char *name, int name_len, zend_class_entry *ce TSRMLS_DC);
 
 #define zend_register_class_alias(name, ce) \
-	zend_register_class_alias_ex(name, sizeof(name)-1, ce TSRMLS_DC)
+	zend_register_class_alias_ex(name, sizeof(name)-1, ce TSRMLS_CC)
 #define zend_register_ns_class_alias(ns, name, ce) \
-	zend_register_class_alias_ex(ZEND_NS_NAME(ns, name), sizeof(ZEND_NS_NAME(ns, name))-1, ce TSRMLS_DC)
+	zend_register_class_alias_ex(ZEND_NS_NAME(ns, name), sizeof(ZEND_NS_NAME(ns, name))-1, ce TSRMLS_CC)
 
 ZEND_API int zend_disable_function(char *function_name, uint function_name_length TSRMLS_DC);
 ZEND_API int zend_disable_class(char *class_name, uint class_name_length TSRMLS_DC);

@@ -19,13 +19,13 @@
 
 echo "Finding system information for a MySQL bug report"
 
-VERSION="5.1.59"
+VERSION="5.5.30"
 COMPILATION_COMMENT="Source distribution"
 BUGmysql="mysql@lists.mysql.com"
 # This is set by configure
-COMP_CALL_INFO="CC='gcc'  CFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer'  CXX='g++'  CXXFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti'  LDFLAGS=''  ASFLAGS=''"
-COMP_RUN_INFO="CC='gcc'  CFLAGS=' -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer   -D_P1003_1B_VISIBLE -DSIGNAL_WITH_VIO_CLOSE -DSIGNALS_DONT_BREAK_READ -DIGNORE_SIGHUP_SIGQUIT  -DDONT_DECLARE_CXA_PURE_VIRTUAL'  CXX='g++'  CXXFLAGS=' -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti   -fno-implicit-templates -fno-exceptions -fno-rtti -D_P1003_1B_VISIBLE -DSIGNAL_WITH_VIO_CLOSE -DSIGNALS_DONT_BREAK_READ -DIGNORE_SIGHUP_SIGQUIT  -DDONT_DECLARE_CXA_PURE_VIRTUAL'  LDFLAGS=' '  ASFLAGS=''"
-CONFIGURE_LINE="./configure '--prefix=/Applications/MNPP/Library/mysql' '--disable-dependency-tracking' '--with-extra-charsets=complex' '--enable-thread-safe-client' '--enable-local-infile' '--with-unix-socket-path=/Applications/MNPP/tmp/mysql/mysql.sock' '--with-charset=latin1' '--with-collation=latin1_general_ci' '--with-mysqld-user=_mysql' '--enable-shared' '--with-plugins=all' 'CFLAGS=-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer' 'CXXFLAGS=-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti'"
+COMP_CALL_INFO="CC='/usr/bin/cc'  CFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -O2 -g -DNDEBUG -DDBUG_OFF'  CXX='/usr/bin/c++'  CXXFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti  -O2 -g -DNDEBUG -DDBUG_OFF'  LDFLAGS=''  ASFLAGS=''"
+COMP_RUN_INFO="CC='/usr/bin/cc'  CFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -O2 -g -DNDEBUG -DDBUG_OFF'  CXX='/usr/bin/c++'  CXXFLAGS='-arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti  -O2 -g -DNDEBUG -DDBUG_OFF'  LDFLAGS=''  ASFLAGS=''"
+CONFIGURE_LINE=""
 
 LIBC_INFO=""
 for pat in /lib/libc.* /lib/libc-* /usr/lib/libc.* /usr/lib/libc-*
@@ -253,8 +253,8 @@ ${ORGANIZATION- $ORGANIZATION_C}
 >Class:		$CLASS_C
 >Release:	mysql-${VERSION} ($COMPILATION_COMMENT)
 `test -n "$MYSQL_SERVER" && echo ">Server: $MYSQL_SERVER"`
->C compiler:    i686-apple-darwin11-llvm-gcc-4.2 (GCC) 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.1.00)
->C++ compiler:  i686-apple-darwin11-llvm-g++-4.2 (GCC) 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.1.00)
+>C compiler:    
+>C++ compiler:  
 >Environment:
 	$ENVIRONMENT_C
 `test -n "$SYSTEM"  && echo "System: $SYSTEM"`

@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2011 The PHP Group                                |
+  | Copyright (c) 1997-2013 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id: php_compat.h 306939 2011-01-01 02:19:59Z felipe $ */
+/* $Id$ */
 
 #ifndef PHP_COMPAT_H
 #define PHP_COMPAT_H
@@ -34,7 +34,6 @@
 #define pcre_exec			php_pcre_exec
 #define pcre_get_substring		php_pcre_get_substring
 #define pcre_get_substring_list		php_pcre_get_substring_list
-#define pcre_info			php_pcre_info
 #define pcre_maketables			php_pcre_maketables
 #define pcre_study			php_pcre_study
 #define pcre_version			php_pcre_version

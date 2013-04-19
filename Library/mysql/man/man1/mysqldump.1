@@ -2,12 +2,12 @@
 .\"     Title: \fBmysqldump\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQLDUMP\FR" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYSQLDUMP\FR" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -69,22 +69,27 @@ option, entire databases are dumped\&.
 \fBmysqldump\fR
 does not dump the
 INFORMATION_SCHEMA
-database by default\&. As of MySQL 5\&.1\&.38,
+database by default\&.
 \fBmysqldump\fR
 dumps
 INFORMATION_SCHEMA
-if you name it explicitly on the command line, although you must also use the
+only if you name it explicitly on the command line, although currently you must also use the
 \fB\-\-skip\-lock\-tables\fR
-option\&. Before 5\&.1\&.38,
+option\&. Before MySQL 5\&.5
 \fBmysqldump\fR
 silently ignores
 INFORMATION_SCHEMA
 even if you name it explicitly on the command line\&.
 .PP
-In MySQL Cluster NDB 7\&.1\&.7 and later, the
+\fBmysqldump\fR
+does not dump the
+performance_schema
+database\&.
+.PP
+\fBmysqldump\fR
+also does not dump the MySQL Cluster
 ndbinfo
-information database is ignored and not dumped by
-\fBmysqldump\fR\&.
+information database\&.
 .PP
 To see a list of the options your version of
 \fBmysqldump\fR
@@ -212,23 +217,10 @@ or
 option\&. Use
 \fB\-\-skip\-opt\fR
 instead\&.
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBNote\fR
-.ps -1
-.br
 .PP
-\fBmysqldump\fR
-from MySQL 5\&.1\&.21 cannot be used to create dumps from MySQL server 5\&.1\&.20 and older\&. This issue is fixed in MySQL 5\&.1\&.22\&. (Bug #30123)
-.sp .5v
-.RE
+For additional information about
+\fBmysqldump\fR, see
+Section\ \&6.4, \(lqUsing mysqldump for Backups\(rq\&.
 .PP
 \fBmysqldump\fR
 supports the following options, which can be specified on the command line or in the
@@ -331,7 +323,7 @@ statement\&.
 .br
 This option is supported only by
 \fBmysqldump\fR
-as supplied with MySQL Cluster NDB 6\&.3\&.38, MySQL Cluster NDB 7\&.0\&.19, MySQL Cluster NDB 7\&.1\&.8, and later MySQL Cluster releases\&. It is not available when using MySQL 5\&.1\&.
+as supplied with MySQL Cluster\&. It is not available when using MySQL Server 5\&.5\&.
 .sp .5v
 .RE
 .RE
@@ -353,7 +345,7 @@ LOCK TABLES
 and
 UNLOCK TABLES
 statements\&. This results in faster inserts when the dump file is reloaded\&. See
-Section\ \&7.3.2.1, \(lqSpeed of INSERT Statements\(rq\&.
+Section\ \&7.2.2.1, \(lqSpeed of INSERT Statements\(rq\&.
 .RE
 .sp
 .RS 4
@@ -391,8 +383,6 @@ Adds to a table dump all SQL statements needed to create any tablespaces used by
 NDBCLUSTER
 table\&. This information is not otherwise included in the output from
 \fBmysqldump\fR\&. This option is currently relevant only to MySQL Cluster tables\&.
-.sp
-This option was added in MySQL 5\&.1\&.6\&.
 .RE
 .sp
 .RS 4
@@ -418,6 +408,29 @@ Permit creation of column names that are keywords\&. This works by prefixing eac
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysqldump: apply-slave-statements option
+.\" apply-slave-statements option: mysqldump
+\fB\-\-apply\-slave\-statements\fR
+.sp
+For a slave dump produced with the
+\fB\-\-dump\-slave\fR
+option, add a
+STOP SLAVE
+statement before the
+CHANGE MASTER TO
+statement and a
+START SLAVE
+statement at the end of the output\&. This option was added in MySQL 5\&.5\&.3\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysqldump: bind-address option
 .\" bind-address option: mysqldump
 \fB\-\-bind\-address=\fR\fB\fIip_address\fR\fR
@@ -426,7 +439,7 @@ On a computer having multiple network interfaces, this option can be used to sel
 .sp
 This option is supported only in the version of
 \fBmysqldump\fR
-that is supplied with MySQL Cluster, beginning with MySQL Cluster NDB 6\&.3\&.4\&. It is not available in standard MySQL 5\&.1 releases\&.
+that is supplied with MySQL Cluster\&. It is not available in standard MySQL Server 5\&.5 releases\&.
 .RE
 .sp
 .RS 4
@@ -481,25 +494,6 @@ Produce more compact output\&. This option enables the
 \fB\-\-skip\-disable\-keys\fR, and
 \fB\-\-skip\-set\-charset\fR
 options\&.
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBNote\fR
-.ps -1
-.br
-Prior to MySQL 5\&.1\&.21, this option did not create valid SQL if the database dump contained views\&. The recreation of views requires the creation and removal of temporary tables and this option suppressed the removal of those temporary tables\&. As a workaround, use
-\fB\-\-compact\fR
-with the
-\fB\-\-add\-drop\-table\fR
-option and then manually adjust the dump file\&.
-.sp .5v
-.RE
 .RE
 .sp
 .RS 4
@@ -642,7 +636,7 @@ string is
 .\" debug-check option: mysqldump
 \fB\-\-debug\-check\fR
 .sp
-Print some debugging information when the program exits\&. This option was added in MySQL 5\&.1\&.21\&.
+Print some debugging information when the program exits\&.
 .RE
 .sp
 .RS 4
@@ -657,7 +651,25 @@ Print some debugging information when the program exits\&. This option was added
 .\" debug-info option: mysqldump
 \fB\-\-debug\-info\fR
 .sp
-Print debugging information and memory and CPU usage statistics when the program exits\&. This option was added in MySQL 5\&.1\&.14\&.
+Print debugging information and memory and CPU usage statistics when the program exits\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: default-auth option
+.\" default-auth option: mysqldump
+\fB\-\-default\-auth=\fR\fB\fIplugin\fR\fR
+.sp
+The client\-side authentication plugin to use\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.9\&.
 .RE
 .sp
 .RS 4
@@ -680,10 +692,6 @@ Section\ \&9.5, \(lqCharacter Set Configuration\(rq\&. If no character set is sp
 uses
 utf8, and earlier versions use
 latin1\&.
-.sp
-Prior to MySQL 5\&.1\&.38, this option has no effect for output data files produced by using the
-\fB\-\-tab\fR
-option\&. See the description for that option\&.
 .RE
 .sp
 .RS 4
@@ -783,7 +791,41 @@ control whether the date is added to the comment\&. The default is
 \fB\-\-dump\-date\fR
 (include the date in the comment)\&.
 \fB\-\-skip\-dump\-date\fR
-suppresses date printing\&. This option was added in MySQL 5\&.1\&.23\&.
+suppresses date printing\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: dump-slave option
+.\" dump-slave option: mysqldump
+\fB\-\-dump\-slave[=\fR\fB\fIvalue\fR\fR\fB]\fR
+.sp
+This option is similar to
+\fB\-\-master\-data\fR
+except that it is used to dump a replication slave server to produce a dump file that can be used to set up another server as a slave that has the same master as the dumped server\&. It causes the dump output to include a
+CHANGE MASTER TO
+statement that indicates the binary log coordinates (file name and position) of the dumped slave\'s master (rather than the coordinates of the dumped server, as is done by the
+\fB\-\-master\-data\fR
+option)\&. These are the master server coordinates from which the slave should start replicating\&. This option was added in MySQL 5\&.5\&.3\&.
+.sp
+The option value is handled the same way as for
+\fB\-\-master\-data\fR
+and has the same effect as
+\fB\-\-master\-data\fR
+in terms of enabling or disabling other options and in how locking is handled\&.
+.sp
+In conjunction with
+\fB\-\-dump\-slave\fR, the
+\fB\-\-apply\-slave\-statements\fR
+and
+\fB\-\-include\-master\-host\-port\fR
+options can also be used\&.
 .RE
 .sp
 .RS 4
@@ -799,7 +841,7 @@ suppresses date printing\&. This option was added in MySQL 5\&.1\&.23\&.
 \fB\-\-events\fR,
 \fB\-E\fR
 .sp
-Include Event Scheduler events for the dumped databases in the output\&. This option was added in MySQL 5\&.1\&.8\&.
+Include Event Scheduler events for the dumped databases in the output\&.
 .RE
 .sp
 .RS 4
@@ -868,7 +910,7 @@ Deprecated\&. Use
 \fB\-\-lock\-all\-tables\fR
 instead\&.
 \fB\-\-first\-slave\fR
-is removed in MySQL 5\&.5\&.
+was removed in MySQL 5\&.5\&.3\&.
 .RE
 .sp
 .RS 4
@@ -920,7 +962,7 @@ database\&. This option should be used any time the dump contains the
 mysql
 database and any other database that depends on the data in the
 mysql
-database for proper restoration\&. This option was added in MySQL 5\&.1\&.12\&.
+database for proper restoration\&.
 .RE
 .sp
 .RS 4
@@ -987,6 +1029,29 @@ VARBINARY, the
 BLOB
 types, and
 BIT\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: include-master-host-port option
+.\" include-master-host-port option: mysqldump
+\fB\-\-include\-master\-host\-port\fR
+.sp
+For the
+CHANGE MASTER TO
+statement in a slave dump produced with the
+\fB\-\-dump\-slave\fR
+option, add
+MASTER_PORT
+and
+MASTER_PORT
+options for the host name and TCP/IP port number of the slave\'s master\&. This option was added in MySQL 5\&.5\&.3\&.
 .RE
 .sp
 .RS 4
@@ -1104,7 +1169,7 @@ locks tables for each database separately, this option does not guarantee that t
 .\" log-error option: mysqldump
 \fB\-\-log\-error=\fR\fB\fIfile_name\fR\fR
 .sp
-Log warnings and errors by appending them to the named file\&. The default is to do no logging\&. This option was added in MySQL 5\&.1\&.18\&.
+Log warnings and errors by appending them to the named file\&. The default is to do no logging\&.
 .RE
 .sp
 .RS 4
@@ -1362,7 +1427,7 @@ This option does
 \fInot\fR
 not exclude statements creating log file groups or tablespaces from
 \fBmysqldump\fR
-output; in MySQL 5\&.1\&.14 and later, you can use the
+output; however, you can use the
 \fB\-\-no\-tablespaces\fR
 option for this purpose\&.
 .sp .5v
@@ -1423,8 +1488,6 @@ and
 CREATE TABLESPACE
 statements in the output of
 \fBmysqldump\fR\&.
-.sp
-This option was added in MySQL 5\&.1\&.14\&.
 .RE
 .sp
 .RS 4
@@ -1526,6 +1589,28 @@ On Windows, connect to the server using a named pipe\&. This option applies only
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysqldump: plugin-dir option
+.\" plugin-dir option: mysqldump
+\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+.sp
+The directory in which to look for plugins\&. It may be necessary to specify this option if the
+\fB\-\-default\-auth\fR
+option is used to specify an authentication plugin but
+\fBmysqldump\fR
+does not find it\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.9\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysqldump: port option
 .\" port option: mysqldump
 \fB\-\-port=\fR\fB\fIport_num\fR\fR,
@@ -1610,7 +1695,7 @@ Write
 REPLACE
 statements rather than
 INSERT
-statements\&. This option was added in MySQL 5\&.1\&.3\&.
+statements\&.
 .RE
 .sp
 .RS 4
@@ -1665,11 +1750,9 @@ table directly, using a MySQL account that has appropriate privileges for the
 mysql
 database\&.
 .sp
-This option was added in MySQL 5\&.1\&.2\&. Before that, stored routines are not dumped\&. Routine
-DEFINER
-values are not dumped until MySQL 5\&.1\&.8\&. This means that before 5\&.1\&.8, when routines are reloaded, they will be created with the definer set to the reloading user\&. If you require routines to be re\-created with their original definer, dump and load the contents of the
-mysql\&.proc
-table directly as described earlier\&.
+Prior to MySQL 5\&.5\&.21, this option had no effect when used together with the
+\fB\-\-xml\fR
+option\&. (Bug #11760384, Bug #52792)
 .RE
 .sp
 .RS 4
@@ -1820,7 +1903,7 @@ localhost, the Unix socket file to use, or, on Windows, the name of the named pi
 Options that begin with
 \fB\-\-ssl\fR
 specify whether to connect to the server using SSL and indicate where to find SSL keys and certificates\&. See
-Section\ \&5.5.6.3, \(lqSSL Command Options\(rq\&.
+Section\ \&5.5.8.3, \(lqSSL Command Options\(rq\&.
 .RE
 .sp
 .RS 4
@@ -1874,11 +1957,9 @@ and
 \fB\-\-lines\-terminated\-by\fR
 options\&.
 .sp
-As of MySQL 5\&.1\&.38, column values are converted to the character set specified by the
+Column values are converted to the character set specified by the
 \fB\-\-default\-character\-set\fR
-option\&. Prior to 5\&.1\&.38 or if no such option is present, values are dumped using the
-binary
-character set\&. In effect, there is no character set conversion\&. If a table contains columns in several character sets, the output data file will as well and you may not be able to reload the file correctly\&.
+option\&.
 .RE
 .sp
 .RS 4
@@ -1943,7 +2024,7 @@ columns are dumped and reloaded in the time zones local to the source and destin
 also protects against changes due to daylight saving time\&.
 \fB\-\-tz\-utc\fR
 is enabled by default\&. To disable it, use
-\fB\-\-skip\-tz\-utc\fR\&. This option was added in MySQL 5\&.1\&.2\&.
+\fB\-\-skip\-tz\-utc\fR\&.
 .RE
 .sp
 .RS 4
@@ -2076,14 +2157,14 @@ T}:T{
 T}
 .TE
 .sp 1
-Beginning with MySQL 5\&.1\&.12, the output from the
+The output from the
 \fBmysql\fR
 client when run using the
 \fB\-\-xml\fR
 option also follows the preceding rules\&. (See
 the section called \(lqMYSQL OPTIONS\(rq\&.)
 .sp
-Beginning with MySQL 5\&.1\&.18, XML output from
+XML output from
 \fBmysqldump\fR
 includes the XML namespace, as shown here:
 .sp
@@ -2133,6 +2214,10 @@ Collation="latin1_swedish_ci" Create_options="" Comment="" />
 .RE
 .\}
 .RE
+.PP
+Prior to MySQL 5\&.5\&.21, this option prevented the
+\fB\-\-routines\fR
+option from working correctly\(emthat is, no stored routines, triggers, or events could be dumped in XML format\&. (Bug #11760384, Bug #52792)
 .PP
 You can also set the following variables by using
 \fB\-\-\fR\fB\fIvar_name\fR\fR\fB=\fR\fB\fIvalue\fR\fR
@@ -2318,11 +2403,11 @@ Section\ \&6.3, \(lqExample Backup and Recovery Strategy\(rq\&.
 .\" mysqldump: workarounds
 .PP
 If you encounter problems backing up views, please read the section that covers restrictions on views which describes a workaround for backing up views when this fails due to insufficient privileges\&. See
-Section\ \&E.4, \(lqRestrictions on Views\(rq\&.
+Section\ \&E.5, \(lqRestrictions on Views\(rq\&.
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

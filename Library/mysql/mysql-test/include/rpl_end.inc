@@ -68,7 +68,7 @@ while ($_rpl_server)
   # Only check slave threads for error on hosts that were at some
   # point configured as slave.
   --let $_tmp= query_get_value(SHOW SLAVE STATUS, Master_Host, 1)
-  if (`SELECT '$_tmp' != 'No such row'`)
+  if ($_tmp != 'No such row')
   {
     --source include/check_slave_no_error.inc
   }
@@ -81,7 +81,7 @@ while ($_rpl_server)
 
 # mtr configures server 2 to be a slave before it runs the test. We
 # have to restore that state now, so we change topology to 1->2.
---let $rpl_topology= 1->2
+--let $rpl_topology= none
 --source include/rpl_change_topology.inc
 
 

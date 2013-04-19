@@ -5,6 +5,8 @@
 -- source include/have_archive.inc
 -- source include/have_binlog_format_mixed_or_statement.inc
 
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+
 --disable_warnings
 DROP TABLE if exists t1,t2,t3,t4,t5,t6;
 --enable_warnings
@@ -1615,7 +1617,7 @@ DROP TABLE t1;
 # BUG#46961 - archive engine loses rows during self joining select!
 #
 SET @save_join_buffer_size= @@join_buffer_size;
-SET @@join_buffer_size= 8228;
+SET @@join_buffer_size= 8192;
 CREATE TABLE t1(a CHAR(255)) ENGINE=archive;
 INSERT INTO t1 VALUES('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
                      ('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
@@ -1623,6 +1625,18 @@ INSERT INTO t1 VALUES('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
 SELECT COUNT(t1.a) FROM t1, t1 a, t1 b, t1 c, t1 d, t1 e;
 DROP TABLE t1;
 SET @@join_buffer_size= @save_join_buffer_size;
+
+--echo End of 5.1 tests
+
+#
+# BUG#40677 - Archive tables joined on primary return no result
+#
+CREATE TABLE t1(id INT NOT NULL AUTO_INCREMENT, name VARCHAR(128) NOT NULL, PRIMARY KEY(id)) ENGINE=archive;
+INSERT INTO t1 VALUES(NULL,'a'),(NULL,'a');
+CREATE TABLE t2(id INT NOT NULL AUTO_INCREMENT, name VARCHAR(128) NOT NULL, PRIMARY KEY(id)) ENGINE=archive;
+INSERT INTO t2 VALUES(NULL,'b'),(NULL,'b');
+SELECT t1.id, t2.id, t1.name, t2.name FROM t1,t2 WHERE t1.id = t2.id;
+DROP TABLE t1,t2;
 
 #
 # BUG#47012 archive tables are not upgradeable, and server crashes on any access
@@ -1656,6 +1670,15 @@ SELECT * FROM t1;
 --error ER_BAD_TABLE_ERROR
 DROP TABLE t1;
 
+--echo #
+--echo # Ensure that TRUNCATE fails for non-empty archive tables.
+--echo #
+CREATE TABLE t1 (a INT) ENGINE=ARCHIVE;
+INSERT INTO t1 VALUES (1);
+--error ER_ILLEGAL_HA
+TRUNCATE TABLE t1;
+DROP TABLE t1;
+
 
 --echo #
 --echo # BUG#46565 - repair of partition fail for archive engine
@@ -1679,6 +1702,35 @@ REPAIR TABLE t1 EXTENDED;
 SELECT * FROM t1;
 DROP TABLE t1;
 
+
+--echo #
+--echo # Bug#45377: ARCHIVE tables aren't discoverable after OPTIMIZE
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (a int) ENGINE=ARCHIVE;
+SHOW CREATE TABLE t1;
+INSERT INTO t1 VALUES (1);
+OPTIMIZE TABLE t1;
+let $MYSQLD_DATADIR= `select @@datadir`;
+remove_file $MYSQLD_DATADIR/test/t1.frm;
+FLUSH TABLES;
+INSERT INTO t1 VALUES (2);
+SELECT * FROM t1 ORDER BY a;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+
+--echo #
+--echo # BUG#58205 - Valgrind failure in fn_format when called from
+--echo #             archive_discover
+--echo #
+CREATE TABLE `a/../`(a INT) ENGINE=ARCHIVE;
+remove_file $MYSQLD_DATADIR/test/a@002f@002e@002e@002f.frm;
+DROP TABLE `a/../`;
+
 --echo #
 --echo # BUG#57162 - valgrind errors, random data when returning
 --echo #             ordered data from archive tables
@@ -1693,3 +1745,18 @@ INSERT INTO t1 SELECT t1.* FROM t1,t1 t2,t1 t3,t1 t4,t1 t5,t1 t6;
 SELECT * FROM t1 ORDER BY f LIMIT 1;
 DROP TABLE t1;
 SET sort_buffer_size=DEFAULT;
+
+
+--echo #
+--echo # BUG#11758979 - 51252: ARCHIVE TABLES STILL FAIL UNDER STRESS
+--echo #                TESTS: CRASH, CORRUPTION, 4G MEMOR
+--echo # (to be executed with valgrind)
+CREATE TABLE t1(a BLOB, b VARCHAR(200)) ENGINE=ARCHIVE;
+INSERT INTO t1 VALUES(NULL, '');
+FLUSH TABLE t1;
+--echo # we need this select to workaround BUG#11764364
+SELECT * FROM t1;
+CHECKSUM TABLE t1 EXTENDED;
+FLUSH TABLE t1;
+OPTIMIZE TABLE t1;
+DROP TABLE t1;

@@ -20,11 +20,6 @@ class GeneralViewController (NSViewController):
 	@objc.IBAction
 	def savePreferences_(self, sender):
 		settings = NSUserDefaults.standardUserDefaults()
-
-		if self.start.state():
-			settings.setObject_forKey_(1, 'start')
-		else:
-			settings.setObject_forKey_(0, 'start')
 		
 		if self.stop.state():
 			settings.setObject_forKey_(1, 'stop')
@@ -36,22 +31,6 @@ class GeneralViewController (NSViewController):
 		else:
 			settings.setObject_forKey_(0, 'open')
 
-		"""
-		if self.nginxPort.stringValue():
-			settings.setObject_forKey_(self.nginxPort.stringValue(), 'nginxPort')
-		else:
-			settings.setObject_forKey_("80", 'nginxPort')
-		
-		if self.mysqlPort.stringValue():
-			settings.setObject_forKey_(self.mysqlPort.stringValue(), 'mysqlPort')
-		else:
-			settings.setObject_forKey_("3306", 'mysqlPort')
-		
-		if self.phpPort.stringValue():
-			settings.setObject_forKey_(self.phpPort.stringValue(), 'phpPort')
-		else:
-			settings.setObject_forKey_("9000", 'phpPort')
-		"""
 		settings.synchronize()
 	
 

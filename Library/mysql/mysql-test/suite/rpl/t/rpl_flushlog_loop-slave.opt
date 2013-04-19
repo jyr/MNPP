@@ -1,1 +1,1 @@
--O max_binlog_size=1M
+--max_binlog_size=1M

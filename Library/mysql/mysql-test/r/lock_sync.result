@@ -20,10 +20,10 @@ set @old_concurrent_insert= @@global.concurrent_insert;
 set @@global.concurrent_insert= 2;
 select @@global.concurrent_insert;
 @@global.concurrent_insert
-2
+ALWAYS
 # Prepare playground by creating tables, views,
 # routines and triggers used in tests.
-drop table if exists t0, t1, t2, t3, t4, t5, te;
+drop table if exists t0, t1, t2, t3, t4, t5;
 drop view if exists v1, v2;
 drop procedure if exists p1;
 drop procedure if exists p2;
@@ -52,8 +52,6 @@ create table t4 (l int primary key);
 insert into t4 values (1);
 create table t5 (l int primary key);
 insert into t5 values (1);
-create table te(e int primary key);
-insert into te values (1);
 create view v1 as select i from t1;
 create view v2 as select j from t2 where j in (select i from t1);
 create procedure p1(k int) insert into t2 values (k);
@@ -160,12 +158,10 @@ if (select i from t1 where i=1) then
 set new.l= 2;
 end if;
 end|
-# Trigger below uses insertion of duplicate key in 'te'
-# table as a way to abort delete operation.
 create trigger t4_bd before delete on t4 for each row
 begin
 if !(select i from v1 where i=1) then
-insert into te values (1);
+signal sqlstate '45000';
 end if;
 end|
 create trigger t5_bi before insert on t5 for each row
@@ -255,11 +251,10 @@ unlock tables;
 #
 # 2.1 CALL with a subquery.
 # 
-# In theory strong lock is not necessary as this statement
-# is not written to the binary log as a whole (it is written
-# statement-by-statement). But in practice in 5.1 for
-# almost everything except SELECT we take strong lock.
-Success: 'call p1((select i + 5 from t1 where i = 1))' doesn't allow concurrent inserts into 't1'.
+# A strong lock is not necessary as this statement is not
+# written to the binary log as a whole (it is written
+# statement-by-statement).
+Success: 'call p1((select i + 5 from t1 where i = 1))' allows concurrent inserts into 't1'.
 #
 # 2.2 CREATE TABLE with a subquery.
 #
@@ -283,10 +278,8 @@ Success: 'delete t2 from t3, t2 where k = j and j in (select i from t1)' doesn't
 #
 # 2.5 DO with a subquery.
 #
-# In theory strong lock is not necessary as it is not logged.
-# But in practice in 5.1 for almost everything except SELECT
-# we take strong lock.
-Success: 'do (select i from t1 where i = 1)' doesn't allow concurrent inserts into 't1'.
+# A strong lock is not necessary as it is not logged.
+Success: 'do (select i from t1 where i = 1)' allows concurrent inserts into 't1'.
 #
 # 2.6 INSERT with a subquery.
 #
@@ -316,16 +309,14 @@ Success: 'select * from t2 where j in (select i from t1)' allows concurrent inse
 #
 # 2.10 SET with a subquery.
 #
-# In theory the same is true for this statement as well.
-# But in practice in 5.1 we acquire strong lock in this
-# case as well.
-Success: 'set @a:= (select i from t1 where i = 1)' doesn't allow concurrent inserts into 't1'.
+# The same is true for this statement as well.
+Success: 'set @a:= (select i from t1 where i = 1)' allows concurrent inserts into 't1'.
 #
 # 2.11 SHOW with a subquery.
 # 
-# The same is true for this statement too.
-Success: 'show tables from test where Tables_in_test = 't2' and (select i from t1 where i = 1)' doesn't allow concurrent inserts into 't1'.
-Success: 'show columns from t2 where (select i from t1 where i = 1)' doesn't allow concurrent inserts into 't1'.
+# And for this statement too.
+Success: 'show tables from test where Tables_in_test = 't2' and (select i from t1 where i = 1)' allows concurrent inserts into 't1'.
+Success: 'show columns from t2 where (select i from t1 where i = 1)' allows concurrent inserts into 't1'.
 #
 # 2.12 UPDATE with a subquery.
 #
@@ -368,13 +359,14 @@ Success: 'update v2 set j= j-10 where j = 3' doesn't allow concurrent inserts in
 # 4.1 SELECT/SET with a stored function which does not 
 #     modify data and uses SELECT in its turn.
 #
-# Calls to such functions won't get into the binary log and
-# thus don't need to acquire strong locks.
-# In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
-# used stored functions may lead to broken SBR" strong locks
-# are taken (we accepted it as a trade-off for this fix).
-Success: 'select f1()' allows concurrent inserts into 't1'.
-Success: 'set @a:= f1()' allows concurrent inserts into 't1'.
+# In theory there is no need to take strong locks on the table
+# being selected from in SF as the call to such function
+# won't get into the binary log. In practice, however, we
+# discover that fact too late in the process to be able to
+# affect the decision what locks should be taken.
+# Hence, strong locks are taken in this case.
+Success: 'select f1()' doesn't allow concurrent inserts into 't1'.
+Success: 'set @a:= f1()' doesn't allow concurrent inserts into 't1'.
 #
 # 4.2 INSERT (or other statement which modifies data) with
 #     a stored function which does not modify data and uses
@@ -384,9 +376,7 @@ Success: 'set @a:= f1()' allows concurrent inserts into 't1'.
 # be serialized with concurrent statements affecting the data
 # it uses. Therefore it should take strong lock on the data
 # it reads.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'insert into t2 values (f1() + 5)' allows concurrent inserts into 't1'.
+Success: 'insert into t2 values (f1() + 5)' doesn't allow concurrent inserts into 't1'.
 #
 # 4.3 SELECT/SET with a stored function which
 #     reads and modifies data.
@@ -395,10 +385,8 @@ Success: 'insert into t2 values (f1() + 5)' allows concurrent inserts into 't1'.
 # it should be serialized with concurrent statements affecting
 # the data it uses. Hence, a strong lock on the data read
 # should be taken.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'select f2()' allows concurrent inserts into 't1'.
-Success: 'set @a:= f2()' allows concurrent inserts into 't1'.
+Success: 'select f2()' doesn't allow concurrent inserts into 't1'.
+Success: 'set @a:= f2()' doesn't allow concurrent inserts into 't1'.
 #
 # 4.4. SELECT/SET with a stored function which does not
 #      modify data and reads a table through subselect
@@ -440,13 +428,10 @@ Success: 'set @a:= f5()' doesn't allow concurrent inserts into 't1'.
 #
 # Once again, in theory, calls to such functions won't
 # get into the binary log and thus don't need strong
-# locks. In practice this fact is discovered
+# locks. But in practice this fact is discovered
 # too late to have any effect.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken
-# in case when simple SELECT is used.
-Success: 'select f6()' allows concurrent inserts into 't1'.
-Success: 'set @a:= f6()' allows concurrent inserts into 't1'.
+Success: 'select f6()' doesn't allow concurrent inserts into 't1'.
+Success: 'set @a:= f6()' doesn't allow concurrent inserts into 't1'.
 Success: 'select f7()' doesn't allow concurrent inserts into 't1'.
 Success: 'set @a:= f7()' doesn't allow concurrent inserts into 't1'.
 #
@@ -458,10 +443,7 @@ Success: 'set @a:= f7()' doesn't allow concurrent inserts into 't1'.
 # should be serialized with concurrent statements affecting
 # the data it uses. Therefore it should take a strong lock on
 # the table it reads.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken
-# in case when simple SELECT is used.
-Success: 'insert into t3 values (f6() + 5)' allows concurrent inserts into 't1'.
+Success: 'insert into t3 values (f6() + 5)' doesn't allow concurrent inserts into 't1'.
 Success: 'insert into t3 values (f7() + 5)' doesn't allow concurrent inserts into 't1'.
 #
 # 4.9 SELECT which uses a stored function which
@@ -470,22 +452,17 @@ Success: 'insert into t3 values (f7() + 5)' doesn't allow concurrent inserts int
 # Since a call to such function is written to the binary log
 # it should be serialized with concurrent statements.
 # Hence, reads should take strong locks.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken
-# in case when simple SELECT is used.
-Success: 'select f8()' allows concurrent inserts into 't1'.
+Success: 'select f8()' doesn't allow concurrent inserts into 't1'.
 Success: 'select f9()' doesn't allow concurrent inserts into 't1'.
 #
 # 4.10 SELECT which uses a stored function which doesn't modify
 #      data and reads a table indirectly, by calling another
 #      function.
 #
-# Calls to such functions won't get into the binary log and
-# thus don't need to acquire strong locks.
-# In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
-# used stored functions may lead to broken SBR" strong locks
-# are taken (we accepted it as a trade-off for this fix).
-Success: 'select f10()' allows concurrent inserts into 't1'.
+# In theory, calls to such functions won't get into the binary
+# log and thus don't need to acquire strong locks. But in practice
+# this fact is discovered too late to have any effect.
+Success: 'select f10()' doesn't allow concurrent inserts into 't1'.
 #
 # 4.11 INSERT which uses a stored function which doesn't modify
 #      data and reads a table indirectly, by calling another
@@ -494,9 +471,7 @@ Success: 'select f10()' allows concurrent inserts into 't1'.
 # Since such statement is written to the binary log, it should
 # be serialized with concurrent statements affecting the data it
 # uses. Therefore it should take strong locks on data it reads.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'insert into t2 values (f10() + 5)' allows concurrent inserts into 't1'.
+Success: 'insert into t2 values (f10() + 5)' doesn't allow concurrent inserts into 't1'.
 #
 # 4.12 SELECT which uses a stored function which modifies
 #      data and reads a table indirectly, by calling another
@@ -505,9 +480,7 @@ Success: 'insert into t2 values (f10() + 5)' allows concurrent inserts into 't1'
 # Since a call to such function is written to the binary log
 # it should be serialized from concurrent statements.
 # Hence, read should take a strong lock.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'select f11()' allows concurrent inserts into 't1'.
+Success: 'select f11()' doesn't allow concurrent inserts into 't1'.
 #
 # 4.13 SELECT that reads a table through a subquery passed
 #      as a parameter to a stored function which modifies
@@ -544,19 +517,15 @@ Success: 'call p2(@a)' allows concurrent inserts into 't1'.
 # Since a call to such function is written to the binary
 # log, it should be serialized with concurrent statements.
 # Hence, in this case reads should take strong locks on data.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'select f14()' allows concurrent inserts into 't1'.
+Success: 'select f14()' doesn't allow concurrent inserts into 't1'.
 #
 # 5.3 SELECT that calls a function that doesn't modify data and
 #     uses a CALL statement that reads a table via SELECT.
 #
-# Calls to such functions won't get into the binary log and
-# thus don't need to acquire strong locks.
-# In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
-# used stored functions may lead to broken SBR" strong locks
-# are taken (we accepted it as a trade-off for this fix).
-Success: 'select f15()' allows concurrent inserts into 't1'.
+# In theory, calls to such functions won't get into the binary
+# log and thus don't need to acquire strong locks. But in practice
+# this fact is discovered too late to have any effect.
+Success: 'select f15()' doesn't allow concurrent inserts into 't1'.
 #
 # 5.4 INSERT which calls function which doesn't modify data and
 #     uses CALL statement which reads table through SELECT.
@@ -564,9 +533,7 @@ Success: 'select f15()' allows concurrent inserts into 't1'.
 # Since such statement is written to the binary log it should
 # be serialized with concurrent statements affecting data it
 # uses. Therefore it should take strong locks on data it reads.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'insert into t2 values (f15()+5)' allows concurrent inserts into 't1'.
+Success: 'insert into t2 values (f15()+5)' doesn't allow concurrent inserts into 't1'.
 #
 # 6. Statements that use triggers.
 #
@@ -577,9 +544,7 @@ Success: 'insert into t2 values (f15()+5)' allows concurrent inserts into 't1'.
 # be serialized with concurrent statements affecting the data
 # it uses. Therefore, it should take strong locks on the data
 # it reads.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'insert into t4 values (2)' allows concurrent inserts into 't1'.
+Success: 'insert into t4 values (2)' doesn't allow concurrent inserts into 't1'.
 #
 # 6.2 Statement invoking a trigger that reads table through
 #     a subquery in a control construct.
@@ -597,17 +562,13 @@ Success: 'delete from t4 where l = 1' doesn't allow concurrent inserts into 't1'
 #     a stored function.
 #
 # And for this statement.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'insert into t5 values (2)' allows concurrent inserts into 't1'.
+Success: 'insert into t5 values (2)' doesn't allow concurrent inserts into 't1'.
 #
 # 6.5 Statement invoking a trigger that reads a table through
 #     stored procedure.
 #
 # And for this statement.
-# But due to bug #53921 "Wrong locks for SELECTs used stored
-# functions may lead to broken SBR" weak locks are taken.
-Success: 'update t5 set l= 2 where l = 1' allows concurrent inserts into 't1'.
+Success: 'update t5 set l= 2 where l = 1' doesn't allow concurrent inserts into 't1'.
 # Clean-up.
 drop function f1;
 drop function f2;
@@ -627,32 +588,188 @@ drop function f15;
 drop view v1, v2;
 drop procedure p1;
 drop procedure p2;
-drop table t1, t2, t3, t4, t5, te;
+drop table t1, t2, t3, t4, t5;
 set @@global.concurrent_insert= @old_concurrent_insert;
 #
-# Bug#11763784 56541: ASSERTION TABLE->DB_STAT FAILED IN
-#                     SQL_BASE.CC::OPEN_TABLE() DURING I_S Q
+# Test for bug #45143 "All connections hang on concurrent ALTER TABLE".
+#
+# Concurrent execution of statements which required weak write lock
+# (TL_WRITE_ALLOW_WRITE) on several instances of the same table and
+# statements which tried to acquire stronger write lock (TL_WRITE,
+# TL_WRITE_ALLOW_READ) on this table might have led to deadlock.
+drop table if exists t1;
+drop view if exists v1;
+# Create auxiliary connections used through the test.
+# Reset DEBUG_SYNC facility before using it.
+set debug_sync= 'RESET';
+# Turn off logging so calls to locking subsystem performed
+# for general_log table won't interfere with our test.
+set @old_general_log = @@global.general_log;
+set @@global.general_log= OFF;
+create table t1 (i int) engine=InnoDB;
+# We have to use view in order to make LOCK TABLES avoid
+# acquiring SNRW metadata lock on table.
+create view v1 as select * from t1;
+insert into t1 values (1);
+# Prepare user lock which will be used for resuming execution of
+# the first statement after it acquires TL_WRITE_ALLOW_WRITE lock.
+select get_lock("lock_bug45143_wait", 0);
+get_lock("lock_bug45143_wait", 0)
+1
+# Switch to connection 'con_bug45143_1'.
+# Sending:
+insert into t1 values (get_lock("lock_bug45143_wait", 100));;
+# Switch to connection 'con_bug45143_2'.
+# Wait until the above INSERT takes TL_WRITE_ALLOW_WRITE lock on 't1'
+# and then gets blocked on user lock 'lock_bug45143_wait'.
+# Ensure that upcoming SELECT waits after acquiring TL_WRITE_ALLOW_WRITE
+# lock for the first instance of 't1'.
+set debug_sync='thr_multi_lock_after_thr_lock SIGNAL parked WAIT_FOR go';
+# Sending:
+select count(*) > 0 from t1 as a, t1 as b for update;;
+# Switch to connection 'con_bug45143_3'.
+# Wait until the above SELECT ... FOR UPDATE is blocked after
+# acquiring lock for the the first instance of 't1'.
+set debug_sync= 'now WAIT_FOR parked';
+# Send LOCK TABLE statement which will try to get TL_WRITE lock on 't1':
+lock table v1 write;;
+# Switch to connection 'default'.
+# Wait until this LOCK TABLES statement starts waiting for table lock.
+# Allow SELECT ... FOR UPDATE to resume.
+# Since it already has TL_WRITE_ALLOW_WRITE lock on the first instance
+# of 't1' it should be able to get lock on the second instance without
+# waiting, even although there is another thread which has such lock
+# on this table and also there is a thread waiting for a TL_WRITE on it.
+set debug_sync= 'now SIGNAL go';
+# Switch to connection 'con_bug45143_2'.
+# Reap SELECT ... FOR UPDATE
+count(*) > 0
+1
+# Switch to connection 'default'.
+# Resume execution of the INSERT statement.
+select release_lock("lock_bug45143_wait");
+release_lock("lock_bug45143_wait")
+1
+# Switch to connection 'con_bug45143_1'.
+# Reap INSERT statement.
+# In Statement and Mixed replication mode we get here "Unsafe 
+# for binlog" warnings. In row mode there are no warnings.
+# Hide the discrepancy.
+# Switch to connection 'con_bug45143_3'.
+# Reap LOCK TABLES statement.
+unlock tables;
+# Switch to connection 'default'.
+# Do clean-up.
+set debug_sync= 'RESET';
+set @@global.general_log= @old_general_log;
+drop view v1;
+drop table t1;
+#
+# Bug#50821 Deadlock between LOCK TABLES and ALTER TABLE
+#
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(id INT);
+CREATE TABLE t2(id INT);
+# Connection con2
+START TRANSACTION;
+SELECT * FROM t1;
+id
+# Connection default
+# Sending:
+ALTER TABLE t1 ADD COLUMN j INT;
+# Connection con2
+# This used to cause a deadlock.
+INSERT INTO t2 SELECT * FROM t1;
+COMMIT;
+# Connection default
+# Reaping ALTER TABLE t1 ADD COLUMN j INT
+DROP TABLE t1, t2;
+#
+# Bug#51391 Deadlock involving events during rqg_info_schema test
+#
+CREATE EVENT e1 ON SCHEDULE EVERY 5 HOUR DO SELECT 1;
+CREATE EVENT e2 ON SCHEDULE EVERY 5 HOUR DO SELECT 2;
+# Connection con1
+SET DEBUG_SYNC="before_lock_tables_takes_lock SIGNAL drop WAIT_FOR query";
+# Sending:
+DROP EVENT e1;;
+# Connection default
+SET DEBUG_SYNC="now WAIT_FOR drop";
+SELECT name FROM mysql.event, INFORMATION_SCHEMA.GLOBAL_VARIABLES
+WHERE definer = VARIABLE_VALUE;
+name
+SET DEBUG_SYNC="now SIGNAL query";
+# Connection con1
+# Reaping: DROP EVENT t1
+# Connection default
+DROP EVENT e2;
+SET DEBUG_SYNC="RESET";
+#
+# Bug#55930 Assertion `thd->transaction.stmt.is_empty() ||
+#           thd->in_sub_stmt || (thd->state..
 #
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1(a int);
+CREATE TABLE t1(a INT) engine=InnoDB;
 INSERT INTO t1 VALUES (1), (2);
-CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW BEGIN END;
-# Connection con2
-SET DEBUG_SYNC= 'before_open_in_get_all_tables SIGNAL is_waits WAIT_FOR is_cont';
-# Sending:
-SELECT * FROM information_schema.table_constraints JOIN t1 ON table_name = a;
 # Connection con1
-SET DEBUG_SYNC= 'now WAIT_FOR is_waits';
+SET SESSION lock_wait_timeout= 1;
+SET DEBUG_SYNC= 'ha_admin_open_ltable SIGNAL opti_recreate WAIT_FOR opti_analyze';
 # Sending:
-DROP TRIGGER t1_bi;
+OPTIMIZE TABLE t1;
+# Connection con2
+SET DEBUG_SYNC= 'now WAIT_FOR opti_recreate';
+SET DEBUG_SYNC= 'after_lock_tables_takes_lock SIGNAL thrlock WAIT_FOR release_thrlock';
+# Sending:
+INSERT INTO t1 VALUES (3);
 # Connection default
-# Wait until DROP TRIGGER is blocked, waiting for t1
-SET DEBUG_SYNC= 'now SIGNAL is_cont';
-# Connection con2
-# Reaping SELECT * FROM information_schema.table_constraints JOIN t1...
-CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE	a
+SET DEBUG_SYNC= 'now WAIT_FOR thrlock';
+SET DEBUG_SYNC= 'now SIGNAL opti_analyze';
 # Connection con1
-# Reaping DROP TRIGGER t1_bi
+# Reaping: OPTIMIZE TABLE t1
+Table	Op	Msg_type	Msg_text
+test.t1	optimize	note	Table does not support optimize, doing recreate + analyze instead
+test.t1	optimize	error	Lock wait timeout exceeded; try restarting transaction
+test.t1	optimize	status	Operation failed
+Warnings:
+Error	1205	Lock wait timeout exceeded; try restarting transaction
+SET DEBUG_SYNC= 'now SIGNAL release_thrlock';
+# Connection con2
+# Reaping: INSERT INTO t1 VALUES (3)
 # Connection default
 DROP TABLE t1;
 SET DEBUG_SYNC= 'RESET';
+#
+# Bug#57130 crash in Item_field::print during SHOW CREATE TABLE or VIEW
+#
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS v1;
+DROP FUNCTION IF EXISTS f1;
+CREATE TABLE t1(a INT);
+CREATE FUNCTION f1() RETURNS INTEGER RETURN 1;
+CREATE VIEW v1 AS SELECT * FROM t1 WHERE f1() = 1;
+DROP FUNCTION f1;
+# Connection con1
+SET DEBUG_SYNC= 'open_tables_after_open_and_process_table SIGNAL opened WAIT_FOR dropped EXECUTE 2';
+# Sending:
+SHOW CREATE VIEW v1;
+# Connection con2
+SET DEBUG_SYNC= 'now WAIT_FOR opened';
+SET DEBUG_SYNC= 'now SIGNAL dropped';
+SET DEBUG_SYNC= 'now WAIT_FOR opened';
+# Sending:
+FLUSH TABLES;
+# Connection default
+# Waiting for FLUSH TABLES to be blocked.
+SET DEBUG_SYNC= 'now SIGNAL dropped';
+# Connection con1
+# Reaping: SHOW CREATE VIEW v1
+View	Create View	character_set_client	collation_connection
+v1	CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v1` AS select `t1`.`a` AS `a` from `t1` where (`f1`() = 1)	latin1	latin1_swedish_ci
+Warnings:
+Warning	1356	View 'test.v1' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them
+# Connection con2
+# Reaping: FLUSH TABLES
+# Connection default
+SET DEBUG_SYNC= 'RESET';
+DROP VIEW v1;
+DROP TABLE t1;

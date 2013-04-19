@@ -97,7 +97,7 @@ include/rpl_reset.inc
 flush logs;
 stop slave;
 reset slave;
-start slave until master_log_file='master-bin.000001', master_log_pos=294 /* to stop right before DROP */;
+start slave until master_log_file='master-bin.000001', master_log_pos=MASTER_LOG_POS;  /* to stop right before DROP */;
 include/wait_for_slave_sql_to_stop.inc
 show tables /* t1 must exist */;
 Tables_in_test

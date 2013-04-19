@@ -2513,8 +2513,6 @@ DROP TABLE t1, t2;
 CREATE TABLE t1 (i INT);
 
 (SELECT i FROM t1) UNION (SELECT i FROM t1);
-#TODO:not supported
---error ER_PARSE_ERROR
 SELECT sql_no_cache * FROM t1 WHERE NOT EXISTS
   (
    (SELECT i FROM t1) UNION
@@ -2531,8 +2529,6 @@ WHERE NOT EXISTS (((SELECT i FROM t1) UNION (SELECT i FROM t1)));
 explain select ((select t11.i from t1 t11) union (select t12.i from t1 t12))
   from t1;
 
-#TODO:not supported
---error ER_PARSE_ERROR
 explain select * from t1 where not exists
   ((select t11.i from t1 t11) union (select t12.i from t1 t12));
 
@@ -3203,8 +3199,6 @@ EXPLAIN EXTENDED
 SELECT 2 FROM t1 WHERE EXISTS ((SELECT 1 FROM t2 WHERE t1.a=t2.a));
 
 
-#TODO:not supported
---error ER_PARSE_ERROR
 EXPLAIN EXTENDED
 SELECT 2 FROM t1 WHERE EXISTS ((SELECT 1 FROM t2 WHERE t1.a=t2.a) UNION
                                (SELECT 1 FROM t2 WHERE t1.a = t2.a));
@@ -3427,6 +3421,61 @@ SET SESSION sql_mode=@old_sql_mode;
 DEALLOCATE PREPARE stmt;
 DROP TABLE t1;
 
+--echo #
+--echo # Bug#12763207 - ASSERT IN SUBSELECT::SINGLE_VALUE_TRANSFORMER
+--echo #
+
+CREATE TABLE t1(a1 int);
+INSERT INTO t1 VALUES (1),(2);
+
+CREATE TABLE t2(a1 int);
+INSERT INTO t2 VALUES (3);
+
+SELECT @@session.sql_mode INTO @old_sql_mode;
+SET SESSION sql_mode='ONLY_FULL_GROUP_BY';
+
+## All these are subject to the transformation
+## '1 < some (...)' => '1 < max(...)'
+SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 2 FROM t2);
+SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 2.0 FROM t2);
+SELECT 1 FROM t1 WHERE 1 < SOME (SELECT 'a' FROM t2);
+SELECT 1 FROM t1 WHERE 1 < SOME (SELECT a1 FROM t2);
+
+SET SESSION sql_mode=@old_sql_mode;
+
+DROP TABLE t1, t2;
+
+--echo #
+--echo # Bug#12763207 - ASSERT IN SUBSELECT::SINGLE_VALUE_TRANSFORMER
+--echo #
+
+create table t2(i int);
+insert into t2 values(0);
+
+SELECT @@session.sql_mode INTO @old_sql_mode;
+SET SESSION sql_mode='ONLY_FULL_GROUP_BY';
+
+CREATE VIEW v1 AS  
+SELECT 'f' FROM t2 UNION SELECT 'x' FROM t2
+;
+
+CREATE TABLE t1 (
+  pk int NOT NULL,
+  col_varchar_key varchar(1) DEFAULT NULL,
+  PRIMARY KEY (pk),
+  KEY col_varchar_key (col_varchar_key)
+);
+
+SELECT t1.pk
+FROM t1
+WHERE t1.col_varchar_key < ALL ( SELECT * FROM v1 )
+;
+
+SET SESSION sql_mode=@old_sql_mode;
+
+drop table t2, t1;
+drop view v1;
+
 --echo End of 5.0 tests.
 
 #
@@ -3603,6 +3652,232 @@ where v in(select v
            where t1.g=t2.g) is unknown;
 drop table t1, t2;
 
+-- echo #
+-- echo # Bug#33204: INTO is allowed in subselect, causing inconsistent results
+-- echo #
+CREATE TABLE t1( a INT );
+INSERT INTO t1 VALUES (1),(2);
+
+CREATE TABLE t2( a INT, b INT );
+
+--error ER_PARSE_ERROR
+SELECT * 
+FROM (SELECT a INTO @var FROM t1 WHERE a = 2) t1a;
+--error ER_PARSE_ERROR
+SELECT * 
+FROM (SELECT a INTO OUTFILE 'file' FROM t1 WHERE a = 2) t1a;
+--error ER_PARSE_ERROR
+SELECT * 
+FROM (SELECT a INTO DUMPFILE 'file' FROM t1 WHERE a = 2) t1a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM ( 
+  SELECT 1 a 
+  UNION 
+  SELECT a INTO @var FROM t1 WHERE a = 2 
+) t1a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM ( 
+  SELECT 1 a 
+  UNION 
+  SELECT a INTO OUTFILE 'file' FROM t1 WHERE a = 2 
+) t1a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM ( 
+  SELECT 1 a 
+  UNION 
+  SELECT a INTO DUMPFILE 'file' FROM t1 WHERE a = 2 
+) t1a;
+
+SELECT * FROM (SELECT a FROM t1 WHERE a = 2) t1a;
+
+SELECT * FROM ( 
+  SELECT a FROM t1 WHERE a = 2 
+  UNION 
+  SELECT a FROM t1 WHERE a = 2 
+) t1a;
+
+SELECT * FROM ( 
+  SELECT 1 a 
+  UNION 
+  SELECT a FROM t1 WHERE a = 2 
+  UNION 
+  SELECT a FROM t1 WHERE a = 2 
+) t1a;
+
+# This was not allowed previously. Possibly, it should be allowed on the future.
+# For now, the intent is to keep the fix as non-intrusive as possible.
+--error ER_PARSE_ERROR
+SELECT * FROM ((SELECT 1 a) UNION SELECT 1 a);
+SELECT * FROM (SELECT 1 a UNION (SELECT 1 a)) alias;
+SELECT * FROM (SELECT 1 UNION SELECT 1) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM ((SELECT 1 a INTO @a)) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM ((SELECT 1 a INTO OUTFILE 'file' )) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM ((SELECT 1 a INTO DUMPFILE 'file' )) t1a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION (SELECT 1 a INTO @a)) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION (SELECT 1 a INTO DUMPFILE 'file' )) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION (SELECT 1 a INTO OUTFILE 'file' )) t1a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION ((SELECT 1 a INTO @a))) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION ((SELECT 1 a INTO DUMPFILE 'file' ))) t1a;
+--error ER_PARSE_ERROR
+SELECT * FROM (SELECT 1 a UNION ((SELECT 1 a INTO OUTFILE 'file' ))) t1a;
+
+SELECT * FROM (SELECT 1 a ORDER BY a) t1a;
+SELECT * FROM (SELECT 1 a UNION SELECT 1 a ORDER BY a) t1a;
+SELECT * FROM (SELECT 1 a UNION SELECT 1 a LIMIT 1) t1a;
+SELECT * FROM (SELECT 1 a UNION SELECT 1 a ORDER BY a LIMIT 1) t1a;
+
+# Test of rule
+# table_factor:  '(' get_select_lex query_expression_body ')' opt_table_alias
+# UNION should not be allowed inside the parentheses, nor should
+# aliases after.
+# 
+SELECT * FROM t1 JOIN  (SELECT 1 UNION SELECT 1) alias ON 1;
+--error ER_PARSE_ERROR
+SELECT * FROM t1 JOIN ((SELECT 1 UNION SELECT 1)) ON 1;
+--error ER_PARSE_ERROR
+SELECT * FROM t1 JOIN  (t1 t1a UNION SELECT 1)  ON 1;
+--error ER_PARSE_ERROR
+SELECT * FROM t1 JOIN ((t1 t1a UNION SELECT 1)) ON 1;
+--error ER_PARSE_ERROR
+SELECT * FROM t1 JOIN  (t1 t1a)  t1a ON 1;
+--error ER_PARSE_ERROR
+SELECT * FROM t1 JOIN ((t1 t1a)) t1a ON 1;
+
+SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
+SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
+
+SELECT * FROM (t1 t1a);
+SELECT * FROM ((t1 t1a));
+
+SELECT * FROM t1 JOIN  (SELECT 1 t1a) alias ON 1;
+SELECT * FROM t1 JOIN ((SELECT 1 t1a)) alias ON 1;
+
+SELECT * FROM t1 JOIN  (SELECT 1 a)  a ON 1;
+SELECT * FROM t1 JOIN ((SELECT 1 a)) a ON 1;
+
+# For the join, TABLE_LIST::select_lex == NULL
+# Check that we handle this.
+--error ER_PARSE_ERROR
+SELECT * FROM (t1 JOIN (SELECT 1) t1a1 ON 1) t1a2;
+
+SELECT * FROM t1 WHERE a = ALL ( SELECT 1 );
+SELECT * FROM t1 WHERE a = ALL ( SELECT 1 UNION SELECT 1 );
+SELECT * FROM t1 WHERE a = ANY ( SELECT 3 UNION SELECT 1 );
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ANY ( SELECT 1 UNION SELECT 1 INTO @a);
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ANY ( SELECT 1 UNION SELECT 1 INTO OUTFILE 'file' );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ANY ( SELECT 1 UNION SELECT 1 INTO DUMPFILE 'file' );
+
+SELECT * FROM t1 WHERE a = ( SELECT 1 );
+SELECT * FROM t1 WHERE a = ( SELECT 1 UNION SELECT 1 );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 INTO @a);
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 INTO OUTFILE 'file' );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 INTO DUMPFILE 'file' );
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 UNION SELECT 1 INTO @a);
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 UNION SELECT 1 INTO OUTFILE 'file' );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ( SELECT 1 UNION SELECT 1 INTO DUMPFILE 'file' );
+
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 INTO @v );
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 INTO OUTFILE 'file' );
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 INTO DUMPFILE 'file' );
+
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 UNION SELECT 1 INTO @v );
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 UNION SELECT 1 INTO OUTFILE 'file' );
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 UNION SELECT 1 INTO DUMPFILE 'file' );
+
+# Make sure context is popped when we leave the nested select
+SELECT ( SELECT a FROM t1 WHERE a = 1 ), a FROM t1;
+SELECT ( SELECT a FROM t1 WHERE a = 1 UNION SELECT 1 ), a FROM t1;
+
+# Make sure we have feature F561 (see .yy file)
+SELECT * FROM t2 WHERE (a, b) IN (SELECT a, b FROM t2);
+
+# Make sure the parser does not allow nested UNIONs anywhere
+
+--error ER_PARSE_ERROR
+SELECT 1 UNION ( SELECT 1 UNION SELECT 1 );
+--error ER_PARSE_ERROR
+( SELECT 1 UNION SELECT 1 ) UNION SELECT 1;
+
+--error ER_PARSE_ERROR
+SELECT ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+--error ER_PARSE_ERROR
+SELECT ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1;
+SELECT ( SELECT 1 UNION SELECT 1 UNION SELECT 1 );
+SELECT ((SELECT 1 UNION SELECT 1 UNION SELECT 1));
+
+--error ER_PARSE_ERROR
+SELECT * FROM ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+--error ER_PARSE_ERROR
+SELECT * FROM ( ( SELECT 1 UNION SELECT 1 ) UNION SELECT 1 );
+SELECT * FROM ( SELECT 1 UNION SELECT 1 UNION SELECT 1 ) a;
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a =     ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ALL ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ANY ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a IN    ( SELECT 1 UNION ( SELECT 1 UNION SELECT 1 ) );
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a =     ( ( SELECT 1 UNION SELECT 1 )  UNION SELECT 1 );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ALL ( ( SELECT 1 UNION SELECT 1 )  UNION SELECT 1 );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a = ANY ( ( SELECT 1 UNION SELECT 1 )  UNION SELECT 1 );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a IN    ( ( SELECT 1 UNION SELECT 1 )  UNION SELECT 1 );
+
+SELECT * FROM t1 WHERE a =     ( SELECT 1 UNION SELECT 1 UNION SELECT 1 );
+SELECT * FROM t1 WHERE a = ALL ( SELECT 1 UNION SELECT 1 UNION SELECT 1 );
+SELECT * FROM t1 WHERE a = ANY ( SELECT 1 UNION SELECT 1 UNION SELECT 1 );
+SELECT * FROM t1 WHERE a IN    ( SELECT 1 UNION SELECT 1 UNION SELECT 1 );
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE EXISTS ( SELECT 1 UNION SELECT 1 INTO @v );
+SELECT EXISTS(SELECT 1+1);
+--error ER_PARSE_ERROR
+SELECT EXISTS(SELECT 1+1 INTO @test);
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a IN ( SELECT 1 UNION SELECT 1 INTO @v );
+
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE EXISTS ( SELECT 1 INTO @v );
+--error ER_PARSE_ERROR
+SELECT * FROM t1 WHERE a IN ( SELECT 1 INTO @v );
+
+DROP TABLE t1, t2;
 #
 # Bug #31157: Crash when select+order by the avg of some field within the
 # group by
@@ -3758,6 +4033,55 @@ SELECT * FROM t2 UNION SELECT * FROM t2
 DROP TABLE t1,t2;
 --enable_result_log
 
+--echo #
+--echo # Bug #58818: Incorrect result for IN/ANY subquery
+--echo # with HAVING condition 
+--echo #
+
+CREATE TABLE t1(i INT);
+INSERT INTO t1 VALUES (1), (2), (3);
+CREATE TABLE t1s(i INT);
+INSERT INTO t1s VALUES (10), (20), (30);
+CREATE TABLE t2s(i INT);
+INSERT INTO t2s VALUES (100), (200), (300);
+
+SELECT * FROM t1
+WHERE t1.i NOT IN
+(
+  SELECT STRAIGHT_JOIN t2s.i 
+  FROM
+  t1s LEFT OUTER JOIN t2s ON t2s.i = t1s.i
+  HAVING t2s.i = 999
+);
+
+SELECT * FROM t1
+WHERE t1.I IN
+(
+  SELECT STRAIGHT_JOIN t2s.i 
+  FROM
+  t1s LEFT OUTER JOIN t2s ON t2s.i = t1s.i
+  HAVING t2s.i = 999
+) IS UNKNOWN;
+
+SELECT * FROM t1
+WHERE NOT t1.I = ANY
+(
+  SELECT STRAIGHT_JOIN t2s.i 
+  FROM
+  t1s LEFT OUTER JOIN t2s ON t2s.i = t1s.i
+  HAVING t2s.i = 999
+);
+
+SELECT * FROM t1
+ WHERE t1.i = ANY (
+  SELECT STRAIGHT_JOIN t2s.i 
+  FROM
+  t1s LEFT OUTER JOIN t2s ON t2s.i = t1s.i
+  HAVING t2s.i = 999
+ ) IS UNKNOWN;
+
+DROP TABLE t1,t1s,t2s;
+
 --echo End of 5.1 tests
 
 --echo #
@@ -3779,5 +4103,33 @@ SELECT 1 as foo FROM t1 WHERE a < SOME
   (SELECT a FROM t1 WHERE a <=>
     (SELECT a FROM t1 where a is null)
   ); 
+
+DROP TABLE t1;
+
+--echo #
+--echo # Bug #57704: Cleanup code dies with void TABLE::set_keyread(bool): 
+--echo #             Assertion `file' failed.
+--echo #
+
+CREATE TABLE t1 (a INT);
+
+--error ER_OPERAND_COLUMNS
+SELECT 1 FROM 
+  (SELECT ROW(
+    (SELECT 1 FROM t1 RIGHT JOIN 
+      (SELECT 1 FROM t1, t1 t2) AS d ON 1),
+    1) FROM t1) AS e;
+
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#13721076 CRASH WITH TIME TYPE/TIMESTAMP() AND WARNINGS IN SUBQUERY
+--echo #
+
+CREATE TABLE t1(a TIME NOT NULL);
+INSERT INTO t1 VALUES ('00:00:32');
+
+SELECT 1 FROM t1 WHERE a >
+(SELECT timestamp(a) AS a FROM t1);
 
 DROP TABLE t1;

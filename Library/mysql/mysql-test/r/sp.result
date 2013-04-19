@@ -526,8 +526,6 @@ end|
 delete from t1|
 create table t3 ( s char(16), d int)|
 call into_test4()|
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 select * from t3|
 s	d
 into4	NULL
@@ -581,7 +579,7 @@ return 2.7182818284590452354|
 set @e = e()|
 select e(), @e|
 e()	@e
-2.71828182845905	2.71828182845905
+2.718281828459045	2.718281828459045
 drop function if exists inc|
 create function inc(i int) returns int
 return i+1|
@@ -618,23 +616,23 @@ create function fun(d double, i int, u int unsigned) returns double
 return mul(inc(i), fac(u)) / e()|
 select fun(2.3, 3, 5)|
 fun(2.3, 3, 5)
-176.582131762292
+176.58213176229233
 insert into t2 values (append("xxx", "yyy"), mul(4,3), e())|
 insert into t2 values (append("a", "b"), mul(2,mul(3,4)), fun(1.7, 4, 6))|
 select * from t2 where s = append("a", "b")|
 s	i	d
-ab	24	1324.36598821719
+ab	24	1324.3659882171924
 select * from t2 where i = mul(4,3) or i = mul(mul(3,4),2) order by i|
 s	i	d
-xxxyyy	12	2.71828182845905
-ab	24	1324.36598821719
+xxxyyy	12	2.718281828459045
+ab	24	1324.3659882171924
 select * from t2 where d = e()|
 s	i	d
-xxxyyy	12	2.71828182845905
+xxxyyy	12	2.718281828459045
 select * from t2 order by i|
 s	i	d
-xxxyyy	12	2.71828182845905
-ab	24	1324.36598821719
+xxxyyy	12	2.718281828459045
+ab	24	1324.3659882171924
 delete from t2|
 drop function e|
 drop function inc|
@@ -739,6 +737,8 @@ close c;
 end|
 insert into t2 values ("foo", 42, -1.9), ("bar", 3, 12.1), ("zap", 666, -3.14)|
 call cur1()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t1|
 id	data
 foo	40
@@ -774,6 +774,8 @@ close c1;
 close c2;
 end|
 call cur2()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t3 order by i,s|
 s	i
 bar	3
@@ -863,6 +865,8 @@ end$
 set @@sql_mode = ''|
 set sql_select_limit = 1|
 call modes(@c1, @c2)|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 set sql_select_limit = default|
 select @c1, @c2|
 @c1	@c2
@@ -1085,11 +1089,9 @@ select f0()|
 f0()
 100
 select * from v0|
-f0()
-100
+ERROR HY000: Table 'v0' was not locked with LOCK TABLES
 select *, f0() from v0, (select 123) as d1|
-f0()	123	f0()
-100	123	100
+ERROR HY000: Table 'v0' was not locked with LOCK TABLES
 select id, f3() from t1|
 ERROR HY000: Table 't1' was not locked with LOCK TABLES
 select f4()|
@@ -1120,8 +1122,6 @@ end|
 select f9()|
 f9()
 6
-Warnings:
-Note	1051	Unknown table 't3'
 select f9() from t1 limit 1|
 f9()
 6
@@ -1162,8 +1162,6 @@ drop temporary table t3|
 select f12_1()|
 f12_1()
 3
-Warnings:
-Note	1051	Unknown table 't3'
 select f12_1() from t1 limit 1|
 f12_1()
 3
@@ -1690,42 +1688,64 @@ end|
 call h_ee()|
 h_ee
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_es()|
 h_es
 Outer (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_en()|
 h_en
 Outer (good)
+Warnings:
+Warning	1329	No data - zero rows fetched, selected, or processed
 call h_ew()|
 h_ew
 Outer (good)
 call h_ex()|
 h_ex
 Outer (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_se()|
 h_se
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_ss()|
 h_ss
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_sn()|
 h_sn
 Outer (good)
+Warnings:
+Warning	1329	No data - zero rows fetched, selected, or processed
 call h_sw()|
 h_sw
 Outer (good)
 call h_sx()|
 h_sx
 Outer (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_ne()|
 h_ne
 Inner (good)
+Warnings:
+Warning	1329	No data - zero rows fetched, selected, or processed
 call h_ns()|
 h_ns
 Inner (good)
+Warnings:
+Warning	1329	No data - zero rows fetched, selected, or processed
 call h_nn()|
 h_nn
 Inner (good)
+Warnings:
+Warning	1329	No data - zero rows fetched, selected, or processed
 call h_we()|
 h_we
 Inner (good)
@@ -1738,12 +1758,18 @@ Inner (good)
 call h_xe()|
 h_xe
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_xs()|
 h_xs
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 call h_xx()|
 h_xx
 Inner (good)
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 drop table t3|
 drop procedure h_ee|
 drop procedure h_es|
@@ -1892,6 +1918,8 @@ set @x2 = 2;
 close c1;
 end|
 call bug2260()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select @x2|
 @x2
 2
@@ -2035,6 +2063,8 @@ insert into t3 values (123456789012);
 insert into t3 values (0);
 end|
 call bug2780()|
+Warnings:
+Warning	1264	Out of range value for column 's1' at row 1
 select @x|
 @x
 1
@@ -2069,12 +2099,7 @@ end if;
 insert into t4 values (2, rc, t3);
 end|
 call bug1863(10)|
-Warnings:
-Note	1051	Unknown table 'temp_t1'
-Warning	1329	No data - zero rows fetched, selected, or processed
 call bug1863(10)|
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 select * from t4|
 f1	rc	t3
 2	0	NULL
@@ -2339,11 +2364,7 @@ begin
 end|
 call bug4579_1()|
 call bug4579_1()|
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 call bug4579_1()|
-Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 drop procedure bug4579_1|
 drop procedure bug4579_2|
 drop table t3|
@@ -2392,7 +2413,6 @@ create procedure bug4902()
 begin
 show charset like 'foo';
 show collation like 'foo';
-show column types;
 show create table t1;
 show create database test;
 show databases like 'foo';
@@ -2410,9 +2430,6 @@ end|
 call bug4902()|
 Charset	Description	Default collation	Maxlen
 Collation	Charset	Id	Default	Compiled	Sortlen
-Type	Size	Min_Value	Max_Value	Prec	Scale	Nullable	Auto_Increment	Unsigned	Zerofill	Searchable	Case_Sensitive	Default	Comment
-tinyint	1	-128	127	0	0	YES	YES	NO	YES	YES	NO	NULL,0	A very small integer
-tinyint unsigned	1	0	255	0	0	YES	YES	YES	YES	YES	NO	NULL,0	A very small integer
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `id` char(16) NOT NULL DEFAULT '',
@@ -2425,7 +2442,7 @@ Level	Code	Message
 Field	Type	Null	Key	Default	Extra
 id	char(16)	NO			
 data	int(11)	NO		NULL	
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
 Database	Table	In_use	Name_locked
 Variable_name	Value
 Tables_in_test (foo)
@@ -2434,9 +2451,6 @@ Level	Code	Message
 call bug4902()|
 Charset	Description	Default collation	Maxlen
 Collation	Charset	Id	Default	Compiled	Sortlen
-Type	Size	Min_Value	Max_Value	Prec	Scale	Nullable	Auto_Increment	Unsigned	Zerofill	Searchable	Case_Sensitive	Default	Comment
-tinyint	1	-128	127	0	0	YES	YES	NO	YES	YES	NO	NULL,0	A very small integer
-tinyint unsigned	1	0	255	0	0	YES	YES	YES	YES	YES	NO	NULL,0	A very small integer
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `id` char(16) NOT NULL DEFAULT '',
@@ -2449,7 +2463,7 @@ Level	Code	Message
 Field	Type	Null	Key	Default	Extra
 id	char(16)	NO			
 data	int(11)	NO		NULL	
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
 Database	Table	In_use	Name_locked
 Variable_name	Value
 Tables_in_test (foo)
@@ -2473,6 +2487,8 @@ declare continue handler for sqlstate 'HY000' begin end;
 select s1 from t3 union select s2 from t3; 
 end|
 call bug4904()|
+Warnings:
+Error	1267	Illegal mix of collations (latin1_swedish_ci,IMPLICIT) and (latin2_general_ci,IMPLICIT) for operation 'UNION'
 drop procedure bug4904|
 drop table t3|
 drop procedure if exists bug336|
@@ -2612,10 +2628,14 @@ select row_count()|
 row_count()
 1
 call bug4905()|
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 select row_count()|
 row_count()
 -1
 call bug4905()|
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 select row_count()|
 row_count()
 -1
@@ -2639,10 +2659,14 @@ insert into t3 values (1)|
 call bug6029()|
 sqlstate 23000
 sqlstate 23000
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 delete from t3|
 call bug6029()|
 1136
 1136
+Warnings:
+Error	1136	Column count doesn't match value count at row 1
 drop procedure bug6029|
 drop table t3|
 drop procedure if exists bug8540|
@@ -2719,10 +2743,10 @@ delete from t3|
 insert into t3 values(1)|
 drop procedure if exists bug7992_1|
 Warnings:
-Note	1305	PROCEDURE bug7992_1 does not exist
+Note	1305	PROCEDURE test.bug7992_1 does not exist
 drop procedure if exists bug7992_2|
 Warnings:
-Note	1305	PROCEDURE bug7992_2 does not exist
+Note	1305	PROCEDURE test.bug7992_2 does not exist
 create procedure bug7992_1()
 begin
 declare i int;
@@ -2748,20 +2772,23 @@ userid
 drop procedure bug8116|
 drop table t3|
 drop procedure if exists bug6857|
-create procedure bug6857(counter int)
+create procedure bug6857()
 begin
 declare t0, t1 int;
 declare plus bool default 0;
-set t0 = current_time();
-while counter > 0 do
-set counter = counter - 1;
-end while;
-set t1 = current_time();
+set t0 = unix_timestamp();
+select sleep(1.1);
+set t1 = unix_timestamp();
 if t1 > t0 then
 set plus = 1;
 end if;
 select plus;
 end|
+call bug6857()|
+sleep(1.1)
+0
+plus
+1
 drop procedure bug6857|
 drop procedure if exists bug8757|
 create procedure bug8757()
@@ -2934,15 +2961,23 @@ end|
 call bug6900()|
 2
 2
+Warnings:
+Error	1136	Column count doesn't match value count at row 1
 call bug9074()|
 x1	x2	x3	x4	x5	x6
 1	1	1	1	1	1
+Warnings:
+Error	1062	Duplicate entry 'a' for key 'w'
 call bug6900_9074(0)|
 sqlexception
 sqlexception
+Warnings:
+Error	1136	Column count doesn't match value count at row 1
 call bug6900_9074(1)|
 23000
 23000
+Warnings:
+Error	1062	Duplicate entry 'a' for key 'w'
 drop procedure bug6900|
 drop procedure bug9074|
 drop procedure bug6900_9074|
@@ -2985,9 +3020,13 @@ delete from t1|
 call bug9856()|
 16
 16
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 call bug9856()|
 16
 16
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 drop procedure bug9856|
 drop procedure if exists bug9674_1|
 drop procedure if exists bug9674_2|
@@ -3052,7 +3091,7 @@ set @x = @x + 1;
 return @x;
 end|
 set @qcs1 = @@query_cache_size|
-set global query_cache_size = 100000|
+set global query_cache_size = 102400|
 set @x = 1|
 insert into t1 values ("qc", 42)|
 select bug9902() from t1|
@@ -3218,6 +3257,8 @@ x
 2
 x
 3
+Warnings:
+Error	1326	Cursor is not open
 call bug10961()|
 x
 1
@@ -3225,6 +3266,8 @@ x
 2
 x
 3
+Warnings:
+Error	1326	Cursor is not open
 drop procedure bug10961|
 DROP PROCEDURE IF EXISTS bug6866|
 DROP VIEW IF EXISTS tv|
@@ -3340,12 +3383,50 @@ insert into t1 values
 ('Name4', 13),
 ('Name5', 14)|
 call bug11529()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 call bug11529()|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 delete from t1|
 drop procedure bug11529|
+set character set utf8|
 drop procedure if exists bug6063|
 drop procedure if exists bug7088_1|
 drop procedure if exists bug7088_2|
+create procedure bug6063()
+begin
+l√¢bel: begin end;
+label: begin end;
+label1: begin end;
+end|
+create procedure bug7088_1()
+label1: begin end label1|
+create procedure bug7088_2()
+l√§bel1: begin end|
+call bug6063()|
+call bug7088_1()|
+call bug7088_2()|
+set character set default|
+show create procedure bug6063|
+Procedure	sql_mode	Create Procedure	character_set_client	collation_connection	Database Collation
+bug6063		CREATE DEFINER=`root`@`localhost` PROCEDURE `bug6063`()
+begin
+l‚bel: begin end;
+label: begin end;
+label1: begin end;
+end	utf8	latin1_swedish_ci	latin1_swedish_ci
+show create procedure bug7088_1|
+Procedure	sql_mode	Create Procedure	character_set_client	collation_connection	Database Collation
+bug7088_1		CREATE DEFINER=`root`@`localhost` PROCEDURE `bug7088_1`()
+label1: begin end label1	utf8	latin1_swedish_ci	latin1_swedish_ci
+show create procedure bug7088_2|
+Procedure	sql_mode	Create Procedure	character_set_client	collation_connection	Database Collation
+bug7088_2		CREATE DEFINER=`root`@`localhost` PROCEDURE `bug7088_2`()
+l‰bel1: begin end	utf8	latin1_swedish_ci	latin1_swedish_ci
+drop procedure bug6063|
+drop procedure bug7088_1|
+drop procedure bug7088_2|
 drop procedure if exists bug9565_sub|
 drop procedure if exists bug9565|
 create procedure bug9565_sub()
@@ -3480,24 +3561,32 @@ end;
 end if;
 end|
 call bug12168('a')|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t4|
 a
 1
 3
 truncate t4|
 call bug12168('b')|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t4|
 a
 2
 4
 truncate t4|
 call bug12168('a')|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t4|
 a
 1
 3
 truncate t4|
 call bug12168('b')|
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 select * from t4|
 a
 2
@@ -3736,9 +3825,6 @@ Table	Create Table
 tm1	CREATE TEMPORARY TABLE `tm1` (
   `spv1` decimal(3,3) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
-Warnings:
-Warning	1264	Out of range value for column 'spv1' at row 1
-Warning	1366	Incorrect decimal value: 'test' for column 'spv1' at row 1
 call bug12589_2()|
 Table	Create Table
 tm1	CREATE TEMPORARY TABLE `tm1` (
@@ -3800,6 +3886,8 @@ end|
 call bug7049_2()|
 Result
 Caught it
+Warnings:
+Error	1062	Duplicate entry '42' for key 'x'
 select * from t3|
 x
 42
@@ -3807,12 +3895,16 @@ delete from t3|
 call bug7049_4()|
 Result
 Caught it
+Warnings:
+Error	1062	Duplicate entry '42' for key 'x'
 select * from t3|
 x
 42
 select bug7049_2()|
 bug7049_2()
 1
+Warnings:
+Error	1062	Duplicate entry '42' for key 'x'
 drop table t3|
 drop procedure bug7049_1|
 drop procedure bug7049_2|
@@ -3940,6 +4032,8 @@ end|
 call bug14845()|
 a
 0
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 drop procedure bug14845|
 drop procedure if exists bug13549_1|
 drop procedure if exists bug13549_2|
@@ -4143,6 +4237,8 @@ end|
 call bug13729()|
 55
 55
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 select * from t3|
 s1
 1
@@ -4179,11 +4275,15 @@ Handler
 boo
 v	isnull(v)
 NULL	1
+Warnings:
+Error	1054	Unknown column 'undefined_var' in 'field list'
 call bug14643_2()|
 Handler
 boo
 Handler
 boo
+Warnings:
+Error	1054	Unknown column 'undefined_var' in 'field list'
 drop procedure bug14643_1|
 drop procedure bug14643_2|
 drop procedure if exists bug14304|
@@ -4296,19 +4396,10 @@ drop procedure if exists bug13012|
 create procedure bug13012()
 BEGIN
 REPAIR TABLE t1;
-BACKUP TABLE t1 to '<MYSQLTEST_VARDIR>/tmp/';
-DROP TABLE t1;
-RESTORE TABLE t1 FROM '<MYSQLTEST_VARDIR>/tmp/';
 END|
 call bug13012()|
 Table	Op	Msg_type	Msg_text
 test.t1	repair	status	OK
-Table	Op	Msg_type	Msg_text
-test.t1	backup	Warning	'BACKUP TABLE' is deprecated and will be removed in a future release. Please use MySQL Administrator (mysqldump, mysql) instead
-test.t1	backup	status	OK
-Table	Op	Msg_type	Msg_text
-test.t1	restore	Warning	'RESTORE TABLE' is deprecated and will be removed in a future release. Please use MySQL Administrator (mysqldump, mysql) instead
-test.t1	restore	status	OK
 drop procedure bug13012|
 create view v1 as select * from t1|
 create procedure bug13012()
@@ -4516,11 +4607,15 @@ Handler
 error
 End
 done
+Warnings:
+Error	1054	Unknown column 'v' in 'field list'
 call bug14498_2()|
 Handler
 error
 End
 done
+Warnings:
+Error	1054	Unknown column 'v' in 'field list'
 call bug14498_3()|
 v
 maybe
@@ -4528,16 +4623,22 @@ Handler
 error
 End
 done
+Warnings:
+Error	1054	Unknown column 'v' in 'field list'
 call bug14498_4()|
 Handler
 error
 End
 done
+Warnings:
+Error	1054	Unknown column 'v' in 'field list'
 call bug14498_5()|
 Handler
 error
 End
 done
+Warnings:
+Error	1054	Unknown column 'v' in 'field list'
 drop procedure bug14498_1|
 drop procedure bug14498_2|
 drop procedure bug14498_3|
@@ -4548,6 +4649,8 @@ drop procedure if exists bug15231_1|
 drop procedure if exists bug15231_2|
 drop procedure if exists bug15231_3|
 drop procedure if exists bug15231_4|
+drop procedure if exists bug15231_5|
+drop procedure if exists bug15231_6|
 create table t3 (id int not null)|
 create procedure bug15231_1()
 begin
@@ -4570,7 +4673,7 @@ end|
 create procedure bug15231_3()
 begin
 declare exit handler for sqlwarning
-select 'Caught it (wrong)' as 'Result';
+select 'Caught it (correct)' as 'Result';
 call bug15231_4();
 end|
 create procedure bug15231_4()
@@ -4578,6 +4681,20 @@ begin
 declare x decimal(2,1);
 set x = 'zap';
 select 'Missed it (correct)' as 'Result';
+show warnings;
+end|
+create procedure bug15231_5()
+begin
+declare exit handler for sqlwarning
+select 'Caught it (wrong)' as 'Result';
+call bug15231_6();
+end|
+create procedure bug15231_6()
+begin
+declare x decimal(2,1);
+set x = 'zap';
+select 'Missed it (correct)' as 'Result';
+select id from t3;
 end|
 call bug15231_1()|
 1
@@ -4585,19 +4702,29 @@ Before NOT FOUND condition is triggered
 2
 After NOT FOUND condtition is triggered
 xid	xdone
-1	0
+1	1
 Warnings:
 Warning	1329	No data - zero rows fetched, selected, or processed
 call bug15231_3()|
 Result
 Missed it (correct)
+Level	Code	Message
+Warning	1366	Incorrect decimal value: 'zap' for column 'x' at row 1
+Result
+Caught it (correct)
 Warnings:
 Warning	1366	Incorrect decimal value: 'zap' for column 'x' at row 1
-drop table if exists t3|
-drop procedure if exists bug15231_1|
-drop procedure if exists bug15231_2|
-drop procedure if exists bug15231_3|
-drop procedure if exists bug15231_4|
+call bug15231_5()|
+Result
+Missed it (correct)
+id
+drop table t3|
+drop procedure bug15231_1|
+drop procedure bug15231_2|
+drop procedure bug15231_3|
+drop procedure bug15231_4|
+drop procedure bug15231_5|
+drop procedure bug15231_6|
 drop procedure if exists bug15011|
 create table t3 (c1 int primary key)|
 insert into t3 values (1)|
@@ -4615,6 +4742,8 @@ end|
 call bug15011()|
 Handler
 Inner
+Warnings:
+Error	1062	Duplicate entry '1' for key 'PRIMARY'
 drop procedure bug15011|
 drop table t3|
 drop procedure if exists bug17476|
@@ -4690,6 +4819,8 @@ i
 1
 i
 0
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 drop table t3|
 drop procedure bug16887|
 drop procedure if exists bug16474_1|
@@ -4762,6 +4893,8 @@ declare continue handler for sqlexception begin end;
 select no_such_function();
 end|
 call bug18787()|
+Warnings:
+Error	1305	FUNCTION test.no_such_function does not exist
 drop procedure bug18787|
 create database bug18344_012345678901|
 use bug18344_012345678901|
@@ -4990,22 +5123,22 @@ SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest1" AND ROUTINE_NAME = "bug16211_f1"|
 dtd_identifier
-char(10) CHARSET utf8
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest1" AND ROUTINE_NAME = "bug16211_f2"|
 dtd_identifier
-char(10) CHARSET koi8r
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest2" AND ROUTINE_NAME = "bug16211_f3"|
 dtd_identifier
-char(10) CHARSET utf8
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest2" AND ROUTINE_NAME = "bug16211_f4"|
 dtd_identifier
-char(10) CHARSET koi8r
+char(10)
 SELECT CHARSET(bug16211_f1())|
 CHARSET(bug16211_f1())
 utf8
@@ -5040,22 +5173,22 @@ SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest1" AND ROUTINE_NAME = "bug16211_f1"|
 dtd_identifier
-char(10) CHARSET utf8
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest1" AND ROUTINE_NAME = "bug16211_f2"|
 dtd_identifier
-char(10) CHARSET koi8r
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest2" AND ROUTINE_NAME = "bug16211_f3"|
 dtd_identifier
-char(10) CHARSET utf8
+char(10)
 SELECT dtd_identifier
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_SCHEMA = "mysqltest2" AND ROUTINE_NAME = "bug16211_f4"|
 dtd_identifier
-char(10) CHARSET koi8r
+char(10)
 SELECT CHARSET(bug16211_f1())|
 CHARSET(bug16211_f1())
 utf8
@@ -5135,6 +5268,8 @@ statement failed
 statement failed
 statement after update
 statement after update
+Warnings:
+Error	1242	Subquery returns more than 1 row
 select * from t3|
 a
 1
@@ -5146,6 +5281,8 @@ statement failed
 statement failed
 statement after update
 statement after update
+Warnings:
+Error	1242	Subquery returns more than 1 row
 select * from t3|
 a
 1
@@ -5178,6 +5315,8 @@ in continue handler
 in continue handler
 reachable code a2
 reachable code a2
+Warnings:
+Error	1242	Subquery returns more than 1 row
 select * from t3|
 a
 1
@@ -5193,6 +5332,8 @@ in continue handler
 in continue handler
 reachable code a2
 reachable code a2
+Warnings:
+Error	1242	Subquery returns more than 1 row
 select * from t3|
 a
 1
@@ -5226,6 +5367,8 @@ in continue handler
 in continue handler
 reachable code a2
 reachable code a2
+Warnings:
+Error	1305	FUNCTION test.no_such_function does not exist
 drop procedure bug8153_proc_a|
 drop procedure bug8153_proc_b|
 drop table t3|
@@ -5794,9 +5937,13 @@ end|
 select func_8407_a()|
 func_8407_a()
 NULL
+Warnings:
+Error	1146	Table 'test.no_such_view' doesn't exist
 select func_8407_b()|
 func_8407_b()
 1500
+Warnings:
+Error	1146	Table 'test.no_such_view' doesn't exist
 drop function func_8407_a|
 drop function func_8407_b|
 drop table if exists table_26503|
@@ -5918,6 +6065,8 @@ looping	i
 looping	0
 leaving handler
 leaving handler
+Warnings:
+Error	1062	Duplicate entry '1' for key 'a'
 call proc_26503_ok_2(2)|
 do something
 do something
@@ -5929,6 +6078,8 @@ looping	i
 looping	4
 leaving handler
 leaving handler
+Warnings:
+Error	1062	Duplicate entry '2' for key 'a'
 call proc_26503_ok_3(3)|
 do something
 do something
@@ -5948,6 +6099,8 @@ looping	i
 looping	0
 leaving handler
 leaving handler
+Warnings:
+Error	1062	Duplicate entry '3' for key 'a'
 call proc_26503_ok_4(4)|
 do something
 do something
@@ -5959,6 +6112,8 @@ looping	i
 looping	4
 leaving handler
 leaving handler
+Warnings:
+Error	1062	Duplicate entry '4' for key 'a'
 drop table table_26503|
 drop procedure proc_26503_ok_1|
 drop procedure proc_26503_ok_2|
@@ -5972,9 +6127,9 @@ CREATE TABLE t3 (f1 INT, f2 FLOAT)|
 INSERT INTO t3 VALUES (1, 3.4), (1, 2), (1, 0.9), (2, 8), (2, 7)|
 SELECT SUM(f2), bug25373(f1) FROM t3 GROUP BY bug25373(f1) WITH ROLLUP|
 SUM(f2)	bug25373(f1)
-6.30000007152557	1
+6.300000071525574	1
 15	2
-21.3000000715256	NULL
+21.300000071525574	NULL
 DROP FUNCTION bug25373|
 DROP TABLE t3|
 DROP DATABASE IF EXISTS mysqltest1|
@@ -6024,16 +6179,12 @@ select bug20777(9223372036854775810) as '9223372036854775810   2**63+2';
 9223372036854775810   2**63+2
 9223372036854775810
 select bug20777(-9223372036854775808) as 'lower bounds signed bigint';
-lower bounds signed bigint
-0
-Warnings:
-Warning	1264	Out of range value for column 'f1' at row 1
+ERROR 22003: BIGINT UNSIGNED value is out of range in '(f1@0 - 10)'
 select bug20777(9223372036854775807) as 'upper bounds signed bigint';
 upper bounds signed bigint
 9223372036854775807
 select bug20777(0) as 'lower bounds unsigned bigint';
-lower bounds unsigned bigint
-0
+ERROR 22003: BIGINT UNSIGNED value is out of range in '(f1@0 - 10)'
 select bug20777(18446744073709551615) as 'upper bounds unsigned bigint';
 upper bounds unsigned bigint
 18446744073709551615
@@ -6043,10 +6194,7 @@ upper bounds unsigned bigint + 1
 Warnings:
 Warning	1264	Out of range value for column 'f1' at row 1
 select bug20777(-1) as 'lower bounds unsigned bigint - 1';
-lower bounds unsigned bigint - 1
-0
-Warnings:
-Warning	1264	Out of range value for column 'f1' at row 1
+ERROR 22003: BIGINT UNSIGNED value is out of range in '(f1@0 - 10)'
 create table examplebug20777 as select 
 0 as 'i',
 bug20777(9223372036854775806) as '2**63-2',
@@ -6055,15 +6203,10 @@ bug20777(9223372036854775808) as '2**63',
 bug20777(9223372036854775809) as '2**63+1',
 bug20777(18446744073709551614) as '2**64-2',
 bug20777(18446744073709551615) as '2**64-1', 
-bug20777(18446744073709551616) as '2**64',
-bug20777(0) as '0',
-bug20777(-1) as '-1';
+bug20777(18446744073709551616) as '2**64';
 Warnings:
 Warning	1264	Out of range value for column 'f1' at row 1
-Warning	1264	Out of range value for column 'f1' at row 1
-insert into examplebug20777 values (1, 9223372036854775806, 9223372036854775807, 223372036854775808, 9223372036854775809, 18446744073709551614, 18446744073709551615, 8446744073709551616, 0, -1);
-Warnings:
-Warning	1264	Out of range value for column '-1' at row 1
+insert into examplebug20777 values (1, 9223372036854775806, 9223372036854775807, 223372036854775808, 9223372036854775809, 18446744073709551614, 18446744073709551615, 8446744073709551616);
 show create table examplebug20777;
 Table	Create Table
 examplebug20777	CREATE TABLE `examplebug20777` (
@@ -6074,14 +6217,12 @@ examplebug20777	CREATE TABLE `examplebug20777` (
   `2**63+1` bigint(20) unsigned DEFAULT NULL,
   `2**64-2` bigint(20) unsigned DEFAULT NULL,
   `2**64-1` bigint(20) unsigned DEFAULT NULL,
-  `2**64` bigint(20) unsigned DEFAULT NULL,
-  `0` bigint(20) unsigned DEFAULT NULL,
-  `-1` bigint(20) unsigned DEFAULT NULL
+  `2**64` bigint(20) unsigned DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 select * from examplebug20777 order by i;
-i	2**63-2	2**63-1	2**63	2**63+1	2**64-2	2**64-1	2**64	0	-1
-0	9223372036854775806	9223372036854775807	9223372036854775808	9223372036854775809	18446744073709551614	18446744073709551615	18446744073709551615	0	0
-1	9223372036854775806	9223372036854775807	223372036854775808	9223372036854775809	18446744073709551614	18446744073709551615	8446744073709551616	0	0
+i	2**63-2	2**63-1	2**63	2**63+1	2**64-2	2**64-1	2**64
+0	9223372036854775806	9223372036854775807	9223372036854775808	9223372036854775809	18446744073709551614	18446744073709551615	18446744073709551615
+1	9223372036854775806	9223372036854775807	223372036854775808	9223372036854775809	18446744073709551614	18446744073709551615	8446744073709551616
 drop table examplebug20777;
 select bug20777(18446744073709551613)+1;
 bug20777(18446744073709551613)+1
@@ -6105,35 +6246,6 @@ SELECT bug5274_f2()|
 bug5274_f2()
 x
 Warnings:
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
-Warning	1265	Data truncated for column 'bug5274_f1' at row 1
 Warning	1265	Data truncated for column 'bug5274_f1' at row 1
 DROP FUNCTION bug5274_f1|
 DROP FUNCTION bug5274_f2|
@@ -6229,19 +6341,16 @@ f1(2)
 0
 Warnings:
 Warning	1329	No data - zero rows fetched, selected, or processed
-Warning	1329	No data - zero rows fetched, selected, or processed
 PREPARE s1 FROM 'SELECT f1(2)';
 EXECUTE s1;
 f1(2)
 0
 Warnings:
 Warning	1329	No data - zero rows fetched, selected, or processed
-Warning	1329	No data - zero rows fetched, selected, or processed
 EXECUTE s1;
 f1(2)
 0
 Warnings:
-Warning	1329	No data - zero rows fetched, selected, or processed
 Warning	1329	No data - zero rows fetched, selected, or processed
 DROP PROCEDURE p1;
 DROP PROCEDURE p2;
@@ -6254,6 +6363,7 @@ create procedure mysqltest_db1.sp_bug28551() begin end;
 call mysqltest_db1.sp_bug28551();
 show warnings;
 Level	Code	Message
+Note	1008	Can't drop database 'mysqltest_db1'; database doesn't exist
 drop database mysqltest_db1;
 drop database if exists mysqltest_db1;
 drop table if exists test.t1;
@@ -6717,6 +6827,8 @@ DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @exception:= 'run';
 SELECT x FROM t1;
 END|
 CALL bug29770();
+Warnings:
+Error	1054	Unknown column 'x' in 'field list'
 SELECT @state, @exception;
 @state	@exception
 run	NULL
@@ -6755,6 +6867,8 @@ end;
 end while;
 end//
 call proc_33618(20);
+Warnings:
+Error	1329	No data - zero rows fetched, selected, or processed
 drop table t_33618;
 drop procedure proc_33618;
 #
@@ -6934,15 +7048,12 @@ DROP FUNCTION f1;
 
 drop procedure if exists p;
 set @old_mode= @@sql_mode;
-set @@sql_mode= pow(2,32)-1;
+set @@sql_mode= cast(pow(2,32)-1 as unsigned integer);
 select @@sql_mode into @full_mode;
 create procedure p() begin end;
 call p();
-select @@sql_mode;
-@@sql_mode
-REAL_AS_FLOAT,PIPES_AS_CONCAT,ANSI_QUOTES,IGNORE_SPACE,?,ONLY_FULL_GROUP_BY,NO_UNSIGNED_SUBTRACTION,NO_DIR_IN_CREATE,POSTGRESQL,ORACLE,MSSQL,DB2,MAXDB,NO_KEY_OPTIONS,NO_TABLE_OPTIONS,NO_FIELD_OPTIONS,MYSQL323,MYSQL40,ANSI,NO_AUTO_VALUE_ON_ZERO,NO_BACKSLASH_ESCAPES,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ALLOW_INVALID_DATES,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,HIGH_NOT_PRECEDENCE,NO_ENGINE_SUBSTITUTION,PAD_CHAR_TO_FULL_LENGTH
 set @@sql_mode= @old_mode;
-select replace(@full_mode, '?', 'NOT_USED') into @full_mode;
+select replace(@full_mode, ',,,', ',NOT_USED,') into @full_mode;
 select replace(@full_mode, 'ALLOW_INVALID_DATES', 'INVALID_DATES') into @full_mode;
 select name from mysql.proc where name = 'p' and sql_mode = @full_mode;
 name
@@ -7090,3 +7201,611 @@ DROP TABLE t1, t2;
 # ------------------------------------------------------------------
 # -- End of 5.1 tests
 # ------------------------------------------------------------------
+DROP FUNCTION IF EXISTS f1;
+DROP TABLE IF EXISTS t_non_existing;
+DROP TABLE IF EXISTS t1;
+CREATE FUNCTION f1() RETURNS INT
+BEGIN
+DECLARE v INT;
+SELECT a INTO v FROM t_non_existing;
+RETURN 1;
+END|
+CREATE TABLE t1 (a INT) ENGINE = myisam;
+INSERT INTO t1 VALUES (1);
+SELECT * FROM t1 WHERE a = f1();
+ERROR 42S02: Table 'test.t_non_existing' doesn't exist
+DROP FUNCTION f1;
+DROP TABLE t1;
+DROP PROCEDURE IF EXISTS p1;
+CREATE PROCEDURE p1(a INT, b CHAR)
+BEGIN
+IF a > 0 THEN
+CALL p1(a-1, 'ab');
+ELSE
+SELECT 1;
+END IF;
+END|
+SET @save_max_sp_recursion= @@max_sp_recursion_depth;
+SET @@max_sp_recursion_depth= 5;
+CALL p1(4, 'a');
+1
+1
+Warnings:
+Warning	1265	Data truncated for column 'b' at row 1
+Warning	1265	Data truncated for column 'b' at row 1
+Warning	1265	Data truncated for column 'b' at row 1
+Warning	1265	Data truncated for column 'b' at row 1
+SET @@max_sp_recursion_depth= @save_max_sp_recursion;
+DROP PROCEDURE p1;
+DROP PROCEDURE IF EXISTS p1;
+CREATE PROCEDURE p1(a CHAR)
+BEGIN
+SELECT 1;
+SELECT CAST('10 ' as UNSIGNED INTEGER);
+SELECT 1;
+END|
+CALL p1('data truncated parameter');
+1
+1
+CAST('10 ' as UNSIGNED INTEGER)
+10
+1
+1
+Warnings:
+Warning	1265	Data truncated for column 'a' at row 1
+Warning	1292	Truncated incorrect INTEGER value: '10 '
+DROP PROCEDURE p1;
+DROP PROCEDURE IF EXISTS p1;
+DROP PROCEDURE IF EXISTS p2;
+DROP PROCEDURE IF EXISTS p3;
+DROP PROCEDURE IF EXISTS p4;
+CREATE PROCEDURE p1()
+CALL p2()|
+CREATE PROCEDURE p2()
+CALL p3()|
+CREATE PROCEDURE p3()
+CALL p4()|
+CREATE PROCEDURE p4()
+BEGIN
+SELECT 1;
+SELECT CAST('10 ' as UNSIGNED INTEGER);
+SELECT 2;
+END|
+CALL p1();
+1
+1
+CAST('10 ' as UNSIGNED INTEGER)
+10
+2
+2
+Warnings:
+Warning	1292	Truncated incorrect INTEGER value: '10 '
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+DROP PROCEDURE p3;
+DROP PROCEDURE p4;
+DROP FUNCTION IF EXISTS f1;
+DROP FUNCTION IF EXISTS f2;
+DROP FUNCTION IF EXISTS f3;
+DROP FUNCTION IF EXISTS f4;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a CHAR(2));
+INSERT INTO t1 VALUES ('aa');
+CREATE FUNCTION f1() RETURNS CHAR
+RETURN (SELECT f2())|
+CREATE FUNCTION f2() RETURNS CHAR
+RETURN (SELECT f3())|
+CREATE FUNCTION f3() RETURNS CHAR
+RETURN (SELECT f4())|
+CREATE FUNCTION f4() RETURNS CHAR
+BEGIN
+RETURN (SELECT a FROM t1);
+END|
+SELECT f1();
+f1()
+a
+Warnings:
+Warning	1265	Data truncated for column 'f4()' at row 1
+DROP FUNCTION f1;
+DROP FUNCTION f2;
+DROP FUNCTION f3;
+DROP FUNCTION f4;
+DROP TABLE t1;
+#
+# Bug#34197: CREATE PROCEDURE fails when COMMENT truncated in non 
+#            strict SQL mode
+#
+DROP PROCEDURE IF EXISTS p1;
+CREATE PROCEDURE p1 ()
+COMMENT
+'12345678901234567890123456789012345678901234567890123456789012345678901234567890'
+BEGIN
+END;
+SELECT comment FROM mysql.proc WHERE name = "p1";
+comment
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+SELECT routine_comment FROM information_schema.routines WHERE routine_name = "p1";
+routine_comment
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+DROP PROCEDURE p1;
+#
+# Bug #47313 assert in check_key_in_view during CALL procedure
+#
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS t1, t2_unrelated;
+DROP PROCEDURE IF EXISTS p1;
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE VIEW t1 AS SELECT 10 AS f1;
+# t1 refers to the view
+CALL p1(1);
+ERROR HY000: The target table t1 of the INSERT is not insertable-into
+CREATE TEMPORARY TABLE t1 (f1 INT);
+# t1 still refers to the view since it was inlined
+CALL p1(2);
+ERROR HY000: The target table t1 of the INSERT is not insertable-into
+DROP VIEW t1;
+# t1 now refers to the temporary table
+CALL p1(3);
+# Check which values were inserted into the temp table.
+SELECT * FROM t1;
+f1
+3
+DROP TEMPORARY TABLE t1;
+DROP PROCEDURE p1;
+# Now test what happens if the sp cache is invalidated.
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE VIEW t1 AS SELECT 10 AS f1;
+CREATE VIEW v2_unrelated AS SELECT 1 AS r1;
+# Load the procedure into the sp cache
+CALL p1(4);
+ERROR HY000: The target table t1 of the INSERT is not insertable-into
+CREATE TEMPORARY TABLE t1 (f1 int);
+ALTER VIEW v2_unrelated AS SELECT 2 AS r1;
+# Alter view causes the sp cache to be invalidated.
+# Now t1 refers to the temporary table, not the view.
+CALL p1(5);
+# Check which values were inserted into the temp table.
+SELECT * FROM t1;
+f1
+5
+DROP TEMPORARY TABLE t1;
+DROP VIEW t1, v2_unrelated;
+DROP PROCEDURE p1;
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE TEMPORARY TABLE t1 (f1 INT);
+# t1 refers to the temporary table
+CALL p1(6);
+CREATE VIEW t1 AS SELECT 10 AS f1;
+# Create view causes the sp cache to be invalidated.
+# t1 still refers to the temporary table since it shadows the view.
+CALL p1(7);
+DROP VIEW t1;
+# Check which values were inserted into the temp table.
+SELECT * FROM t1;
+f1
+6
+7
+DROP TEMPORARY TABLE t1;
+DROP PROCEDURE p1;
+#
+# Bug #11918 Can't use a declared variable in LIMIT clause
+#
+drop table if exists t1;
+drop procedure if exists p1;
+create table t1 (c1 int);
+insert into t1 (c1) values (1), (2), (3), (4), (5);
+create procedure p1()
+begin
+declare a integer;
+declare b integer;
+select * from t1 limit a, b;
+end|
+# How do we handle NULL limit values?
+call p1();
+c1
+drop table t1;
+create table t1 (a int);
+insert into t1 (a) values (1), (2), (3), (4), (5);
+#
+# Do we correctly resolve identifiers in LIMIT?
+# Since DROP and CREATE did not invalidate
+# the SP cache, we can't test until
+# we drop and re-create the procedure.
+#
+call p1();
+ERROR 42S22: Unknown column 'test.t1.c1' in 'field list'
+# 
+# Drop and recreate the procedure, then repeat
+#
+drop procedure p1;
+create procedure p1()
+begin
+declare a integer;
+declare b integer;
+select * from t1 limit a, b;
+end|
+# Stored procedure variables are resolved correctly in the LIMIT
+call p1();
+a
+drop table t1;
+create table t1 (c1 int);
+insert into t1 (c1) values (1), (2), (3), (4), (5);
+drop procedure p1;
+# Try to create a procedure that
+# refers to non-existing variables.
+create procedure p1(p1 integer, p2 integer)
+select * from t1 limit a, b;
+ERROR 42000: Undeclared variable: a
+#
+# Try to use data types not allowed in LIMIT 
+#
+create procedure p1(p1 date, p2 date) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create procedure p1(p1 integer, p2 float) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create procedure p1(p1 integer, p2 char(1)) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create procedure p1(p1 varchar(5), p2 char(1)) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create procedure p1(p1 decimal, p2 decimal) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create procedure p1(p1 double, p2 double) select * from t1 limit p1, p2;
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+#
+# Finally, test the valid case.
+#
+create procedure p1(p1 integer, p2 integer)
+select * from t1 limit p1, p2;
+call p1(NULL, NULL);
+c1
+call p1(0, 0);
+c1
+call p1(0, -1);
+c1
+1
+2
+3
+4
+5
+call p1(-1, 0);
+c1
+call p1(-1, -1);
+c1
+call p1(0, 1);
+c1
+1
+call p1(1, 0);
+c1
+call p1(1, 5);
+c1
+2
+3
+4
+5
+call p1(3, 2);
+c1
+4
+5
+# Try to create a function that
+# refers to non-existing variables.
+create function f1(p1 integer, p2 integer)
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit a, b);
+return a;
+end|
+ERROR 42000: Undeclared variable: b
+create function f1()
+returns int
+begin
+declare a, b, c int;
+set a = (select count(*) from t1 limit b, c);
+return a;
+end|
+# How do we handle NULL limit values?
+select f1();
+f1()
+NULL
+drop function f1;
+#
+# Try to use data types not allowed in LIMIT 
+#
+create function f1(p1 date, p2 date)
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create function f1(p1 integer, p2 float)
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create function f1(p1 integer, p2 char(1))
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create function f1(p1 varchar(5), p2 char(1))
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create function f1(p1 decimal, p2 decimal)
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+create function f1(p1 double, p2 double)
+returns int
+begin
+declare a int;
+set a = (select count(*) from t1 limit p1, p2);
+return a;
+end|
+ERROR HY000: A variable of a non-integer based type in LIMIT clause
+#
+# Finally, test the valid case.
+#
+create function f1(p1 integer, p2 integer)
+returns int
+begin
+declare count int;
+set count= (select count(*) from (select * from t1 limit p1, p2) t_1);
+return count;
+end|
+select f1(0, 0);
+f1(0, 0)
+0
+select f1(0, -1);
+f1(0, -1)
+5
+select f1(-1, 0);
+f1(-1, 0)
+0
+select f1(-1, -1);
+f1(-1, -1)
+0
+select f1(0, 1);
+f1(0, 1)
+1
+select f1(1, 0);
+f1(1, 0)
+0
+select f1(1, 5);
+f1(1, 5)
+4
+select f1(3, 2);
+f1(3, 2)
+2
+# Cleanup
+drop table t1;
+drop procedure p1;
+drop function f1;
+# 
+# BUG#11766234: 59299: ASSERT (TABLE_REF->TABLE || TABLE_REF->VIEW) 
+#               FAILS IN SET_FIELD_ITERATOR
+# 
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 (a INT);
+CREATE VIEW v1 AS SELECT a FROM t2;
+CREATE PROCEDURE proc() SELECT * FROM t1 NATURAL JOIN v1;
+ALTER TABLE t2 CHANGE COLUMN a b CHAR;
+
+CALL proc();
+ERROR HY000: View 'test.v1' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them
+CALL proc();
+ERROR HY000: View 'test.v1' references invalid table(s) or column(s) or function(s) or definer/invoker of view lack rights to use them
+
+DROP TABLE t1,t2;
+DROP VIEW v1;
+DROP PROCEDURE proc;
+
+# --
+# -- Bug 11765684 - 58674: SP-cache does not detect changes in
+# -- pre-locking list caused by triggers
+# --- 
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+DROP TABLE IF EXISTS t3;
+DROP PROCEDURE IF EXISTS p1;
+CREATE TABLE t1(a INT);
+CREATE TABLE t2(a INT);
+CREATE TABLE t3(a INT);
+CREATE PROCEDURE p1()
+INSERT INTO t1(a) VALUES (1);
+
+CREATE TRIGGER t1_ai AFTER INSERT ON t1
+FOR EACH ROW
+INSERT INTO t2(a) VALUES (new.a);
+
+CALL p1();
+
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1
+FOR EACH ROW
+INSERT INTO t3(a) VALUES (new.a);
+
+CALL p1();
+
+DROP TABLE t1, t2, t3;
+DROP PROCEDURE p1;
+
+
+# --
+# -- Bug#12652769 - 61470: case operator in stored routine retains old
+# -- value of input parameter
+# --- 
+DROP TABLE IF EXISTS t1;
+DROP PROCEDURE IF EXISTS p1;
+CREATE TABLE t1 (s1 CHAR(5) CHARACTER SET utf8);
+INSERT INTO t1 VALUES ('a');
+CREATE PROCEDURE p1(dt DATETIME, i INT)
+BEGIN
+SELECT
+CASE
+WHEN i = 1 THEN 2
+ELSE dt
+END AS x1;
+SELECT
+CASE _latin1'a'
+      WHEN _utf8'a' THEN 'A'
+    END AS x2;
+SELECT
+CASE _utf8'a'
+      WHEN _latin1'a' THEN _utf8'A'
+    END AS x3;
+SELECT
+CASE s1
+WHEN _latin1'a' THEN _latin1'b'
+      ELSE _latin1'c'
+    END AS x4
+FROM t1;
+END|
+
+CALL p1('2011-04-03 05:14:10', 1);
+x1
+2
+x2
+A
+x3
+A
+x4
+b
+CALL p1('2011-04-03 05:14:11', 2);
+x1
+2011-04-03 05:14:11
+x2
+A
+x3
+A
+x4
+b
+CALL p1('2011-04-03 05:14:12', 2);
+x1
+2011-04-03 05:14:12
+x2
+A
+x3
+A
+x4
+b
+CALL p1('2011-04-03 05:14:13', 2);
+x1
+2011-04-03 05:14:13
+x2
+A
+x3
+A
+x4
+b
+
+DROP TABLE t1;
+DROP PROCEDURE p1;
+
+#
+# Bug#12621017 - Crash if a sp variable is used in the
+#                limit clause of a set statement
+#
+DROP TABLE IF EXISTS t1;
+DROP PROCEDURE IF EXISTS p1;
+DROP PROCEDURE IF EXISTS p2;
+CREATE TABLE t1 (c1 INT);
+INSERT INTO t1 VALUES (1);
+CREATE PROCEDURE p1() 
+BEGIN 
+DECLARE foo, cnt INT UNSIGNED DEFAULT 1; 
+SET foo = (SELECT MIN(c1) FROM t1 LIMIT cnt); 
+END|
+CREATE PROCEDURE p2()
+BEGIN
+DECLARE iLimit INT;
+DECLARE iVal INT;
+DECLARE cur1 CURSOR FOR
+SELECT c1 FROM t1
+LIMIT iLimit;
+SET iLimit=1;
+OPEN cur1;
+FETCH cur1 INTO iVal;
+END|
+CALL p1();
+CALL p2();
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+DROP TABLE t1;
+
+# Bug#13805127: Stored program cache produces wrong result in same THD
+
+CREATE PROCEDURE p1(x INT UNSIGNED)
+BEGIN
+SELECT c1, t2.c2, count(c3)
+FROM
+(
+SELECT 3 as c2 FROM dual WHERE x = 1
+UNION
+SELECT 2       FROM dual WHERE x = 1 OR x = 2
+) AS t1,
+(
+SELECT '2012-03-01 01:00:00' AS c1, 3 as c2, 1 as c3 FROM dual
+UNION
+SELECT '2012-03-01 02:00:00',       3,       2       FROM dual
+UNION
+SELECT '2012-03-01 01:00:00',       2,       1       FROM dual
+) AS t2
+WHERE t2.c2 = t1.c2
+GROUP BY c1, c2
+;
+END|
+
+CALL p1(1);
+c1	c2	count(c3)
+2012-03-01 01:00:00	2	1
+2012-03-01 01:00:00	3	1
+2012-03-01 02:00:00	3	1
+CALL p1(2);
+c1	c2	count(c3)
+2012-03-01 01:00:00	2	1
+CALL p1(1);
+c1	c2	count(c3)
+2012-03-01 01:00:00	2	1
+2012-03-01 01:00:00	3	1
+2012-03-01 02:00:00	3	1
+DROP PROCEDURE p1;
+# End of 5.5 test
+#
+# Bug#12663165 SP DEAD CODE REMOVAL DOESN'T UNDERSTAND CONTINUE HANDLERS
+#
+DROP FUNCTION IF EXISTS f1;
+CREATE FUNCTION f1() RETURNS INT
+BEGIN
+DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+BEGIN
+DECLARE CONTINUE HANDLER FOR SQLEXCEPTION RETURN f1();
+BEGIN
+DECLARE CONTINUE HANDLER FOR SQLEXCEPTION RETURN f1();
+RETURN f1();
+END;
+END;
+RETURN 1;
+END $
+SELECT f1();
+f1()
+1
+Warnings:
+Error	1424	Recursive stored functions and triggers are not allowed.
+Error	1305	FUNCTION test.f1 does not exist
+DROP FUNCTION f1;

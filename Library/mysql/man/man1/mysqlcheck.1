@@ -2,12 +2,12 @@
 .\"     Title: \fBmysqlcheck\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQLCHECK\FR" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYSQLCHECK\FR" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -72,7 +72,7 @@ REPAIR TABLE,
 ANALYZE TABLE, and
 OPTIMIZE TABLE
 in a convenient way for the user\&. It determines which statements to use for the operation you want to perform, and then sends the statements to the server to be executed\&. For details about which storage engines each statement works with, see the descriptions for those statements in
-Section\ \&12.4.2, \(lqTable Maintenance Statements\(rq\&.
+Section\ \&12.7.2, \(lqTable Maintenance Statements\(rq\&.
 .PP
 The
 MyISAM
@@ -101,16 +101,12 @@ note     : The storage engine for the table doesn\'t support check
 If
 \fBmysqlcheck\fR
 is unable to repair a table, see
-Section\ \&2.13.4, \(lqRebuilding or Repairing Tables or Indexes\(rq
+Section\ \&2.11.4, \(lqRebuilding or Repairing Tables or Indexes\(rq
 for manual table repair strategies\&. This will be the case, for example, for
 InnoDB
 tables, which can be checked with
 CHECK TABLE, but not repaired with
 REPAIR TABLE\&.
-.PP
-The use of
-\fBmysqlcheck\fR
-with partitioned tables is not supported before MySQL 5\&.1\&.27\&.
 .if n \{\
 .sp
 .\}
@@ -301,7 +297,7 @@ On a computer having multiple network interfaces, this option can be used to sel
 .sp
 This option is supported only in the version of
 \fBmysqlcheck\fR
-that is supplied with MySQL Cluster, beginning with MySQL Cluster NDB 6\&.3\&.4\&. It is not available in standard MySQL 5\&.1 releases\&.
+that is supplied with MySQL Cluster\&. It is not available in standard MySQL Server 5\&.5 releases\&.
 .RE
 .sp
 .RS 4
@@ -374,8 +370,6 @@ option to check tables for incompatibilities with the current version of the ser
 and
 \fB\-\-fix\-table\-names\fR
 options\&.
-\fB\-\-check\-upgrade\fR
-was added in MySQL 5\&.1\&.7\&.
 .RE
 .sp
 .RS 4
@@ -443,7 +437,7 @@ string is
 .\" debug-check option: mysqlcheck
 \fB\-\-debug\-check\fR
 .sp
-Print some debugging information when the program exits\&. This option was added in MySQL 5\&.1\&.21\&.
+Print some debugging information when the program exits\&.
 .RE
 .sp
 .RS 4
@@ -458,7 +452,7 @@ Print some debugging information when the program exits\&. This option was added
 .\" debug-info option: mysqlcheck
 \fB\-\-debug\-info\fR
 .sp
-Print debugging information and memory and CPU usage statistics when the program exits\&. This option was added in MySQL 5\&.1\&.14\&.
+Print debugging information and memory and CPU usage statistics when the program exits\&.
 .RE
 .sp
 .RS 4
@@ -505,6 +499,24 @@ If you are using this option to repair tables, it runs an extended repair that m
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysqlcheck: default-auth option
+.\" default-auth option: mysqlcheck
+\fB\-\-default\-auth=\fR\fB\fIplugin\fR\fR
+.sp
+The client\-side authentication plugin to use\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.10\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysqlcheck: fast option
 .\" fast option: mysqlcheck
 \fB\-\-fast\fR,
@@ -525,7 +537,7 @@ Check only tables that have not been closed properly\&.
 .\" fix-db-names option: mysqlcheck
 \fB\-\-fix\-db\-names\fR
 .sp
-Convert database names to 5\&.1 format\&. Only database names that contain special characters are affected\&. This option was added in MySQL 5\&.1\&.7\&.
+Convert database names to 5\&.1 format\&. Only database names that contain special characters are affected\&.
 .RE
 .sp
 .RS 4
@@ -540,7 +552,7 @@ Convert database names to 5\&.1 format\&. Only database names that contain speci
 .\" fix-table-names option: mysqlcheck
 \fB\-\-fix\-table\-names\fR
 .sp
-Convert table names to 5\&.1 format\&. Only table names that contain special characters are affected\&. This option was added in MySQL 5\&.1\&.7\&. As of MySQL 5\&.1\&.23, this option also applies to views\&.
+Convert table names to 5\&.1 format\&. Only table names that contain special characters are affected\&. This option also applies to views\&.
 .RE
 .sp
 .RS 4
@@ -662,6 +674,28 @@ On Windows, connect to the server using a named pipe\&. This option applies only
 .sp -1
 .IP \(bu 2.3
 .\}
+.\" mysqlcheck: plugin-dir option
+.\" plugin-dir option: mysqlcheck
+\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+.sp
+The directory in which to look for plugins\&. It may be necessary to specify this option if the
+\fB\-\-default\-auth\fR
+option is used to specify an authentication plugin but
+\fBmysqlcheck\fR
+does not find it\&. See
+Section\ \&5.5.6, \(lqPluggable Authentication\(rq\&.
+.sp
+This option was added in MySQL 5\&.5\&.10\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 .\" mysqlcheck: port option
 .\" port option: mysqlcheck
 \fB\-\-port=\fR\fB\fIport_num\fR\fR,
@@ -768,7 +802,7 @@ localhost, the Unix socket file to use, or, on Windows, the name of the named pi
 Options that begin with
 \fB\-\-ssl\fR
 specify whether to connect to the server using SSL and indicate where to find SSL keys and certificates\&. See
-Section\ \&5.5.6.3, \(lqSSL Command Options\(rq\&.
+Section\ \&5.5.8.3, \(lqSSL Command Options\(rq\&.
 .RE
 .sp
 .RS 4
@@ -883,12 +917,12 @@ to cause
 NO_WRITE_TO_BINLOG
 to be added to the statements so that they are not logged\&. Use the
 \fB\-\-skip\-write\-binlog\fR
-when these statements should not be sent to replication slaves or run when using the binary logs for recovery from backup\&. This option was added in MySQL 5\&.1\&.18\&.
+when these statements should not be sent to replication slaves or run when using the binary logs for recovery from backup\&.
 .RE
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

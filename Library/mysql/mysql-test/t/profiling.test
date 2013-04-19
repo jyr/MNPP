@@ -1,4 +1,4 @@
---source include/have_community_features.inc
+--source include/have_profiling.inc
 
 # Verify that the protocol isn't violated if we ask for profiling info
 # before profiling has recorded anything.
@@ -8,10 +8,6 @@ show profile all;
 # default is OFF
 show session variables like 'profil%';
 select @@profiling;
-
-# setting global variable is an error
---error ER_LOCAL_VARIABLE
-set global profiling = ON;
 
 # But size is okay
 set @start_value= @@global.profiling_history_size;

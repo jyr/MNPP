@@ -1,5 +1,7 @@
 # This test should work in embedded server after we fix mysqltest
 -- source include/not_embedded.inc
+# need to have the dynamic loading turned on for the client plugin tests
+--source include/have_plugin_auth.inc
 
 SET @old_general_log= @@global.general_log;
 SET @old_slow_query_log= @@global.slow_query_log;
@@ -12,10 +14,17 @@ SET @old_slow_query_log= @@global.slow_query_log;
 # var/log/mysql_client_test.trace
 
 --exec echo "$MYSQL_CLIENT_TEST" > $MYSQLTEST_VARDIR/log/mysql_client_test.out.log 2>&1
---exec $MYSQL_CLIENT_TEST --getopt-ll-test=25600M >> $MYSQLTEST_VARDIR/log/mysql_client_test.out.log 2>&1
+--exec $MYSQL_CLIENT_TEST --getopt-ll-test=25600M $PLUGIN_AUTH_CLIENT_OPT >> $MYSQLTEST_VARDIR/log/mysql_client_test.out.log 2>&1
 
 # End of 4.1 tests
 echo ok;
+
+--echo
+--echo # cat MYSQL_TMP_DIR/test_wl4435.out.log
+--echo # ------------------------------------
+--cat_file $MYSQL_TMP_DIR/test_wl4435.out.log
+--echo # ------------------------------------
+--echo
 
 SET @@global.general_log= @old_general_log;
 SET @@global.slow_query_log= @old_slow_query_log;

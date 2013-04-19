@@ -1,6 +1,9 @@
 # This test  uses grants, which can't get tested for embedded server
 -- source include/not_embedded.inc
 
+#Don't run this test when thread_pool active
+--source include/not_threadpool.inc
+
 # check that CSV engine was compiled in, as the result of the test depends
 # on the presence of the log tables (which are CSV-based).
 --source include/have_csv.inc
@@ -44,8 +47,7 @@ insert into t5 values (10);
 create view v1 (c) as
  SELECT table_name FROM information_schema.TABLES
   WHERE table_schema IN ('mysql', 'INFORMATION_SCHEMA', 'test', 'mysqltest') AND
-        table_name<>'ndb_binlog_index' AND
-        table_name<>'ndb_apply_status';
+        table_name not like 'ndb_%' AND table_name not like 'innodb_%';
 select * from v1;
 
 select c,table_name from v1
@@ -367,7 +369,7 @@ show tables from information_schema like "T%";
 create database information_schema;
 use information_schema;
 show full tables like "T%";
---error ER_UNKNOWN_TABLE
+--error ER_DBACCESS_DENIED_ERROR
 create table t1(a int);
 use test;
 show tables;
@@ -491,7 +493,7 @@ select table_schema,table_name, column_name from
 information_schema.columns
 where data_type = 'longtext';
 select table_name, column_name, data_type from information_schema.columns
-where data_type = 'datetime';
+where data_type = 'datetime' and table_name not like 'innodb_%';
 
 #
 # Bug#8164 subquery with INFORMATION_SCHEMA.COLUMNS, 100 % CPU
@@ -528,7 +530,7 @@ grant select on test.* to mysqltest_4@localhost;
 connect (user10261,localhost,mysqltest_4,,);
 connection user10261;
 SELECT TABLE_NAME, COLUMN_NAME, PRIVILEGES FROM INFORMATION_SCHEMA.COLUMNS
-where COLUMN_NAME='TABLE_NAME';
+where COLUMN_NAME='TABLE_NAME' ORDER BY TABLE_NAME;
 connection default;
 disconnect user10261;
 delete from mysql.user where user='mysqltest_4';
@@ -539,7 +541,11 @@ flush privileges;
 # Bug#9404 information_schema: Weird error messages
 # with SELECT SUM() ... GROUP BY queries
 #
-SELECT table_schema, count(*) FROM information_schema.TABLES WHERE table_schema IN ('mysql', 'INFORMATION_SCHEMA', 'test', 'mysqltest') AND table_name<>'ndb_binlog_index' AND table_name<>'ndb_apply_status' GROUP BY TABLE_SCHEMA;
+SELECT table_schema, count(*) FROM information_schema.TABLES WHERE
+table_schema IN ('mysql', 'INFORMATION_SCHEMA', 'test', 'mysqltest')
+AND table_name not like 'ndb%' AND table_name not like 'innodb_%'
+GROUP BY TABLE_SCHEMA;
+
 
 
 #
@@ -912,41 +918,8 @@ DROP PROCEDURE p1;
 DROP USER mysql_bug20230@localhost;
 
 #
-# Bug#18925 subqueries with MIN/MAX functions on INFORMARTION_SCHEMA
-#
-
-SELECT t.table_name, c1.column_name
-  FROM information_schema.tables t
-       INNER JOIN
-       information_schema.columns c1
-       ON t.table_schema = c1.table_schema AND
-          t.table_name = c1.table_name
-  WHERE t.table_schema = 'information_schema' AND
-        c1.ordinal_position =
-        ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-            FROM information_schema.columns c2
-            WHERE c2.table_schema = t.table_schema AND
-                  c2.table_name = t.table_name AND
-                  c2.column_name LIKE '%SCHEMA%'
-        );
-SELECT t.table_name, c1.column_name
-  FROM information_schema.tables t
-       INNER JOIN
-       information_schema.columns c1
-       ON t.table_schema = c1.table_schema AND
-          t.table_name = c1.table_name
-  WHERE t.table_schema = 'information_schema' AND
-        c1.ordinal_position =
-        ( SELECT COALESCE(MIN(c2.ordinal_position),1)
-            FROM information_schema.columns c2
-            WHERE c2.table_schema = 'information_schema' AND
-                  c2.table_name = t.table_name AND
-                  c2.column_name LIKE '%SCHEMA%'
-        );
-
-#
-# Bug#2123 query with a simple non-correlated subquery over
-#          INFORMARTION_SCHEMA.TABLES
+# Bug#21231 query with a simple non-correlated subquery over
+#           INFORMARTION_SCHEMA.TABLES
 #
 
 SELECT MAX(table_name) FROM information_schema.tables WHERE table_schema IN ('mysql', 'INFORMATION_SCHEMA', 'test');
@@ -1041,6 +1014,7 @@ where t.table_schema = 'information_schema' and
          c2.table_schema='information_schema' and
          (c2.column_type = 'varchar(7)' or c2.column_type = 'varchar(20)')
           group by c2.column_type order by num limit 1)
+        and t.table_name not like 'innodb_%'
 group by t.table_name order by num1, t.table_name;
 
 #
@@ -1470,9 +1444,356 @@ SELECT length(CAST(b AS CHAR)) FROM ubig;
 
 DROP TABLE ubig;
 
+#Bug 1083377
+grant usage on *.* to mysqltest_1@localhost;
+connect (con1, localhost, mysqltest_1,,);
+connection con1;
+select 1 from information_schema.tables where table_schema=repeat('a', 2000);
+connection default;
+disconnect con1;
+drop user mysqltest_1@localhost;
 
 --echo End of 5.1 tests.
 
+--echo #
+--echo # Additional test for WL#3726 "DDL locking for all metadata objects"
+--echo # To avoid possible deadlocks process of filling of I_S tables should
+--echo # use high-priority metadata lock requests when opening tables.
+--echo # Below we just test that we really use high-priority lock request
+--echo # since reproducing a deadlock will require much more complex test.
+--echo #
+--disable_warnings
+drop tables if exists t1, t2, t3;
+--enable_warnings
+create table t1 (i int);
+create table t2 (j int primary key auto_increment);
+connect (con3726_1,localhost,root,,test);
+--echo # Switching to connection 'con3726_1'
+connection con3726_1;
+lock table t2 read;
+connect (con3726_2,localhost,root,,test);
+--echo # Switching to connection 'con3726_2'
+connection con3726_2;
+--echo # RENAME below will be blocked by 'lock table t2 read' above but
+--echo # will add two pending requests for exclusive metadata locks.
+--send rename table t2 to t3
+--echo # Switching to connection 'default'
+connection default;
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info like "rename table t2 to t3";
+--source include/wait_condition.inc
+--echo # These statements should not be blocked by pending lock requests
+select table_name, column_name, data_type from information_schema.columns
+  where table_schema = 'test' and table_name in ('t1', 't2');
+select table_name, auto_increment from information_schema.tables
+  where table_schema = 'test' and table_name in ('t1', 't2');
+--echo # Switching to connection 'con3726_1'
+connection con3726_1;
+unlock tables;
+--echo # Switching to connection 'con3726_2'
+connection con3726_2;
+--reap
+--echo # Switching to connection 'default'
+connection default;
+disconnect con3726_1;
+disconnect con3726_2;
+drop tables t1, t3;
+
+#
+# Bug#39270 I_S optimization algorithm does not work properly in some cases
+#
+EXPLAIN SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE;
+EXPLAIN SELECT * FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='t1';
+EXPLAIN SELECT * FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA='test';
+EXPLAIN SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+  WHERE TABLE_NAME='t1' and TABLE_SCHEMA='test';
+EXPLAIN SELECT * FROM INFORMATION_SCHEMA.TRIGGERS
+  WHERE EVENT_OBJECT_SCHEMA='test';
+
+#
+# Bug#24062 Incorrect error msg after execute DROP TABLE IF EXISTS on information_schema
+#
+--error ER_DBACCESS_DENIED_ERROR
+create table information_schema.t1 (f1 INT);
+--error ER_DBACCESS_DENIED_ERROR
+drop table information_schema.t1;
+--error ER_DBACCESS_DENIED_ERROR
+drop temporary table if exists information_schema.t1;
+--error ER_DBACCESS_DENIED_ERROR
+create temporary table information_schema.t1 (f1 INT);
+--error ER_DBACCESS_DENIED_ERROR
+drop view information_schema.v1;
+--error ER_DBACCESS_DENIED_ERROR
+create view information_schema.v1;
+--error ER_DBACCESS_DENIED_ERROR
+create trigger mysql.trg1 after insert on information_schema.t1 for each row set @a=1;
+--error 1109
+create table t1 select * from information_schema.t1;
+
+CREATE TABLE t1(f1 char(100));
+--error ER_DBACCESS_DENIED_ERROR
+REPAIR TABLE t1, information_schema.tables;
+CHECKSUM TABLE t1, information_schema.tables;
+--error ER_DBACCESS_DENIED_ERROR
+ANALYZE TABLE t1, information_schema.tables;
+CHECK TABLE t1, information_schema.tables;
+--error ER_DBACCESS_DENIED_ERROR
+OPTIMIZE TABLE t1, information_schema.tables;
+--error ER_DBACCESS_DENIED_ERROR
+RENAME TABLE v1 to v2, information_schema.tables to t2;
+--error ER_DBACCESS_DENIED_ERROR
+DROP TABLE t1, information_schema.tables;
+
+--error ER_DBACCESS_DENIED_ERROR
+LOCK TABLES t1 READ, information_schema.tables READ;
+DROP TABLE t1;
+
+
+#
+# Bug #43834    Assertion in Natural_join_column::db_name() on an I_S query
+#
+
+SELECT *
+FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+LEFT JOIN INFORMATION_SCHEMA.COLUMNS
+USING (TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME)
+WHERE COLUMNS.TABLE_SCHEMA = 'test'
+AND COLUMNS.TABLE_NAME = 't1';
+
+
+--echo #
+--echo # A test case for Bug#56540 "Exception (crash) in sql_show.cc
+--echo # during rqg_info_schema test on Windows"
+--echo # Ensure that we never access memory of a closed table,
+--echo # in particular, never access table->field[] array.
+--echo # Before the fix, the below test case, produced
+--echo # valgrind errors.
+--echo #
+
+--disable_warnings
+drop table if exists t1;
+drop view if exists v1;
+--enable_warnings
+
+create table t1 (a int, b int);
+create view v1 as select t1.a, t1.b from t1;
+alter table t1 change b c int;
+lock table t1 read;
+connect(con1, localhost, root,,);
+--echo # --> connection con1
+connection con1;
+send flush tables;
+--echo # --> connection default
+connection default;
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+    where state = "Waiting for table flush" and
+          info = "flush tables";
+--source include/wait_condition.inc
+--vertical_results
+select * from information_schema.views;
+--horizontal_results
+unlock tables;
+
+--echo #
+--echo # Cleanup.
+--echo #
+
+--echo # --> connection con1
+connection con1;
+--echo # Reaping 'flush tables'
+reap;
+disconnect con1;
+--source include/wait_until_disconnected.inc
+--echo # --> connection default
+connection default;
+drop table t1;
+drop view v1;
+
+
+--echo #
+--echo # Test for bug #12828477 - "MDL SUBSYSTEM CREATES BIG OVERHEAD FOR
+--echo #                           CERTAIN QUERIES TO INFORMATION_SCHEMA".
+--echo #
+--echo # Check that metadata locks which are acquired during the process
+--echo # of opening tables/.FRMs/.TRG files while filling I_S table are
+--echo # not kept to the end of statement. Keeping the locks has caused
+--echo # performance problems in cases when big number of tables (.FRMs
+--echo # or .TRG files) were scanned as cost of new lock acquisition has
+--echo # increased linearly.
+--disable_warnings
+drop database if exists mysqltest;
+--enable_warnings
+create database mysqltest;
+use mysqltest;
+create table t0 (i int);
+create table t1 (j int);
+create table t2 (k int);
+
+--echo #
+--echo # Test that we don't keep locks in case when we to fill
+--echo # I_S table we perform full-blown table open.
+--echo #
+
+--echo # Acquire lock on 't2' so upcoming RENAME is
+--echo # blocked.
+lock tables t2 read;
+
+--echo #
+--echo # Switching to connection 'con12828477_1'. 
+--echo #
+connect (con12828477_1, localhost, root,,mysqltest);
+--echo # The below RENAME should wait on 't2' while
+--echo # keeping X lock on 't1'.
+--send rename table t1 to t3, t2 to t1, t3 to t2
+
+--echo #
+--echo # Switching to connection 'con12828477_2'. 
+--echo #
+connect (con12828477_2, localhost, root,,mysqltest);
+--echo # Wait while the above RENAME is blocked.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "rename table t1 to t3, t2 to t1, t3 to t2";
+--source include/wait_condition.inc
+
+--echo # Issue query to I_S which will open 't0' and get
+--echo # blocked on 't1' because of RENAME.
+--send select table_name, auto_increment from information_schema.tables where table_schema='mysqltest'
+
+--echo #
+--echo # Switching to connection 'con12828477_3'. 
+--echo #
+connect (con12828477_3, localhost, root,,mysqltest);
+--echo # Wait while the above SELECT is blocked.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "select table_name, auto_increment from information_schema.tables where table_schema='mysqltest'";
+--source include/wait_condition.inc
+
+--echo #
+--echo # Check that it holds no lock on 't0' so it can be renamed.
+rename table t0 to t4;
+
+--echo #
+--echo # Switching to connection 'default'.
+--echo #
+connection default;
+--echo #
+--echo # Unblock the first RENAME.
+unlock tables;
+
+--echo #
+--echo # Switching to connection 'con12828477_1'. 
+--echo #
+connection con12828477_1;
+--echo # Reap the first RENAME
+--reap
+
+--echo #
+--echo # Switching to connection 'con12828477_2'. 
+--echo #
+connection con12828477_2;
+--echo # Reap SELECT to I_S.
+--reap
+
+--echo #
+--echo # Switching to connection 'default'.
+--echo #
+connection default;
+
+--echo #
+--echo # Now test that we don't keep locks in case when we to fill
+--echo # I_S table we read .FRM or .TRG file only (this was the case
+--echo # for which problem existed).
+--echo #
+
+rename table t4 to t0;
+--echo # Acquire lock on 't2' so upcoming RENAME is
+--echo # blocked.
+lock tables t2 read;
+
+--echo #
+--echo # Switching to connection 'con12828477_1'. 
+--echo #
+connection con12828477_1;
+--echo # The below RENAME should wait on 't2' while
+--echo # keeping X lock on 't1'.
+--send rename table t1 to t3, t2 to t1, t3 to t2
+
+--echo #
+--echo # Switching to connection 'con12828477_2'. 
+--echo #
+connection con12828477_2;
+--echo # Wait while the above RENAME is blocked.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "rename table t1 to t3, t2 to t1, t3 to t2";
+--source include/wait_condition.inc
+
+--echo # Issue query to I_S which will open 't0' and get
+--echo # blocked on 't1' because of RENAME.
+--send select event_object_table, trigger_name from information_schema.triggers where event_object_schema='mysqltest'
+
+--echo #
+--echo # Switching to connection 'con12828477_3'. 
+--echo #
+connection con12828477_3;
+--echo # Wait while the above SELECT is blocked.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "select event_object_table, trigger_name from information_schema.triggers where event_object_schema='mysqltest'";
+--source include/wait_condition.inc
+
+--echo #
+--echo # Check that it holds no lock on 't0' so it can be renamed.
+rename table t0 to t4;
+
+--echo #
+--echo # Switching to connection 'default'.
+--echo #
+connection default;
+--echo #
+--echo # Unblock the first RENAME.
+unlock tables;
+
+--echo #
+--echo # Switching to connection 'con12828477_1'. 
+--echo #
+connection con12828477_1;
+--echo # Reap the first RENAME
+--reap
+
+--echo #
+--echo # Switching to connection 'con12828477_2'. 
+--echo #
+connection con12828477_2;
+--echo # Reap SELECT to I_S.
+--reap
+
+--echo #
+--echo # Switching to connection 'default'.
+--echo #
+connection default;
+disconnect con12828477_1;
+disconnect con12828477_2;
+disconnect con12828477_3;
+
+--echo #
+--echo # Clean-up.
+drop database mysqltest;
+
+
+--echo #
+--echo # End of 5.5 tests
+--echo #
+
 # Wait till all disconnects are completed
 --source include/wait_until_count_sessions.inc
-

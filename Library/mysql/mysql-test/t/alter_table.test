@@ -1101,3 +1101,163 @@ drop table t1;
 
 
 --echo End of 5.1 tests
+
+#
+# Bug #31031 ALTER TABLE regression in 5.0
+#
+#  The ALTER TABLE operation failed with 
+#  ERROR 1089 (HY000): Incorrect sub part key; ...
+#
+CREATE TABLE t1(c CHAR(10), 
+  i INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY);
+INSERT INTO t1 VALUES('a',2),('b',4),('c',6);
+ALTER TABLE t1
+  DROP i,
+  ADD i INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  AUTO_INCREMENT = 1;
+DROP TABLE t1;
+
+
+#
+# Bug#50542 5.5.x doesn't check length of key prefixes: 
+#           corruption and crash results
+#
+# This case is related to Bug#31031 (above)
+# A statement where the index key is larger/wider than
+# the column type, should cause an error
+#
+--error ER_WRONG_SUB_KEY
+CREATE TABLE t1 (a CHAR(1), PRIMARY KEY (a(255)));
+
+# Test other variants of creating indices
+CREATE TABLE t1 (a CHAR(1));
+#  ALTER TABLE
+--error ER_WRONG_SUB_KEY
+ALTER TABLE t1 ADD PRIMARY KEY (a(20));
+--error ER_WRONG_SUB_KEY
+ALTER TABLE t1 ADD KEY (a(20));
+#  CREATE INDEX
+--error ER_WRONG_SUB_KEY
+CREATE UNIQUE INDEX i1 ON t1 (a(20));
+--error ER_WRONG_SUB_KEY
+CREATE INDEX i2 ON t1 (a(20));
+# cleanup
+DROP TABLE t1;
+
+
+#
+# Bug #45052    ALTER TABLE ADD COLUMN crashes server with multiple foreign key columns
+#   The alter table fails if 2 or more new fields added and
+#   also added a key with these fields
+#
+CREATE TABLE t1 (id int);
+INSERT INTO t1 VALUES (1), (2);
+ALTER TABLE t1 ADD COLUMN (f1 INT), ADD COLUMN (f2 INT), ADD KEY f2k(f2);
+DROP TABLE t1;
+
+
+--echo #
+--echo # Test for bug #53820 "ALTER a MEDIUMINT column table causes full
+--echo #                      table copy".
+--echo #
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+CREATE TABLE t1 (a INT, b MEDIUMINT);
+INSERT INTO t1 VALUES (1, 1), (2, 2);
+--echo # The below ALTER should not copy table and so no rows should
+--echo # be shown as affected.
+--enable_info
+ALTER TABLE t1 CHANGE a id INT;
+--disable_info
+DROP TABLE t1;
+
+
+--echo #
+--echo # Bug#11754461 CANNOT ALTER TABLE WHEN KEY PREFIX TOO LONG
+--echo #
+
+--disable_warnings
+DROP DATABASE IF EXISTS db1;
+--enable_warnings
+
+CREATE DATABASE db1 CHARACTER SET utf8;
+CREATE TABLE db1.t1 (bar TINYTEXT, KEY (bar(100)));
+ALTER TABLE db1.t1 ADD baz INT;
+
+DROP DATABASE db1;
+
+
+--echo #
+--echo # Bug#11938039 RE-EXECUTION OF FRM-ONLY ALTER TABLE WITH RENAME
+--echo #              CLAUSE FAILS OR ABORTS SERVER.
+--echo #
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+create table t1 (a int);
+prepare stmt1 from 'alter table t1 alter column a set default 1, rename to t2';
+execute stmt1;
+rename table t2 to t1;
+--echo # The below statement should succeed and not emit error or abort server.
+execute stmt1;
+deallocate prepare stmt1;
+drop table t2;
+
+--echo #
+--echo # Bug#11815557 60269: MYSQL SHOULD REJECT ATTEMPTS TO CREATE SYSTEM
+--echo #                     TABLES IN INCORRECT ENGINE
+--echo #
+--echo # Note: This test assumes that only MyISAM supports system tables.
+--echo #       If other engines are made to support system tables,
+--echo #       then this test needs to be updated
+--echo #
+
+use mysql;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE db ENGINE=innodb;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE user ENGINE=memory;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE proc ENGINE=heap;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE func ENGINE=csv;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE event ENGINE=merge;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE servers ENGINE=innodb;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE procs_priv ENGINE=memory;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE tables_priv ENGINE=heap;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE columns_priv ENGINE=csv;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE time_zone ENGINE=merge;
+--error ER_UNSUPPORTED_ENGINE
+ALTER TABLE help_topic ENGINE=innodb;
+
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE db (dummy int) ENGINE=innodb;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE user (dummy int) ENGINE=memory;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE proc (dummy int) ENGINE=heap;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE func (dummy int) ENGINE=csv;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE event (dummy int) ENGINE=merge;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE servers (dummy int) ENGINE=innodb;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE procs_priv (dummy int) ENGINE=memory;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE tables_priv (dummy int) ENGINE=heap;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE columns_priv (dummy int) ENGINE=csv;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE time_zone (dummy int) ENGINE=merge;
+--error ER_UNSUPPORTED_ENGINE
+CREATE TABLE help_topic (dummy int) ENGINE=innodb;
+use test;
+--echo # End of Bug#11815557

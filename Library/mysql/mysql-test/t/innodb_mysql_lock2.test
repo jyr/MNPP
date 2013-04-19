@@ -3,9 +3,18 @@
 # This test requires statement/mixed mode binary logging.
 # Row-based mode puts weaker serializability requirements
 # so weaker locks are acquired for it.
+# Also in ROW mode LOCK_S row locks won't be acquired for DML
+# and test for bug#51263 won't trigger execution path on which
+# this bug was encountered.
 --source include/have_binlog_format_mixed_or_statement.inc
+# Original test case for bug#51263 needs partitioning.
+--source include/have_partition.inc
 # Save the initial number of concurrent sessions.
 --source include/count_sessions.inc
+
+--disable_query_log
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+--enable_query_log
 
 --echo #
 --echo # Test how do we handle locking in various cases when
@@ -29,7 +38,7 @@ select @@session.tx_isolation;
 connect (con1, localhost, root,,);
 connection default;
 --disable_warnings
-drop table if exists t0, t1, t2, t3, t4, t5, te;
+drop table if exists t0, t1, t2, t3, t4, t5;
 drop view if exists v1, v2;
 drop procedure if exists p1;
 drop procedure if exists p2;
@@ -59,8 +68,6 @@ create table t4 (l int primary key) engine=innodb;
 insert into t4 values (1);
 create table t5 (l int primary key) engine=innodb;
 insert into t5 values (1);
-create table te(e int primary key);
-insert into te values (1);
 create view v1 as select i from t1;
 create view v2 as select j from t2 where j in (select i from t1);
 create procedure p1(k int) insert into t2 values (k);
@@ -168,12 +175,10 @@ begin
     set new.l= 2;
   end if;
 end|
---echo # Trigger below uses insertion of duplicate key in 'te'
---echo # table as a way to abort delete operation.
 create trigger t4_bd before delete on t4 for each row
 begin
   if !(select i from v1 where i=1) then
-    insert into te values (1);
+    signal sqlstate '45000';
   end if;
 end|
 create trigger t5_bi before insert on t5 for each row
@@ -435,17 +440,18 @@ let $wait_statement= $statement;
 --echo # 4.1 SELECT/SET with a stored function which does not 
 --echo #     modify data and uses SELECT in its turn.
 --echo #
---echo # Calls to such functions won't get into the binary log and
---echo # thus don't need to acquire strong locks.
---echo # In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
---echo # used stored functions may lead to broken SBR" strong locks
---echo # are taken (we accepted it as a trade-off for this fix).
+--echo # In theory there is no need to take row locks on the table
+--echo # being selected from in SF as the call to such function
+--echo # won't get into the binary log. In practice, however, we
+--echo # discover that fact too late in the process to be able to
+--echo # affect the decision what locks should be taken.
+--echo # Hence, strong locks are taken in this case.
 let $statement= select f1();
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= set @a:= f1();
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.2 INSERT (or other statement which modifies data) with
@@ -456,11 +462,9 @@ let $wait_statement= select i from t1 where i = 1 into j;
 --echo # be serialized with concurrent statements affecting the data
 --echo # it uses. Therefore it should take row locks on the data
 --echo # it reads.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= insert into t2 values (f1() + 5);
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.3 SELECT/SET with a stored function which
@@ -470,14 +474,12 @@ let $wait_statement= select i from t1 where i = 1 into j;
 --echo # it should be serialized with concurrent statements affecting
 --echo # the data it uses. Hence, row locks on the data read
 --echo # should be taken.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= select f2();
 let $wait_statement= select i from t1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= set @a:= f2();
 let $wait_statement= select i from t1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.4. SELECT/SET with a stored function which does not
@@ -539,17 +541,14 @@ let $wait_statement= insert into t2 values ((select i from t1 where i = 1) + 5);
 --echo #
 --echo # Once again, in theory, calls to such functions won't
 --echo # get into the binary log and thus don't need row
---echo # locks. In practice this fact is discovered
+--echo # locks. But in practice this fact is discovered
 --echo # too late to have any effect.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken
---echo # in case of simple SELECT.
 let $statement= select f6();
 let $wait_statement= select i from v1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= set @a:= f6();
 let $wait_statement= select i from v1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= select f7();
 let $wait_statement= select j from v2 where j = 1 into k;
 --source include/check_shared_row_lock.inc
@@ -566,12 +565,9 @@ let $wait_statement= select j from v2 where j = 1 into k;
 --echo # should be serialized with concurrent statements affecting
 --echo # the data it uses. Therefore it should take row locks on
 --echo # the rows it reads.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken
---echo # in case of simple SELECT.
 let $statement= insert into t3 values (f6() + 5);
 let $wait_statement= select i from v1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= insert into t3 values (f7() + 5);
 let $wait_statement= select j from v2 where j = 1 into k;
 --source include/check_shared_row_lock.inc
@@ -584,12 +580,9 @@ let $wait_statement= select j from v2 where j = 1 into k;
 --echo # Since a call to such function is written to the binary log
 --echo # it should be serialized with concurrent statements.
 --echo # Hence, reads should take row locks.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken
---echo # in case of simple SELECT.
 let $statement= select f8();
 let $wait_statement= select i from v1 where i = 1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 let $statement= select f9();
 let $wait_statement= update v2 set j=j+10 where j=1;
 --source include/check_shared_row_lock.inc
@@ -599,14 +592,12 @@ let $wait_statement= update v2 set j=j+10 where j=1;
 --echo #      data and reads a table indirectly, by calling another
 --echo #      function.
 --echo #
---echo # Calls to such functions won't get into the binary log and
---echo # thus don't need to acquire strong locks.
---echo # In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
---echo # used stored functions may lead to broken SBR" strong locks
---echo # are taken (we accepted it as a trade-off for this fix).
+--echo # In theory, calls to such functions won't get into the binary
+--echo # log and thus don't need to acquire row locks. But in practice
+--echo # this fact is discovered too late to have any effect.
 let $statement= select f10();
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.11 INSERT which uses a stored function which doesn't modify
@@ -616,11 +607,9 @@ let $wait_statement= select i from t1 where i = 1 into j;
 --echo # Since such statement is written to the binary log, it should
 --echo # be serialized with concurrent statements affecting the data it
 --echo # uses. Therefore it should take row locks on data it reads.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= insert into t2 values (f10() + 5);
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.12 SELECT which uses a stored function which modifies
@@ -630,11 +619,9 @@ let $wait_statement= select i from t1 where i = 1 into j;
 --echo # Since a call to such function is written to the binary log
 --echo # it should be serialized from concurrent statements.
 --echo # Hence, reads should take row locks.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= select f11();
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 4.13 SELECT that reads a table through a subquery passed
@@ -645,13 +632,8 @@ let $wait_statement= select i from t1 where i = 1 into j;
 --echo # binary log, values of its parameters are written as literals.
 --echo # So there is no need to acquire row locks on rows used in 
 --echo # the subquery.
---echo # But due to the fact that in 5.1 for prelocked statements
---echo # THD::in_lock_tables is set to TRUE we acquire strong locks
---echo # (see also bug#44613 "SELECT statement inside FUNCTION takes
---echo # a shared lock" [sic!!!]).
 let $statement= select f12((select i+10 from t1 where i=1));
-let $wait_statement= $statement;
---source include/check_shared_row_lock.inc
+--source include/check_no_row_lock.inc
 
 --echo #
 --echo # 4.14 INSERT that reads a table via a subquery passed
@@ -686,24 +668,20 @@ let $statement= call p2(@a);
 --echo # Since a call to such function is written to the binary
 --echo # log, it should be serialized with concurrent statements.
 --echo # Hence, in this case reads should take row locks on data.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= select f14();
 let $wait_statement= select i from t1 where i = 1 into p;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 5.3 SELECT that calls a function that doesn't modify data and
 --echo #     uses a CALL statement that reads a table via SELECT.
 --echo #
---echo # Calls to such functions won't get into the binary log and
---echo # thus don't need to acquire strong locks.
---echo # In 5.5 due to fix for bug #53921 "Wrong locks for SELECTs
---echo # used stored functions may lead to broken SBR" strong locks
---echo # are taken (we accepted it as a trade-off for this fix).
+--echo # In theory, calls to such functions won't get into the binary
+--echo # log and thus don't need to acquire row locks. But in practice
+--echo # this fact is discovered too late to have any effect.
 let $statement= select f15();
 let $wait_statement= select i from t1 where i = 1 into p;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 5.4 INSERT which calls function which doesn't modify data and
@@ -712,11 +690,9 @@ let $wait_statement= select i from t1 where i = 1 into p;
 --echo # Since such statement is written to the binary log it should
 --echo # be serialized with concurrent statements affecting data it
 --echo # uses. Therefore it should take row locks on data it reads.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= insert into t2 values (f15()+5);
 let $wait_statement= select i from t1 where i = 1 into p;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 
 --echo #
@@ -730,11 +706,9 @@ let $wait_statement= select i from t1 where i = 1 into p;
 --echo # be serialized with concurrent statements affecting the data
 --echo # it uses. Therefore, it should take row locks on the data
 --echo # it reads.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= insert into t4 values (2);
 let $wait_statement= select i from t1 where i=1 into k;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 6.2 Statement invoking a trigger that reads table through
@@ -759,22 +733,18 @@ let $wait_statement= $statement;
 --echo #     a stored function.
 --echo #
 --echo # And for this statement.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= insert into t5 values (2);
 let $wait_statement= select i from t1 where i = 1 into j;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo #
 --echo # 6.5 Statement invoking a trigger that reads a table through
 --echo #     stored procedure.
 --echo #
 --echo # And for this statement.
---echo # But due to bug #53921 "Wrong locks for SELECTs used stored
---echo # functions may lead to broken SBR" no lock is taken.
 let $statement= update t5 set l= 2 where l = 1;
 let $wait_statement= select i from t1 where i = 1 into p;
---source include/check_no_row_lock.inc
+--source include/check_shared_row_lock.inc
 
 --echo # Clean-up.
 drop function f1;
@@ -795,8 +765,108 @@ drop function f15;
 drop view v1, v2;
 drop procedure p1;
 drop procedure p2;
-drop table t1, t2, t3, t4, t5, te;
+drop table t1, t2, t3, t4, t5;
 disconnect con1;
+
+
+--echo #
+--echo # Test for bug#51263 "Deadlock between transactional SELECT
+--echo # and ALTER TABLE ... REBUILD PARTITION".
+--echo #
+connect (con1,localhost,root,,test,,);
+connection default;
+--disable_warnings
+drop table if exists t1, t2;
+--enable_warnings
+create table t1 (i int auto_increment not null primary key) engine=innodb;
+create table t2 (i int) engine=innodb;
+insert into t1 values (1), (2), (3), (4), (5);
+
+begin;
+--echo # Acquire SR metadata lock on t1 and LOCK_S row-locks on its rows.
+insert into t2 select count(*) from t1;
+
+--echo # Switching to connection 'con1'.
+connection con1;
+--echo # Sending:
+--send alter table t1 add column j int
+
+--echo # Switching to connection 'default'.
+connection default;
+--echo # Wait until ALTER is blocked because it tries to upgrade SNW
+--echo # metadata lock to X lock.
+--echo # It should not be blocked during copying data to new version of
+--echo # table as it acquires LOCK_S locks on rows of old version, which
+--echo # are compatible with locks acquired by connection 'con1'.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "alter table t1 add column j int";
+--source include/wait_condition.inc
+
+--echo # The below statement will deadlock because it will try to acquire
+--echo # SW lock on t1, which will conflict with ALTER's SNW lock. And
+--echo # ALTER will be waiting for this connection to release its SR lock.
+--echo # This deadlock should be detected by an MDL subsystem and this
+--echo # statement should be aborted with an appropriate error.
+--error ER_LOCK_DEADLOCK
+insert into t1 values (6);
+--echo # Unblock ALTER TABLE.
+commit;
+
+--echo # Switching to connection 'con1'.
+connection con1;
+--echo # Reaping ALTER TABLE.
+--reap
+
+--echo # Switching to connection 'default'.
+connection default;
+
+--echo #
+--echo # Now test for scenario in which bug was reported originally.
+--echo #
+drop tables t1, t2;
+create table t1 (i int auto_increment not null primary key) engine=innodb
+  partition by hash (i) partitions 4;
+create table t2 (i int) engine=innodb;
+insert into t1 values (1), (2), (3), (4), (5);
+
+begin;
+--echo # Acquire SR metadata lock on t1.
+select * from t1;
+
+--echo # Switching to connection 'con1'.
+connection con1;
+--echo # Sending:
+--send alter table t1 rebuild partition p0
+
+--echo # Switching to connection 'default'.
+connection default;
+--echo # Wait until ALTER is blocked because of active SR lock.
+let $wait_condition=
+  select count(*) = 1 from information_schema.processlist
+  where state = "Waiting for table metadata lock" and
+        info = "alter table t1 rebuild partition p0";
+--source include/wait_condition.inc
+
+--echo # The below statement should succeed as transaction
+--echo # has SR metadata lock on t1 and only going to read
+--echo # rows from it.
+insert into t2 select count(*) from t1;
+--echo # Unblock ALTER TABLE.
+commit;
+
+--echo # Switching to connection 'con1'.
+connection con1;
+--echo # Reaping ALTER TABLE.
+--reap
+
+--echo # Switching to connection 'default'.
+connection default;
+disconnect con1;
+--echo # Clean-up.
+drop tables t1, t2;
+
 
 # Check that all connections opened by test cases in this file are really
 # gone so execution of other tests won't be affected by their presence.

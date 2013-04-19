@@ -13,12 +13,6 @@ ERROR HY000: Incorrect AT value: 'definitely not a datetime'
 set names utf8;
 create event задачка on schedule every 123 minute starts now() ends now() + interval 1 month do select 1;
 drop event задачка;
-set event_scheduler=off;
-ERROR HY000: Variable 'event_scheduler' is a GLOBAL variable and should be set with SET GLOBAL
-set global event_scheduler=3;
-ERROR 42000: Variable 'event_scheduler' can't be set to the value of '3'
-set global event_scheduler=disabled;
-ERROR 42000: Variable 'event_scheduler' can't be set to the value of 'disabled'
 "DISABLE the scheduler. Testing that it does not work when the variable is 0"
 set global event_scheduler=off;
 select definer, name, db from mysql.event;
@@ -134,74 +128,74 @@ create event e1 on schedule every 10 hour do select 1;
 lock table t1 read;
 show create event e1;
 Event	sql_mode	time_zone	Create Event	character_set_client	collation_connection	Database Collation
-e1		SYSTEM	CREATE EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
+e1		SYSTEM	CREATE DEFINER=`root`@`localhost` EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
 select event_name from information_schema.events;
 event_name
 e1
 create event e2 on schedule every 10 hour do select 1;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 disable;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 rename to e3;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e2;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e1;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 unlock tables;
 lock table t1 write;
 show create event e1;
 Event	sql_mode	time_zone	Create Event	character_set_client	collation_connection	Database Collation
-e1		SYSTEM	CREATE EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
+e1		SYSTEM	CREATE DEFINER=`root`@`localhost` EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
 select event_name from information_schema.events;
 event_name
 e1
 create event e2 on schedule every 10 hour do select 1;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 disable;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 rename to e3;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e2;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e1;
-ERROR HY000: Table 'event' was not locked with LOCK TABLES
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 unlock tables;
 lock table t1 read, mysql.event read;
 show create event e1;
 Event	sql_mode	time_zone	Create Event	character_set_client	collation_connection	Database Collation
-e1		SYSTEM	CREATE EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
+e1		SYSTEM	CREATE DEFINER=`root`@`localhost` EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
 select event_name from information_schema.events;
 event_name
 e1
 create event e2 on schedule every 10 hour do select 1;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 disable;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 rename to e3;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e2;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e1;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 unlock tables;
 lock table t1 write, mysql.event read;
 show create event e1;
 Event	sql_mode	time_zone	Create Event	character_set_client	collation_connection	Database Collation
-e1		SYSTEM	CREATE EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
+e1		SYSTEM	CREATE DEFINER=`root`@`localhost` EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
 select event_name from information_schema.events;
 event_name
 e1
 create event e2 on schedule every 10 hour do select 1;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 disable;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 rename to e3;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e2;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e1;
-ERROR HY000: Table 'event' was locked with a READ lock and can't be updated
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 unlock tables;
 lock table t1 read, mysql.event write;
 ERROR HY000: You can't combine write-locking of system tables with other tables or lock types
@@ -210,16 +204,22 @@ ERROR HY000: You can't combine write-locking of system tables with other tables 
 lock table mysql.event write;
 show create event e1;
 Event	sql_mode	time_zone	Create Event	character_set_client	collation_connection	Database Collation
-e1		SYSTEM	CREATE EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
+e1		SYSTEM	CREATE DEFINER=`root`@`localhost` EVENT `e1` ON SCHEDULE EVERY 10 HOUR STARTS '#' ON COMPLETION NOT PRESERVE ENABLE DO select 1	utf8	utf8_general_ci	latin1_swedish_ci
 select event_name from information_schema.events;
 event_name
 e1
 create event e2 on schedule every 10 hour do select 1;
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 disable;
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 alter event e2 rename to e3;
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e3;
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 drop event e1;
+ERROR HY000: Can't execute the given command because you have active locked tables or an active transaction
 unlock tables;
+drop event e1;
 Make sure we have left no events 
 select event_name from information_schema.events;
 event_name

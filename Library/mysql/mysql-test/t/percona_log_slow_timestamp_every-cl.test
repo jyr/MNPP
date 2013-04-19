@@ -1,2 +1,0 @@
-SHOW VARIABLES LIKE 'log_slow_timestamp_every';
-SHOW GLOBAL VARIABLES LIKE 'log_slow_timestamp_every';

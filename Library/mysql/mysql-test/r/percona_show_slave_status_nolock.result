@@ -1,5 +1,6 @@
 include/master-slave.inc
 [connection master]
+call mtr.add_suppression("Slave SQL: Request to stop slave SQL Thread received while applying a group that has non-transactional changes");
 include/rpl_connect.inc [creating slave_lock]
 include/rpl_connect.inc [creating slave_nolock]
 [master]
@@ -7,8 +8,7 @@ DROP TABLE IF EXISTS t;
 CREATE TABLE t(id INT);
 [slave]
 SET DEBUG_SYNC='RESET';
-SET GLOBAL DEBUG="+d,after_mysql_insert";
-SET GLOBAL DEBUG="+d,after_show_slave_status";
+SET GLOBAL DEBUG="+d,after_mysql_insert,after_show_slave_status";
 [master]
 INSERT INTO t VALUES(0);
 [slave]
@@ -64,5 +64,6 @@ SET DEBUG_SYNC='RESET';
 [slave]
 SET GLOBAL DEBUG='';
 SET DEBUG_SYNC='RESET';
+[master]
 DROP TABLE t;
 include/rpl_end.inc

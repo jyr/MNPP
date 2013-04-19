@@ -25,15 +25,6 @@ set names utf8;
 create event задачка on schedule every 123 minute starts now() ends now() + interval 1 month do select 1;
 drop event задачка;
 
-# event_scheduler is a global var
---error ER_GLOBAL_VARIABLE
-set event_scheduler=off;
-# event_scheduler could be only either 1 or 2
---error ER_WRONG_VALUE_FOR_VAR
-set global event_scheduler=3;
---error ER_WRONG_VALUE_FOR_VAR
-set global event_scheduler=disabled;
-
 --echo "DISABLE the scheduler. Testing that it does not work when the variable is 0"
 set global event_scheduler=off;
 select definer, name, db from mysql.event;
@@ -221,15 +212,15 @@ lock table t1 read;
 --replace_regex /STARTS '[^']+'/STARTS '#'/
 show create event e1;
 select event_name from information_schema.events;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 create event e2 on schedule every 10 hour do select 1;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 disable;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 rename to e3;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e2;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e1;
 unlock tables;
 #
@@ -238,15 +229,15 @@ lock table t1 write;
 --replace_regex /STARTS '[^']+'/STARTS '#'/
 show create event e1;
 select event_name from information_schema.events;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 create event e2 on schedule every 10 hour do select 1;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 disable;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 rename to e3;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e2;
---error ER_TABLE_NOT_LOCKED
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e1;
 unlock tables;
 #
@@ -255,15 +246,15 @@ lock table t1 read, mysql.event read;
 --replace_regex /STARTS '[^']+'/STARTS '#'/
 show create event e1;
 select event_name from information_schema.events;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 create event e2 on schedule every 10 hour do select 1;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 disable;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 rename to e3;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e2;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e1;
 unlock tables;
 #
@@ -272,15 +263,15 @@ lock table t1 write, mysql.event read;
 --replace_regex /STARTS '[^']+'/STARTS '#'/
 show create event e1;
 select event_name from information_schema.events;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 create event e2 on schedule every 10 hour do select 1;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 disable;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 rename to e3;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e2;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e1;
 unlock tables;
 #
@@ -294,12 +285,18 @@ lock table mysql.event write;
 --replace_regex /STARTS '[^']+'/STARTS '#'/
 show create event e1;
 select event_name from information_schema.events;
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 create event e2 on schedule every 10 hour do select 1;
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 disable;
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter event e2 rename to e3;
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e3;
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 drop event e1;
 unlock tables;
+drop event e1;
 --echo Make sure we have left no events 
 select event_name from information_schema.events;
 --echo

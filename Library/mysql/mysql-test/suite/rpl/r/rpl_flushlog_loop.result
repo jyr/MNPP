@@ -5,6 +5,7 @@ relay_log
 relay_log_index	
 relay_log_info_file	relay-log.info
 relay_log_purge	ON
+relay_log_recovery	OFF
 relay_log_space_limit	0
 CREATE TABLE t1 (a INT KEY) ENGINE= MyISAM;
 INSERT INTO t1 VALUE(1);

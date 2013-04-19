@@ -2,12 +2,12 @@
 .\"     Title: \fBmysql_install_db\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 08/10/2011
+.\"      Date: 03/02/2012
 .\"    Manual: MySQL Database System
-.\"    Source: MySQL 5.1
+.\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQL_INSTALL_DB\" "1" "08/10/2011" "MySQL 5\&.1" "MySQL Database System"
+.TH "\FBMYSQL_INSTALL_DB\" "1" "03/02/2012" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -65,7 +65,7 @@ does not use the correct locations for the installation directory or data direct
 .RS 4
 .\}
 .nf
-shell> \fBbin/mysql_install_db \-\-user=mysql \e\fR
+shell> \fBscripts/mysql_install_db \-\-user=mysql \e\fR
          \fB\-\-basedir=/opt/mysql/mysql \e\fR
          \fB\-\-datadir=/opt/mysql/mysql/data\fR
 .fi
@@ -81,13 +81,13 @@ with the
 and
 \fB\-\-skip\-grant\-tables\fR
 options\&. If MySQL was configured with the
-\fB\-\-disable\-grant\-options\fR
-option,
+\fBDISABLE_GRANT_OPTIONS\fR
+compiler flag,
 \fB\-\-bootstrap\fR
 and
 \fB\-\-skip\-grant\-tables\fR
 will be disabled (see
-Section\ \&2.11.4, \(lqMySQL Source-Configuration Options\(rq)\&. To handle this, set the
+Section\ \&2.9.4, \(lqMySQL Source-Configuration Options\(rq)\&. To handle this, set the
 MYSQLD_BOOTSTRAP
 environment variable to the full path name of a server that has all options enabled\&.
 \fBmysql_install_db\fR
@@ -123,8 +123,12 @@ supports the following options, which can be specified on the command line or in
 and (if they are common to
 \fBmysqld\fR)
 [mysqld]
-groups of an option file\&. For information about option files, see
+groups of an option file\&. Other options are passed to
+\fBmysqld\fR\&. For information about option files, see
 Section\ \&4.2.3.3, \(lqUsing Option Files\(rq\&.
+\fBmysql_install_db\fR
+also supports the options for processing option files described at
+Section\ \&4.2.3.3.1, \(lqCommand-Line Options that Affect Option-File Handling\(rq\&.
 .sp
 .RS 4
 .ie n \{\
@@ -220,7 +224,7 @@ Use IP addresses rather than host names when creating grant table entries\&. Thi
 .sp
 For internal use\&. The directory under which
 \fBmysql_install_db\fR
-looks for support files such as the error message file and the file for populating the help tables\&. This option was added in MySQL 5\&.1\&.14\&.
+looks for support files such as the error message file and the file for populating the help tables\&.
 .RE
 .sp
 .RS 4
@@ -277,7 +281,7 @@ For internal use\&. This option is used for creating Windows distributions\&.
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP
