@@ -24,10 +24,33 @@
 
 * x86_64
 
+## Provisions
+
+Needs a update of php, percona or nginx? Only change the software version in bootstrap.sh, example:
+
+	PERCONA_URL='http://www.percona.com/redir/downloads/Percona-Server-5.5/Percona-Server-5.5.30-30.2/source/'
+	PERCONA_FILE='Percona-Server-5.5.30-rel30.2'
+
+After run
+
+	sudo sh /Applications/MNPP/provisions/bash/bootstrap.sh
+
 ##Set environment
 
 <pre><code>$ sudo sh /Applications/MNPP/init/environment.sh</code></pre>
 <pre><code>$ source /Users/youruser/.bash_profile</code></pre>
+
+## Dynamic Extensions
+
+MNPP by default only have mcrypt and gettext enabled, but if  you need more can you install it for each php version, before install autoconf.
+	
+	$ brew install autoconf
+
+Version: 52 | 53 | 54    
+
+	$ /Applications/MNPP/Library/php[VERSION]/bin/pecl install apc
+	
+You should add "extension=apc.so" to php.ini
 
 ##Runs from console
 
