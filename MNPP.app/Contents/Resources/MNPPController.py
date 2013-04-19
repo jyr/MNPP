@@ -45,6 +45,7 @@ class MNPPController (NSWindowController):
 		try:
 			self.checkPhpVersion()
 			stopScript = self.path + "stop" + self.phpVersion
+
 			self.disableUwsgi()
 			self.auth.executeWithPrivileges(stopScript)
 		except:
@@ -52,13 +53,14 @@ class MNPPController (NSWindowController):
 
     @objc.IBAction
     def restartServers_(self, sender):
-		try:
-			self.checkPhpVersion()
-			restartScript = self.path + "restart" + self.phpVersion
-			self.disableUwsgi()
-			self.auth.executeWithPrivileges(restartScript)
-		except:
-			pass
+        try:
+            self.checkPhpVersion()
+            restartScript = self.path + "restart" + self.phpVersion
+        
+            self.disableUwsgi()
+            self.auth.executeWithPrivileges(restartScript)
+        except:
+            pass
 
     @objc.IBAction
     def openPage_(self, sender):
