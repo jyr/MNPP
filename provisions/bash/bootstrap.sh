@@ -150,7 +150,7 @@ __essentials( ){
 
 __nginx( ) {
 	wget -c "${PCRE_URL}${PCRE_FILE}.tar.gz"  && tar xvfz "${PCRE_FILE}.tar.gz"
-	wget -c  "${NGINX_URL}${NGINX_FILE}.tar.gz" | tar -zx && cd "${NGINX_FILE}"
+	wget -c  "${NGINX_URL}${NGINX_FILE}.tar.gz" && tar zxvf "${NGINX_FILE}.tar.gz" && cd "${NGINX_FILE}"
 
 	./configure --prefix=/Applications/MNPP/Library/nginx --sbin-path=/Applications/MNPP/Library/nginx --conf-path=/Applications/MNPP/conf/nginx/nginx.conf --user=www --group=www --with-http_ssl_module --with-http_stub_status_module --pid-path=/Applications/MNPP/run/nginx --with-http_gzip_static_module --with-pcre=/Applications/MNPP/src/$PCRE_FILE/
 
@@ -299,7 +299,6 @@ __dependencies( ){
 }
 
 __reset( ){
-	rm -rf /Applications/MNPP/src/*
 	chown -R $SUDO_USER /Applications/MNPP/Library
 	chown -R mysql:mysql /Applications/MNPP/Library/mysql
 }
