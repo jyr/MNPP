@@ -1,3 +1,0 @@
-SELECT @@global.innodb_blocking_buffer_pool_restore;
-@@global.innodb_blocking_buffer_pool_restore
-0

@@ -1,3 +1,0 @@
-SELECT @@global.innodb_dict_size_limit;
-@@global.innodb_dict_size_limit
-0

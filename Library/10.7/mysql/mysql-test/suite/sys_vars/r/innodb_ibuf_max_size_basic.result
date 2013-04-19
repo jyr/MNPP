@@ -1,3 +1,0 @@
-SELECT @@global.innodb_ibuf_max_size;
-@@global.innodb_ibuf_max_size
-16760832

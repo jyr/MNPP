@@ -1,1 +1,0 @@
---skip-stack-trace --skip-core-file --innodb-file-per-table=1

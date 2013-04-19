@@ -1,3 +1,0 @@
-SELECT @@global.innodb_doublewrite_file;
-@@global.innodb_doublewrite_file
-NULL

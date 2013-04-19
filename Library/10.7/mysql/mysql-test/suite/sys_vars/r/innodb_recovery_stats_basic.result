@@ -1,3 +1,0 @@
-SELECT @@global.innodb_recovery_stats;
-@@global.innodb_recovery_stats
-0

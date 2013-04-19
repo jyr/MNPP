@@ -1,3 +1,0 @@
-SELECT @@global.innodb_buffer_pool_restore_at_startup;
-@@global.innodb_buffer_pool_restore_at_startup
-0

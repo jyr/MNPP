@@ -1,3 +1,0 @@
-SELECT @@global.innodb_stats_auto_update;
-@@global.innodb_stats_auto_update
-1

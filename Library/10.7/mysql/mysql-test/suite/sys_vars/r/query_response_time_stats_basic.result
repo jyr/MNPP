@@ -1,3 +1,0 @@
-SELECT @@global.query_response_time_stats;
-@@global.query_response_time_stats
-0

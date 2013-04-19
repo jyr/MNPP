@@ -1,3 +1,0 @@
-SELECT @@global.innodb_fast_checksum;
-@@global.innodb_fast_checksum
-0
