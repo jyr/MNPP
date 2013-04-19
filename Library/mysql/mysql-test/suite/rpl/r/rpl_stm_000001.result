@@ -1,6 +1,6 @@
 include/master-slave.inc
 [connection master]
-CALL mtr.add_suppression("Statement may not be safe to log in statement format.");
+CALL mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
 create table t1 (word char(20) not null);
 load data infile '../../std_data/words.dat' into table t1;
 load data local infile 'MYSQL_TEST_DIR/std_data/words.dat' into table t1;
@@ -36,6 +36,7 @@ stop slave;
 reset slave;
 lock tables t1 read;
 start slave;
+include/sync_slave_io_with_master.inc
 unlock tables;
 create table t2(id int);
 insert into t2 values(connection_id());

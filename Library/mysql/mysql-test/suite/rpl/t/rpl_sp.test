@@ -3,11 +3,6 @@
 # Test of replication of stored procedures (WL#2146 for MySQL 5.0)
 # Modified by WL#2971.
 
-# Note that in the .opt files we still use the old variable name
-# log-bin-trust-routine-creators so that this test checks that it's
-# still accepted (this test also checks that the new name is
-# accepted). The old name could be removed in 5.1 or 6.0.
-
 source include/have_binlog_format_mixed.inc;
 source include/master-slave.inc;
 
@@ -241,16 +236,11 @@ begin
 end|
 delimiter ;|
 connection master;
-set @old_log_bin_trust_routine_creators= @@global.log_bin_trust_routine_creators;
 set @old_log_bin_trust_function_creators= @@global.log_bin_trust_function_creators;
-# test old variable name:
-set global log_bin_trust_routine_creators=1;
-# now use new name:
 set global log_bin_trust_function_creators=0;
 set global log_bin_trust_function_creators=1;
 # slave needs it too otherwise will not execute what master allowed:
 connection slave;
-set @old_log_bin_trust_routine_creators= @@global.log_bin_trust_routine_creators;
 set @old_log_bin_trust_function_creators= @@global.log_bin_trust_function_creators;
 set global log_bin_trust_function_creators=1;
 
@@ -466,9 +456,7 @@ DROP FUNCTION IF EXISTS f1;
 --echo
 --echo ---> Synchronizing slave with master...
 
---save_master_pos
---connection slave
---sync_with_master
+--sync_slave_with_master
 
 --echo
 --echo ---> connection: master
@@ -492,9 +480,7 @@ SHOW CREATE FUNCTION f1;
 --echo
 --echo ---> Synchronizing slave with master...
 
---save_master_pos
---connection slave
---sync_with_master
+--sync_slave_with_master
 
 --echo ---> connection: master
 
@@ -516,9 +502,7 @@ SHOW CREATE FUNCTION f1;
 DROP PROCEDURE p1;
 DROP FUNCTION f1;
 
---save_master_pos
---connection slave
---sync_with_master
+--sync_slave_with_master
 --connection master
 
 
@@ -575,10 +559,8 @@ connection master;
 # This is a cleanup for all parts above where we tested stored
 # functions and triggers.
 connection slave;
-set @@global.log_bin_trust_routine_creators= @old_log_bin_trust_routine_creators;
 set @@global.log_bin_trust_function_creators= @old_log_bin_trust_function_creators;
 connection master;
-set @@global.log_bin_trust_routine_creators= @old_log_bin_trust_routine_creators;
 set @@global.log_bin_trust_function_creators= @old_log_bin_trust_function_creators;
 
 # Clean up
@@ -639,7 +621,120 @@ drop procedure mysqltestbug36570_p1;
 drop procedure ` mysqltestbug36570_p2`;
 drop function mysqltestbug36570_f1;
 --echo End of 5.0 tests
---echo End of 5.1 tests
+--echo # End of 5.1 tests
+--echo #
+--echo # Test Bug#30977 Concurrent statement using stored
+--echo # function and DROP FUNCTION breaks SBR.
+--echo #
+--echo # Demonstrate that stored function DDL can not go through,
+--echo # or, worse yet, make its way into the binary log, while
+--echo # the stored function is in use.
+--echo # For that, try to insert a result of a stored function
+--echo # into a table. Block the insert in the beginning, waiting
+--echo # on a table lock. While insert is blocked, attempt to
+--echo # drop the routine. Verify that this attempt 
+--echo # blocks and waits for INSERT to complete. Commit and 
+--echo # reap the chain of events. Master and slave must contain
+--echo # identical data. Statements in the binrary log must be
+--echo # consistent with data in the table.
+--echo #
+--echo # --> connection default
+connection default;
+--disable_warnings
+drop table if exists t1, t2;
+drop function if exists t1;
+--enable_warnings
+create table t1 (a int);
+create table t2 (a int) as select 1 as a;
+create function f1() returns int deterministic return (select max(a) from t2);
+lock table t2 write;
+--echo # --> connection master
+connection master;
+--echo # Sending 'insert into t1 (a) values (f1())'...
+--send insert into t1 (a) values (f1())
+connection master1;
+--echo # Waitng for 'insert into t1 ...' to get blocked on table lock...
+let $wait_condition=select count(*)=1 from information_schema.processlist
+where state='Waiting for table metadata lock' and
+      info='insert into t1 (a) values (f1())';
+--source include/wait_condition.inc
+--echo # Sending 'drop function f1'. It will wait till insert finishes.
+--send drop function f1;
+--echo # --> connection default
+connection default;
+--echo # Check that 'drop function f1' gets blocked.
+let $wait_condition=select count(*)=1 from information_schema.processlist
+where state='Waiting for stored function metadata lock' and info='drop function f1';
+--source include/wait_condition.inc
+--echo # Now let's let 'insert' go through...
+unlock tables;
+--echo # --> connection master
+connection master;
+--echo # Reaping 'insert into t1 (a) values (f1())'...
+--reap
+--echo # --> connection master1
+connection master1;
+--echo # Reaping 'drop function f1'
+--reap
+--echo # --> connection master
+connection master;
+select * from t1;
+sync_slave_with_master;
+connection slave;
+select * from  t1;
+# Cleanup
+connection master;
+drop table t1, t2;
+--error ER_SP_DOES_NOT_EXIST
+drop function f1;
+
+
+--echo #
+--echo # Bug #11918 Can't use a declared variable in LIMIT clause
+--echo #
+--source include/rpl_reset.inc
+
+create table t1 (c1 int);
+insert into t1 (c1) values
+(1), (2), (3), (4), (5), (6), (7), (8), (9), (10);
+
+call mtr.add_suppression("Unsafe statement written to the binary log using statement format since BINLOG_FORMAT = STATEMENT");
+
+create procedure p1(p1 integer)
+  delete from t1 limit p1; 
+
+set @save_binlog_format=@@session.binlog_format;
+set @@session.binlog_format=STATEMENT;
+
+--disable_warnings
+call p1(NULL);
+call p1(0);
+call p1(1);
+call p1(2);
+call p1(3);
+--enable_warnings
+
+select * from t1;
+sync_slave_with_master;
+connection slave;
+select * from t1;
+connection master;
+--disable_warnings
+call p1(-1);
+--enable_warnings
+select * from t1;
+sync_slave_with_master;
+connection slave;
+select * from t1;
+connection master;
+
+--echo # Cleanup
+set @@session.binlog_format=@save_binlog_format;
+drop table t1;
+drop procedure p1;
+
+--echo # End of 5.5 tests.
+
 
 # Cleanup
 sync_slave_with_master;

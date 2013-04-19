@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -140,7 +140,7 @@ $pid_file="mysql_stress_test.pid";
 $opt_mysqltest= ($^O =~ /mswin32/i) ? "mysqltest.exe" : "mysqltest";
 $opt_check_tests_file="";
 # OBM adding a setting for 'max-connect-retries=20' the default of 500 is to high  
-@mysqltest_args=("--silent", "-v", "--skip-safemalloc", "--max-connect-retries=20");
+@mysqltest_args=("--silent", "-v", "--max-connect-retries=20");
 
 # Client ip address
 $client_ip=inet_ntoa((gethostbyname(hostname()))[4]);
@@ -238,9 +238,9 @@ GetOptions("server-host=s", "server-logs-dir=s", "server-port=s",
            "test-duration=i", "test-suffix=s", "check-tests-file", 
            "verbose", "log-error-details", "cleanup", "mysqltest=s", 
            # OBN: (changing 'abort-on-error' to numberic for WL-4626/4685) 
-           "abort-on-error=i" => \$opt_abort_on_error, "help") || usage();
+           "abort-on-error=i" => \$opt_abort_on_error, "help") || usage(1);
 
-usage() if ($opt_help);
+usage(0) if ($opt_help);
 
 #$opt_abort_on_error=1;
 
@@ -1131,6 +1131,7 @@ sub sig_TERM_handler
 
 sub usage
 {
+  my $retcode= shift;
   print <<EOF;
 
 The MySQL Stress suite Ver $stress_suite_version
@@ -1234,7 +1235,7 @@ perl mysql-stress-test.pl \
 --cleanup \
 
 EOF
-exit(0);
+exit($retcode);
 }
 
 

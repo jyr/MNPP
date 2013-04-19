@@ -1,5 +1,6 @@
 #/bin/sh
- 
+
+
 NGINX_BASE_DIR="/Applications/MNPP/Library/nginx"
 NGINX_DAEMON="${NGINX_BASE_DIR}/nginx"
 NGINX_CONF="/Applications/MNPP/conf/nginx/nginx.conf"
@@ -41,7 +42,7 @@ __show_usage( ) {
   echo "Usage: ${0} {start|stop|restart|reload}"
   exit 3
 }
- 
+
 ##
 # :: main ::
 case "${1}" in
@@ -53,3 +54,4 @@ case "${1}" in
     __show_usage
     ;;
 esac
+

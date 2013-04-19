@@ -11,7 +11,7 @@ explain extended select uncompress(compress(@test_compress_string));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select uncompress(compress((@test_compress_string))) AS `uncompress(compress(@test_compress_string))`
+Note	1003	select uncompress(compress((@`test_compress_string`))) AS `uncompress(compress(@test_compress_string))`
 select uncompressed_length(compress(@test_compress_string))=length(@test_compress_string);
 uncompressed_length(compress(@test_compress_string))=length(@test_compress_string)
 1
@@ -19,7 +19,7 @@ explain extended select uncompressed_length(compress(@test_compress_string))=len
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
 Warnings:
-Note	1003	select (uncompressed_length(compress((@test_compress_string))) = length((@test_compress_string))) AS `uncompressed_length(compress(@test_compress_string))=length(@test_compress_string)`
+Note	1003	select (uncompressed_length(compress((@`test_compress_string`))) = length((@`test_compress_string`))) AS `uncompressed_length(compress(@test_compress_string))=length(@test_compress_string)`
 select uncompressed_length(compress(@test_compress_string));
 uncompressed_length(compress(@test_compress_string))
 117
@@ -65,8 +65,8 @@ NULL
 50000
 NULL
 Warnings:
-Error	1259	ZLIB: Input data corrupted
-Error	1256	Uncompressed data size too large; the maximum size is 1048576 (probably, length of uncompressed data was corrupted)
+Warning	1259	ZLIB: Input data corrupted
+Warning	1256	Uncompressed data size too large; the maximum size is 1048576 (probably, length of uncompressed data was corrupted)
 drop table t1;
 set @@global.max_allowed_packet=1048576*100;
 select compress(repeat('aaaaaaaaaa', IF(XXX, 10, 10000000))) is null;
@@ -96,12 +96,12 @@ explain select * from t1 where uncompress(a) is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	
 Warnings:
-Error	1259	ZLIB: Input data corrupted
+Warning	1259	ZLIB: Input data corrupted
 select * from t1 where uncompress(a) is null;
 a
 foo
 Warnings:
-Error	1259	ZLIB: Input data corrupted
+Warning	1259	ZLIB: Input data corrupted
 explain select *, uncompress(a) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	
@@ -109,13 +109,13 @@ select *, uncompress(a) from t1;
 a	uncompress(a)
 foo	NULL
 Warnings:
-Error	1259	ZLIB: Input data corrupted
+Warning	1259	ZLIB: Input data corrupted
 select *, uncompress(a), uncompress(a) is null from t1;
 a	uncompress(a)	uncompress(a) is null
 foo	NULL	1
 Warnings:
-Error	1259	ZLIB: Input data corrupted
-Error	1259	ZLIB: Input data corrupted
+Warning	1259	ZLIB: Input data corrupted
+Warning	1259	ZLIB: Input data corrupted
 drop table t1;
 CREATE TABLE t1 (c1 INT);
 INSERT INTO t1 VALUES (1), (1111), (11111);

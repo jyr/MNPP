@@ -29,7 +29,7 @@ $opt_example       = 0;
 $opt_help          = 0;
 $opt_log           = undef();
 $opt_mysqladmin    = "/Applications/MNPP/Library/mysql/bin/mysqladmin";
-$opt_mysqld        = "/Applications/MNPP/Library/mysql/libexec/mysqld";
+$opt_mysqld        = "/Applications/MNPP/Library/mysql/bin/mysqld";
 $opt_no_log        = 0;
 $opt_password      = undef();
 $opt_tcp_ip        = 0;
@@ -46,6 +46,28 @@ my ($mysqld, $mysqladmin, $groupids, $homedir, $my_progname);
 $homedir = $ENV{HOME};
 $my_progname = $0;
 $my_progname =~ s/.*[\/]//;
+
+
+if (defined($ENV{UMASK})) {
+  my $UMASK = $ENV{UMASK};
+  my $m;
+  my $fmode = "0640";
+
+  if(($UMASK =~ m/[^0246]/) || ($UMASK =~ m/^[^0]/) || (length($UMASK) != 4)) {
+    printf("UMASK must be a 3-digit mode with an additional leading 0 to indicate octal.\n");
+    printf("The first digit will be corrected to 6, the others may be 0, 2, 4, or 6.\n"); }
+  else {
+    $fmode= substr $UMASK, 2, 2;
+    $fmode= "06${fmode}"; }
+
+  if($fmode != $UMASK) {
+    printf("UMASK corrected from $UMASK to $fmode ...\n"); }
+
+  $fmode= oct($fmode);
+
+  umask($fmode);
+}
+
 
 main();
 
@@ -76,20 +98,6 @@ sub main
     push @defaults_options, (shift @ARGV);
   }
 
-  # Handle deprecated --config-file option: convert to --defaults-extra-file
-  foreach my $arg (@ARGV)
-  {
-    if ($arg =~ m/^--config-file=(.*)/)
-    {
-      # Put it at the beginning of the list, so it has lower precedence
-      # than a correct --defaults-extra-file option
-
-      unshift @defaults_options, "--defaults-extra-file=$1";
-      print "WARNING: --config-file is deprecated and will be removed\n";
-      print "in MySQL 5.6.  Please use --defaults-extra-file instead\n";
-    }
-  }
-
   foreach (@defaults_options)
   {
     $_ = quote_shell_word($_);
@@ -97,11 +105,6 @@ sub main
 
   # Add [mysqld_multi] options to front of @ARGV, ready for GetOptions()
   unshift @ARGV, defaults_for_group('mysqld_multi');
-
-  # The --config-file option can be ignored; if passed on the command
-  # line, it's already handled; if specified in the configuration file,
-  # it's redundant and not useful
-  @ARGV= grep { not /^--config-file=/ } @ARGV;
 
   # We've already handled --no-defaults, --defaults-file, etc.
   if (!GetOptions("help", "example", "version", "mysqld=s", "mysqladmin=s",
@@ -252,10 +255,10 @@ sub report_mysqlds
 {
   my (@groups, $com, $i, @options, $pec);
 
-  print "Reporting MySQL servers\n";
+  print "Reporting MySQL (Percona Server) servers\n";
   if (!$opt_no_log)
   {
-    w2log("\nReporting MySQL servers","$opt_log",0,0);
+    w2log("\nReporting MySQL (Percona Server) servers","$opt_log",0,0);
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -266,19 +269,19 @@ sub report_mysqlds
     $pec = $? >> 8;
     if ($pec)
     {
-      print "MySQL server from group: $groups[$i] is not running\n";
+      print "MySQL (Percona Server) from group: $groups[$i] is not running\n";
       if (!$opt_no_log)
       {
-	w2log("MySQL server from group: $groups[$i] is not running",
+	w2log("MySQL (Percona Server) from group: $groups[$i] is not running",
 	      "$opt_log", 0, 0);
       }
     }
     else
     {
-      print "MySQL server from group: $groups[$i] is running\n";
+      print "MySQL (Percona Server) from group: $groups[$i] is running\n";
       if (!$opt_no_log)
       {
-	w2log("MySQL server from group: $groups[$i] is running",
+	w2log("MySQL (Percona Server) from group: $groups[$i] is running",
 	      "$opt_log", 0, 0);
       }
     }
@@ -303,11 +306,11 @@ sub start_mysqlds()
 
   if (!$opt_no_log)
   {
-    w2log("\nStarting MySQL servers\n","$opt_log",0,0);
+    w2log("\nStarting MySQL (Percona Server)\n","$opt_log",0,0);
   }
   else
   {
-    print "\nStarting MySQL servers\n";
+    print "\nStarting MySQL (Percona Server)\n";
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -378,7 +381,7 @@ sub start_mysqlds()
   }
   if (!$i && !$opt_no_log)
   {
-    w2log("No MySQL servers to be started (check your GNRs)",
+    w2log("No MySQL (Percona Server) servers to be started (check your GNRs)",
 	  "$opt_log", 0, 0);
   }
 }
@@ -393,11 +396,11 @@ sub stop_mysqlds()
 
   if (!$opt_no_log)
   {
-    w2log("\nStopping MySQL servers\n","$opt_log",0,0);
+    w2log("\nStopping MySQL (Percona Server) servers\n","$opt_log",0,0);
   }
   else
   {
-    print "\nStopping MySQL servers\n";
+    print "\nStopping MySQL (Percona Server) servers\n";
   }
   @groups = &find_groups($groupids);
   for ($i = 0; defined($groups[$i]); $i++)
@@ -410,7 +413,7 @@ sub stop_mysqlds()
   }
   if (!$i && !$opt_no_log)
   {
-    w2log("No MySQL servers to be stopped (check your GNRs)",
+    w2log("No MySQL (Percona Server) servers to be stopped (check your GNRs)",
 	  "$opt_log", 0, 0);
   }
 }
@@ -481,7 +484,7 @@ sub list_defaults_files
   return grep { defined $_ and not $seen{$_}++ and -f $_ and -r $_ }
               ('/etc/my.cnf',
                '/etc/mysql/my.cnf',
-               '/Applications/MNPP/Library/mysql/etc/my.cnf',
+               '/Applications/MNPP/Library/mysql/my.cnf',
                ($ENV{MYSQL_HOME} ? "$ENV{MYSQL_HOME}/my.cnf" : undef),
                $opt{'extra-file'},
                ($ENV{HOME} ? "$ENV{HOME}/.my.cnf" : undef));
@@ -685,7 +688,7 @@ sub example
 #   (as per Linux/Unix standard). You may even replace the
 #   /etc/init.d/mysql.server script with it.
 #
-#   Before using, you must create a my.cnf file either in /Applications/MNPP/Library/mysql/etc/my.cnf
+#   Before using, you must create a my.cnf file either in /Applications/MNPP/Library/mysql/my.cnf
 #   or /root/.my.cnf and add the [mysqld_multi] and [mysqld#] groups.
 #
 #   The script can be found from support-files/mysqld_multi.server.sh
@@ -701,8 +704,8 @@ password   = my_password
 [mysqld2]
 socket     = /tmp/mysql.sock2
 port       = 3307
-pid-file   = /Applications/MNPP/Library/mysql/var2/hostname.pid2
-datadir    = /Applications/MNPP/Library/mysql/var2
+pid-file   = /Applications/MNPP/Library/mysql/data2/hostname.pid2
+datadir    = /Applications/MNPP/Library/mysql/data2
 language   = /Applications/MNPP/Library/mysql/share/mysql/english
 user       = unix_user1
 
@@ -712,24 +715,24 @@ ledir      = /path/to/mysqld-binary/
 mysqladmin = /path/to/mysqladmin
 socket     = /tmp/mysql.sock3
 port       = 3308
-pid-file   = /Applications/MNPP/Library/mysql/var3/hostname.pid3
-datadir    = /Applications/MNPP/Library/mysql/var3
+pid-file   = /Applications/MNPP/Library/mysql/data3/hostname.pid3
+datadir    = /Applications/MNPP/Library/mysql/data3
 language   = /Applications/MNPP/Library/mysql/share/mysql/swedish
 user       = unix_user2
 
 [mysqld4]
 socket     = /tmp/mysql.sock4
 port       = 3309
-pid-file   = /Applications/MNPP/Library/mysql/var4/hostname.pid4
-datadir    = /Applications/MNPP/Library/mysql/var4
+pid-file   = /Applications/MNPP/Library/mysql/data4/hostname.pid4
+datadir    = /Applications/MNPP/Library/mysql/data4
 language   = /Applications/MNPP/Library/mysql/share/mysql/estonia
 user       = unix_user3
  
 [mysqld6]
 socket     = /tmp/mysql.sock6
 port       = 3311
-pid-file   = /Applications/MNPP/Library/mysql/var6/hostname.pid6
-datadir    = /Applications/MNPP/Library/mysql/var6
+pid-file   = /Applications/MNPP/Library/mysql/data6/hostname.pid6
+datadir    = /Applications/MNPP/Library/mysql/data6
 language   = /Applications/MNPP/Library/mysql/share/mysql/japanese
 user       = unix_user4
 EOF
@@ -759,8 +762,8 @@ from both [mysqld_multi] and [mysqld#], a group that is tried to be
 used, $my_progname will abort with an error.
 
 $my_progname will search for groups named [mysqld#] from my.cnf (or
-the given --config-file=...), where '#' can be any positive integer
-starting from 1. These groups should be the same as the regular
+the given --defaults-extra-file=...), where '#' can be any positive 
+integer starting from 1. These groups should be the same as the regular
 [mysqld] group, but with those port, socket and any other options
 that are to be used with each separate mysqld process. The number
 in the group name has another function; it can be used for starting,
@@ -786,7 +789,6 @@ These options must be given before any others:
                    standard system-wide and user-specific files
 Using:  @{[join ' ', @defaults_options]}
 
---config-file=...  Deprecated, please use --defaults-extra-file instead
 --example          Give an example of a config file with extra information.
 --help             Print this help and exit.
 --log=...          Log file. Full path to and the name for the log file. NOTE:

@@ -30,29 +30,27 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *
- * @category    File_Formats
- * @package     Archive_Tar
- * @author      Vincent Blavet <vincent@phpconcept.net>
- * @copyright   1997-2008 The Authors
- * @license     http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version     CVS: $Id: Tar.php 295988 2010-03-09 08:39:37Z mrook $
- * @link        http://pear.php.net/package/Archive_Tar
+ * @category  File_Formats
+ * @package   Archive_Tar
+ * @author    Vincent Blavet <vincent@phpconcept.net>
+ * @copyright 1997-2010 The Authors
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version   CVS: $Id$
+ * @link      http://pear.php.net/package/Archive_Tar
  */
 
 require_once 'PEAR.php';
 
-
-define ('ARCHIVE_TAR_ATT_SEPARATOR', 90001);
-define ('ARCHIVE_TAR_END_BLOCK', pack("a512", ''));
+define('ARCHIVE_TAR_ATT_SEPARATOR', 90001);
+define('ARCHIVE_TAR_END_BLOCK', pack("a512", ''));
 
 /**
 * Creates a (compressed) Tar archive
 *
-* @author   Vincent Blavet <vincent@phpconcept.net>
-* @version  $Revision: 295988 $
-* @license  http://www.opensource.org/licenses/bsd-license.php New BSD License
-* @package  Archive_Tar
+* @package Archive_Tar
+* @author  Vincent Blavet <vincent@phpconcept.net>
+* @license http://www.opensource.org/licenses/bsd-license.php New BSD License
+* @version $Revision$
 */
 class Archive_Tar extends PEAR
 {
@@ -91,6 +89,11 @@ class Archive_Tar extends PEAR
     */
     var $_ignore_regexp='';
 
+    /**
+     * @var object PEAR_Error object
+     */
+    var $error_object=null; 
+
     // {{{ constructor
     /**
     * Archive_Tar Class constructor. This flavour of the constructor only
@@ -99,11 +102,12 @@ class Archive_Tar extends PEAR
     * If the compress argument is set the tar will be read or created as a
     * gzip or bz2 compressed TAR file.
     *
-    * @param    string  $p_tarname  The name of the tar archive to create
-    * @param    string  $p_compress can be null, 'gz' or 'bz2'. This
-    *                   parameter indicates if gzip or bz2 compression
-    *                   is required.  For compatibility reason the
-    *                   boolean value 'true' means 'gz'.
+    * @param string $p_tarname  The name of the tar archive to create
+    * @param string $p_compress can be null, 'gz' or 'bz2'. This
+    *               parameter indicates if gzip or bz2 compression
+    *               is required.  For compatibility reason the
+    *               boolean value 'true' means 'gz'.
+    *
     * @access public
     */
     function Archive_Tar($p_tarname, $p_compress = null)
@@ -120,7 +124,7 @@ class Archive_Tar extends PEAR
                     if ($data == "\37\213") {
                         $this->_compress = true;
                         $this->_compress_type = 'gz';
-                    // No sure it's enought for a magic code ....
+                        // No sure it's enought for a magic code ....
                     } elseif ($data == "BZ") {
                         $this->_compress = true;
                         $this->_compress_type = 'bz2';
@@ -197,11 +201,12 @@ class Archive_Tar extends PEAR
     * sub-directories are also added.
     * See also createModify() method for more details.
     *
-    * @param array  $p_filelist An array of filenames and directory names, or a
-	*                           single string with names separated by a single
-	*                           blank space.
-    * @return                   true on success, false on error.
-    * @see createModify()
+    * @param array $p_filelist An array of filenames and directory names, or a
+    *              single string with names separated by a single
+    *              blank space.
+    *
+    * @return true on success, false on error.
+    * @see    createModify()
     * @access public
     */
     function create($p_filelist)
@@ -219,11 +224,12 @@ class Archive_Tar extends PEAR
     * even if a file with the same name is already archived.
     * See also createModify() method for more details.
     *
-    * @param array  $p_filelist An array of filenames and directory names, or a
-	*                           single string with names separated by a single
-	*                           blank space.
-    * @return                   true on success, false on error.
-    * @see createModify()
+    * @param array $p_filelist An array of filenames and directory names, or a
+    *              single string with names separated by a single
+    *              blank space.
+    *
+    * @return true on success, false on error.
+    * @see    createModify()
     * @access public
     */
     function add($p_filelist)
@@ -233,9 +239,9 @@ class Archive_Tar extends PEAR
     // }}}
 
     // {{{ extract()
-    function extract($p_path='')
+    function extract($p_path='', $p_preserve=false)
     {
-        return $this->extractModify($p_path, '');
+        return $this->extractModify($p_path, '', $p_preserve);
     }
     // }}}
 
@@ -279,16 +285,17 @@ class Archive_Tar extends PEAR
     * for extraction in a different path than the origin files are.
     * See also addModify() method for file adding properties.
     *
-    * @param array  $p_filelist     An array of filenames and directory names,
-	*                               or a single string with names separated by
-	*                               a single blank space.
-    * @param string $p_add_dir      A string which contains a path to be added
-	*                               to the memorized path of each element in
-	*                               the list.
-    * @param string $p_remove_dir   A string which contains a path to be
-	*                               removed from the memorized path of each
-	*                               element in the list, when relevant.
-    * @return boolean               true on success, false on error.
+    * @param array  $p_filelist   An array of filenames and directory names,
+    *                             or a single string with names separated by
+    *                             a single blank space.
+    * @param string $p_add_dir    A string which contains a path to be added
+    *                             to the memorized path of each element in
+    *                             the list.
+    * @param string $p_remove_dir A string which contains a path to be
+    *                             removed from the memorized path of each
+    *                             element in the list, when relevant.
+    *
+    * @return boolean true on success, false on error.
     * @access public
     * @see addModify()
     */
@@ -351,17 +358,18 @@ class Archive_Tar extends PEAR
     * If a file/dir is not readable the file/dir is ignored. However an
     * error text is send to PEAR error.
     *
-    * @param array      $p_filelist     An array of filenames and directory
-	*                                   names, or a single string with names
-	*                                   separated by a single blank space.
-    * @param string     $p_add_dir      A string which contains a path to be
-	*                                   added to the memorized path of each
-	*                                   element in the list.
-    * @param string     $p_remove_dir   A string which contains a path to be
-	*                                   removed from the memorized path of
-	*                                   each element in the list, when
-    *                                   relevant.
-    * @return                           true on success, false on error.
+    * @param array  $p_filelist   An array of filenames and directory
+    *                             names, or a single string with names
+    *                             separated by a single blank space.
+    * @param string $p_add_dir    A string which contains a path to be
+    *                             added to the memorized path of each
+    *                             element in the list.
+    * @param string $p_remove_dir A string which contains a path to be
+    *                             removed from the memorized path of
+    *                             each element in the list, when
+    *                             relevant.
+    *
+    * @return true on success, false on error.
     * @access public
     */
     function addModify($p_filelist, $p_add_dir, $p_remove_dir='')
@@ -370,7 +378,7 @@ class Archive_Tar extends PEAR
 
         if (!$this->_isArchive())
             $v_result = $this->createModify($p_filelist, $p_add_dir,
-			                                $p_remove_dir);
+                                            $p_remove_dir);
         else {
             if (is_array($p_filelist))
                 $v_list = $p_filelist;
@@ -394,15 +402,18 @@ class Archive_Tar extends PEAR
     * end of the existing archive. If the archive does not yet exists it
     * is created.
     *
-    * @param string     $p_filename     A string which contains the full
-	*                                   filename path that will be associated
-	*                                   with the string.
-    * @param string     $p_string       The content of the file added in
-	*                                   the archive.
-    * @return                           true on success, false on error.
+    * @param string $p_filename A string which contains the full
+    *                           filename path that will be associated
+    *                           with the string.
+    * @param string $p_string   The content of the file added in
+    *                           the archive.
+    * @param int    $p_datetime A custom date/time (unix timestamp)
+    *                           for the file (optional).
+    *
+    * @return true on success, false on error.
     * @access public
     */
-    function addString($p_filename, $p_string)
+    function addString($p_filename, $p_string, $p_datetime = false)
     {
         $v_result = true;
 
@@ -417,7 +428,7 @@ class Archive_Tar extends PEAR
             return false;
 
         // Need to check the get back to the temporary file ? ....
-        $v_result = $this->_addString($p_filename, $p_string);
+        $v_result = $this->_addString($p_filename, $p_string, $p_datetime);
 
         $this->_writeFooter();
 
@@ -452,23 +463,25 @@ class Archive_Tar extends PEAR
     * is returned. However the result can be a partial extraction that may
     * need to be manually cleaned.
     *
-    * @param string $p_path         The path of the directory where the
-	*                               files/dir need to by extracted.
-    * @param string $p_remove_path  Part of the memorized path that can be
-	*                               removed if present at the beginning of
-	*                               the file/dir path.
-    * @return boolean               true on success, false on error.
+    * @param string  $p_path        The path of the directory where the
+    *                               files/dir need to by extracted.
+    * @param string  $p_remove_path Part of the memorized path that can be
+    *                               removed if present at the beginning of
+    *                               the file/dir path.
+    * @param boolean $p_preserve    Preserve user/group ownership of files
+    *
+    * @return boolean true on success, false on error.
     * @access public
-    * @see extractList()
+    * @see    extractList()
     */
-    function extractModify($p_path, $p_remove_path)
+    function extractModify($p_path, $p_remove_path, $p_preserve=false)
     {
         $v_result = true;
         $v_list_detail = array();
 
         if ($v_result = $this->_openRead()) {
             $v_result = $this->_extractList($p_path, $v_list_detail,
-			                                "complete", 0, $p_remove_path);
+                "complete", 0, $p_remove_path, $p_preserve);
             $this->_close();
         }
 
@@ -480,8 +493,10 @@ class Archive_Tar extends PEAR
     /**
     * This method extract from the archive one file identified by $p_filename.
     * The return value is a string with the file content, or NULL on error.
-    * @param string $p_filename     The path of the file to extract in a string.
-    * @return                       a string with the file content or NULL.
+    *
+    * @param string $p_filename The path of the file to extract in a string.
+    *
+    * @return a string with the file content or NULL.
     * @access public
     */
     function extractInString($p_filename)
@@ -490,7 +505,7 @@ class Archive_Tar extends PEAR
             $v_result = $this->_extractInString($p_filename);
             $this->_close();
         } else {
-            $v_result = NULL;
+            $v_result = null;
         }
 
         return $v_result;
@@ -504,19 +519,22 @@ class Archive_Tar extends PEAR
     * in the directory indicated by the optional $p_path parameter.
     * If indicated the $p_remove_path can be used in the same way as it is
     * used in extractModify() method.
-    * @param array  $p_filelist     An array of filenames and directory names,
-	*                               or a single string with names separated
-	*                               by a single blank space.
-    * @param string $p_path         The path of the directory where the
-	*                               files/dir need to by extracted.
-    * @param string $p_remove_path  Part of the memorized path that can be
-	*                               removed if present at the beginning of
-	*                               the file/dir path.
-    * @return                       true on success, false on error.
+    *
+    * @param array   $p_filelist    An array of filenames and directory names,
+    *                               or a single string with names separated
+    *                               by a single blank space.
+    * @param string  $p_path        The path of the directory where the
+    *                               files/dir need to by extracted.
+    * @param string  $p_remove_path Part of the memorized path that can be
+    *                               removed if present at the beginning of
+    *                               the file/dir path.
+    * @param boolean $p_preserve    Preserve user/group ownership of files
+    *
+    * @return true on success, false on error.
     * @access public
-    * @see extractModify()
+    * @see    extractModify()
     */
-    function extractList($p_filelist, $p_path='', $p_remove_path='')
+    function extractList($p_filelist, $p_path='', $p_remove_path='', $p_preserve=false)
     {
         $v_result = true;
         $v_list_detail = array();
@@ -532,7 +550,7 @@ class Archive_Tar extends PEAR
 
         if ($v_result = $this->_openRead()) {
             $v_result = $this->_extractList($p_path, $v_list_detail, "partial",
-			                                $v_list, $p_remove_path);
+                $v_list, $p_remove_path, $p_preserve);
             $this->_close();
         }
 
@@ -545,8 +563,10 @@ class Archive_Tar extends PEAR
     * This method set specific attributes of the archive. It uses a variable
     * list of parameters, in the format attribute code + attribute values :
     * $arch->setAttribute(ARCHIVE_TAR_ATT_SEPARATOR, ',');
-    * @param mixed $argv            variable list of attributes and values
-    * @return                       true on success, false on error.
+    *
+    * @param mixed $argv variable list of attributes and values
+    *
+    * @return true on success, false on error.
     * @access public
     */
     function setAttribute()
@@ -599,7 +619,9 @@ class Archive_Tar extends PEAR
     * This method sets the regular expression for ignoring files and directories
     * at import, for example:
     * $arch->setIgnoreRegexp("#CVS|\.svn#");
-    * @param string $regexp         regular expression defining which files or directories to ignore
+    *
+    * @param string $regexp regular expression defining which files or directories to ignore
+    *
     * @access public
     */
     function setIgnoreRegexp($regexp)
@@ -613,7 +635,9 @@ class Archive_Tar extends PEAR
     * This method sets the regular expression for ignoring all files and directories
     * matching the filenames in the array list at import, for example:
     * $arch->setIgnoreList(array('CVS', '.svn', 'bin/tool'));
-    * @param array $list         a list of file or directory names to ignore
+    *
+    * @param array $list a list of file or directory names to ignore
+    *
     * @access public
     */
     function setIgnoreList($list)
@@ -627,23 +651,21 @@ class Archive_Tar extends PEAR
     // {{{ _error()
     function _error($p_message)
     {
-        // ----- To be completed
-        $this->raiseError($p_message);
+        $this->error_object = &$this->raiseError($p_message); 
     }
     // }}}
 
     // {{{ _warning()
     function _warning($p_message)
     {
-        // ----- To be completed
-        $this->raiseError($p_message);
+        $this->error_object = &$this->raiseError($p_message); 
     }
     // }}}
 
     // {{{ _isArchive()
-    function _isArchive($p_filename=NULL)
+    function _isArchive($p_filename=null)
     {
-        if ($p_filename == NULL) {
+        if ($p_filename == null) {
             $p_filename = $this->_tarname;
         }
         clearstatcache();
@@ -654,15 +676,17 @@ class Archive_Tar extends PEAR
     // {{{ _openWrite()
     function _openWrite()
     {
-        if ($this->_compress_type == 'gz')
+        if ($this->_compress_type == 'gz' && function_exists('gzopen'))
             $this->_file = @gzopen($this->_tarname, "wb9");
-        else if ($this->_compress_type == 'bz2')
+        else if ($this->_compress_type == 'bz2' && function_exists('bzopen'))
             $this->_file = @bzopen($this->_tarname, "w");
         else if ($this->_compress_type == 'none')
             $this->_file = @fopen($this->_tarname, "wb");
-        else
+        else {
             $this->_error('Unknown or missing compression type ('
 			              .$this->_compress_type.')');
+            return false;
+        }
 
         if ($this->_file == 0) {
             $this->_error('Unable to open in write mode \''
@@ -707,15 +731,17 @@ class Archive_Tar extends PEAR
           // ----- File to open if the normal Tar file
           $v_filename = $this->_tarname;
 
-        if ($this->_compress_type == 'gz')
+        if ($this->_compress_type == 'gz' && function_exists('gzopen'))
             $this->_file = @gzopen($v_filename, "rb");
-        else if ($this->_compress_type == 'bz2')
+        else if ($this->_compress_type == 'bz2' && function_exists('bzopen'))
             $this->_file = @bzopen($v_filename, "r");
         else if ($this->_compress_type == 'none')
             $this->_file = @fopen($v_filename, "rb");
-        else
+        else {
             $this->_error('Unknown or missing compression type ('
 			              .$this->_compress_type.')');
+            return false;
+        }
 
         if ($this->_file == 0) {
             $this->_error('Unable to open in read mode \''.$v_filename.'\'');
@@ -737,9 +763,11 @@ class Archive_Tar extends PEAR
             return false;
         } else if ($this->_compress_type == 'none')
             $this->_file = @fopen($this->_tarname, "r+b");
-        else
+        else {
             $this->_error('Unknown or missing compression type ('
 			              .$this->_compress_type.')');
+            return false;
+        }
 
         if ($this->_file == 0) {
             $this->_error('Unable to open in read/write mode \''
@@ -923,7 +951,7 @@ class Archive_Tar extends PEAR
        	    continue;
        	}
 
-        if (!file_exists($v_filename)) {
+        if (!file_exists($v_filename) && !is_link($v_filename)) {
             $this->_warning("File '$v_filename' does not exist");
             continue;
         }
@@ -1024,7 +1052,7 @@ class Archive_Tar extends PEAR
     // }}}
 
     // {{{ _addString()
-    function _addString($p_filename, $p_string)
+    function _addString($p_filename, $p_string, $p_datetime = false)
     {
       if (!$this->_file) {
           $this->_error('Invalid file descriptor');
@@ -1038,9 +1066,14 @@ class Archive_Tar extends PEAR
 
       // ----- Calculate the stored filename
       $p_filename = $this->_translateWinPath($p_filename, false);;
+      
+      // ----- If datetime is not specified, set current time
+      if ($p_datetime === false) {
+          $p_datetime = time();
+      }
 
       if (!$this->_writeHeaderBlock($p_filename, strlen($p_string),
-	                                  time(), 384, "", 0, 0))
+                                    $p_datetime, 384, "", 0, 0))
           return false;
 
       $i=0;
@@ -1323,10 +1356,20 @@ class Archive_Tar extends PEAR
         for ($i=156; $i<512; $i++)
            $v_checksum+=ord(substr($v_binary_data,$i,1));
 
-        $v_data = unpack("a100filename/a8mode/a8uid/a8gid/a12size/a12mtime/"
-		                 ."a8checksum/a1typeflag/a100link/a6magic/a2version/"
-						 ."a32uname/a32gname/a8devmajor/a8devminor",
-						 $v_binary_data);
+        if (version_compare(PHP_VERSION,"5.5.0-dev")<0) {
+            $fmt = "a100filename/a8mode/a8uid/a8gid/a12size/a12mtime/" .
+                   "a8checksum/a1typeflag/a100link/a6magic/a2version/" .
+                   "a32uname/a32gname/a8devmajor/a8devminor/a131prefix";
+        } else {
+            $fmt = "Z100filename/Z8mode/Z8uid/Z8gid/Z12size/Z12mtime/" .
+                   "Z8checksum/Z1typeflag/Z100link/Z6magic/Z2version/" .
+                   "Z32uname/Z32gname/Z8devmajor/Z8devminor/Z131prefix";
+        }
+        $v_data = unpack($fmt, $v_binary_data);
+
+        if (strlen($v_data["prefix"]) > 0) {
+            $v_data["filename"] = "$v_data[prefix]/$v_data[filename]";
+        }
 
         // ----- Extract the checksum
         $v_header['checksum'] = OctDec(trim($v_data['checksum']));
@@ -1378,6 +1421,7 @@ class Archive_Tar extends PEAR
      * Detect and report a malicious file name
      *
      * @param string $file
+     *
      * @return bool
      * @access private
      */
@@ -1428,9 +1472,11 @@ class Archive_Tar extends PEAR
     // {{{ _extractInString()
     /**
     * This method extract from the archive one file identified by $p_filename.
-    * The return value is a string with the file content, or NULL on error.
-    * @param string $p_filename     The path of the file to extract in a string.
-    * @return                       a string with the file content or NULL.
+    * The return value is a string with the file content, or null on error.
+    *
+    * @param string $p_filename The path of the file to extract in a string.
+    *
+    * @return a string with the file content or null.
     * @access private
     */
     function _extractInString($p_filename)
@@ -1440,7 +1486,7 @@ class Archive_Tar extends PEAR
         While (strlen($v_binary_data = $this->_readBlock()) != 0)
         {
           if (!$this->_readHeader($v_binary_data, $v_header))
-            return NULL;
+            return null;
 
           if ($v_header['filename'] == '')
             continue;
@@ -1448,14 +1494,14 @@ class Archive_Tar extends PEAR
           // ----- Look for long filename
           if ($v_header['typeflag'] == 'L') {
             if (!$this->_readLongHeader($v_header))
-              return NULL;
+              return null;
           }
 
           if ($v_header['filename'] == $p_filename) {
               if ($v_header['typeflag'] == "5") {
                   $this->_error('Unable to extract in string a directory '
 				                .'entry {'.$v_header['filename'].'}');
-                  return NULL;
+                  return null;
               } else {
                   $n = floor($v_header['size']/512);
                   for ($i=0; $i<$n; $i++) {
@@ -1473,13 +1519,13 @@ class Archive_Tar extends PEAR
           }
         }
 
-        return NULL;
+        return null;
     }
     // }}}
 
     // {{{ _extractList()
     function _extractList($p_path, &$p_list_detail, $p_mode,
-	                      $p_file_list, $p_remove_path)
+                          $p_file_list, $p_remove_path, $p_preserve=false)
     {
     $v_result=true;
     $v_nb = 0;
@@ -1500,16 +1546,16 @@ class Archive_Tar extends PEAR
 
     switch ($p_mode) {
       case "complete" :
-        $v_extract_all = TRUE;
-        $v_listing = FALSE;
+        $v_extract_all = true;
+        $v_listing = false;
       break;
       case "partial" :
-          $v_extract_all = FALSE;
-          $v_listing = FALSE;
+          $v_extract_all = false;
+          $v_listing = false;
       break;
       case "list" :
-          $v_extract_all = FALSE;
-          $v_listing = TRUE;
+          $v_extract_all = false;
+          $v_listing = true;
       break;
       default :
         $this->_error('Invalid extract mode ('.$p_mode.')');
@@ -1547,29 +1593,33 @@ class Archive_Tar extends PEAR
             if ((strlen($v_header['filename']) > strlen($p_file_list[$i]))
 			    && (substr($v_header['filename'], 0, strlen($p_file_list[$i]))
 				    == $p_file_list[$i])) {
-              $v_extract_file = TRUE;
+              $v_extract_file = true;
               break;
             }
           }
 
           // ----- It is a file, so compare the file names
           elseif ($p_file_list[$i] == $v_header['filename']) {
-            $v_extract_file = TRUE;
+            $v_extract_file = true;
             break;
           }
         }
       } else {
-        $v_extract_file = TRUE;
+        $v_extract_file = true;
       }
 
       // ----- Look if this file need to be extracted
       if (($v_extract_file) && (!$v_listing))
       {
         if (($p_remove_path != '')
-            && (substr($v_header['filename'], 0, $p_remove_path_size)
-			    == $p_remove_path))
+            && (substr($v_header['filename'].'/', 0, $p_remove_path_size)
+			    == $p_remove_path)) {
           $v_header['filename'] = substr($v_header['filename'],
 		                                 $p_remove_path_size);
+          if( $v_header['filename'] == '' ){
+            continue;
+          }
+        }
         if (($p_path != './') && ($p_path != '/')) {
           while (substr($p_path, -1) == '/')
             $p_path = substr($p_path, 0, strlen($p_path)-1);
@@ -1646,6 +1696,11 @@ class Archive_Tar extends PEAR
             }
 
             @fclose($v_dest_file);
+            
+            if ($p_preserve) {
+                @chown($v_header['filename'], $v_header['uid']);
+                @chgrp($v_header['filename'], $v_header['gid']);
+            }
 
             // ----- Change the file mode, mtime
             @touch($v_header['filename'], $v_header['mtime']);
@@ -1658,12 +1713,19 @@ class Archive_Tar extends PEAR
 
           // ----- Check the file size
           clearstatcache();
-          if (filesize($v_header['filename']) != $v_header['size']) {
+          if (!is_file($v_header['filename'])) {
               $this->_error('Extracted file '.$v_header['filename']
-			                .' does not have the correct file size \''
-							.filesize($v_header['filename'])
-							.'\' ('.$v_header['size']
-							.' expected). Archive may be corrupted.');
+                            .'does not exist. Archive may be corrupted.');
+              return false;
+          }
+          
+          $filesize = filesize($v_header['filename']);
+          if ($filesize != $v_header['size']) {
+              $this->_error('Extracted file '.$v_header['filename']
+                            .' does not have the correct file size \''
+                            .$filesize
+                            .'\' ('.$v_header['size']
+                            .' expected). Archive may be corrupted.');
               return false;
           }
           }
@@ -1734,12 +1796,20 @@ class Archive_Tar extends PEAR
             }
 
             if ($this->_compress_type == 'gz') {
+                $end_blocks = 0;
+                
                 while (!@gzeof($v_temp_tar)) {
                     $v_buffer = @gzread($v_temp_tar, 512);
-                    if ($v_buffer == ARCHIVE_TAR_END_BLOCK) {
+                    if ($v_buffer == ARCHIVE_TAR_END_BLOCK || strlen($v_buffer) == 0) {
+                        $end_blocks++;
                         // do not copy end blocks, we will re-make them
                         // after appending
                         continue;
+                    } elseif ($end_blocks > 0) {
+                        for ($i = 0; $i < $end_blocks; $i++) {
+                            $this->_writeBlock(ARCHIVE_TAR_END_BLOCK);
+                        }
+                        $end_blocks = 0;
                     }
                     $v_binary_data = pack("a512", $v_buffer);
                     $this->_writeBlock($v_binary_data);
@@ -1748,9 +1818,19 @@ class Archive_Tar extends PEAR
                 @gzclose($v_temp_tar);
             }
             elseif ($this->_compress_type == 'bz2') {
+                $end_blocks = 0;
+                
                 while (strlen($v_buffer = @bzread($v_temp_tar, 512)) > 0) {
-                    if ($v_buffer == ARCHIVE_TAR_END_BLOCK) {
+                    if ($v_buffer == ARCHIVE_TAR_END_BLOCK || strlen($v_buffer) == 0) {
+                        $end_blocks++;
+                        // do not copy end blocks, we will re-make them
+                        // after appending
                         continue;
+                    } elseif ($end_blocks > 0) {
+                        for ($i = 0; $i < $end_blocks; $i++) {
+                            $this->_writeBlock(ARCHIVE_TAR_END_BLOCK);
+                        }
+                        $end_blocks = 0;
                     }
                     $v_binary_data = pack("a512", $v_buffer);
                     $this->_writeBlock($v_binary_data);
@@ -1812,7 +1892,7 @@ class Archive_Tar extends PEAR
      *
      * @param string $p_dir directory to check
      *
-     * @return bool TRUE if the directory exists or was created
+     * @return bool true if the directory exists or was created
      */
     function _dirCheck($p_dir)
     {
@@ -1881,7 +1961,11 @@ class Archive_Tar extends PEAR
                 }
             }
         }
-        $v_result = strtr($v_result, '\\', '/');
+        
+        if (defined('OS_WINDOWS') && OS_WINDOWS) {
+            $v_result = strtr($v_result, '\\', '/');
+        }
+        
         return $v_result;
     }
 

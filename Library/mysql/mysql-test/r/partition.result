@@ -67,6 +67,39 @@ AND A.b = '06'
 AND A.c = 343;
 DROP TABLE t1;
 #
+# Bug#57778: failed primary key add to partitioned innodb table
+#            inconsistent and crashes
+#
+CREATE TABLE t1 (a INT NOT NULL, b INT NOT NULL)
+PARTITION BY KEY (a) PARTITIONS 2;
+INSERT INTO t1 VALUES (0,1), (0,2);
+ALTER TABLE t1 ADD PRIMARY KEY (a);
+ERROR 23000: Duplicate entry '0' for key 'PRIMARY'
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int(11) NOT NULL,
+  `b` int(11) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+/*!50100 PARTITION BY KEY (a)
+PARTITIONS 2 */
+SELECT * FROM t1;
+a	b
+0	1
+0	2
+UPDATE t1 SET a = 1, b = 1 WHERE a = 0 AND b = 2;
+ALTER TABLE t1 ADD PRIMARY KEY (a);
+SELECT * FROM t1;
+a	b
+1	1
+0	1
+ALTER TABLE t1 DROP PRIMARY KEY;
+SELECT * FROM t1;
+a	b
+1	1
+0	1
+DROP TABLE t1;
+#
 # Bug#57113: ha_partition::extra(ha_extra_function):
 #            Assertion `m_extra_cache' failed
 CREATE TABLE t1
@@ -106,6 +139,48 @@ INSERT INTO t2 VALUES (2,8601,'JS');
 INSERT INTO t2 VALUES (3,8601,'John S');
 UPDATE t1, t2 SET t2.name = 'John Smith' WHERE t1.user_num = t2.user_num;
 DROP TABLE t1, t2;
+# Bug#39338: Fieldnames in
+#   INFORMATIONSCHEMA.PARTITIONS.PARTITION_EXPRESSION become unescaped
+# NOTE: the partition expression is saved as a string, so changing from
+#       normal quotes to ansi quotes does not change the expression, only
+#       for partition by KEY.
+CREATE TABLE t1 (
+ID int(11) NOT NULL,
+`aaaa,aaaaa` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
+ddddddddd int(11) NOT NULL DEFAULT '0',
+new_field0 varchar(50),
+PRIMARY KEY(ID, `aaaa,aaaaa`, ddddddddd))
+PARTITION BY RANGE(ID)
+PARTITIONS 3
+SUBPARTITION BY LINEAR KEY(ID,`aaaa,aaaaa`)
+SUBPARTITIONS 2 (
+PARTITION p01 VALUES LESS THAN(100),
+PARTITION p11 VALUES LESS THAN(200),
+PARTITION p21 VALUES LESS THAN MAXVALUE);
+SELECT PARTITION_EXPRESSION, SUBPARTITION_EXPRESSION FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME='t1';
+PARTITION_EXPRESSION	SUBPARTITION_EXPRESSION
+ID	`ID`,`aaaa,aaaaa`
+ID	`ID`,`aaaa,aaaaa`
+ID	`ID`,`aaaa,aaaaa`
+ID	`ID`,`aaaa,aaaaa`
+ID	`ID`,`aaaa,aaaaa`
+ID	`ID`,`aaaa,aaaaa`
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `ID` int(11) NOT NULL,
+  `aaaa,aaaaa` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `ddddddddd` int(11) NOT NULL DEFAULT '0',
+  `new_field0` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`ID`,`aaaa,aaaaa`,`ddddddddd`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+/*!50100 PARTITION BY RANGE (ID)
+SUBPARTITION BY LINEAR KEY (ID,`aaaa,aaaaa`)
+SUBPARTITIONS 2
+(PARTITION p01 VALUES LESS THAN (100) ENGINE = MyISAM,
+ PARTITION p11 VALUES LESS THAN (200) ENGINE = MyISAM,
+ PARTITION p21 VALUES LESS THAN MAXVALUE ENGINE = MyISAM) */
+drop table t1;
 CREATE TABLE t1 (a INT, b INT)
 PARTITION BY LIST (a)
 SUBPARTITION BY HASH (b)
@@ -143,6 +218,15 @@ a	b
 2007-07-30 17:35:48	p1
 2009-07-14 17:35:55	pmax
 2009-09-21 17:31:42	pmax
+SELECT * FROM t1 where a between '2007-01-01' and '2007-08-01';
+a	b
+2007-07-30 17:35:48	p1
+EXPLAIN PARTITIONS SELECT * FROM t1 where a between '2007-01-01' and '2007-08-01';
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	p1	system	PRIMARY	NULL	NULL	NULL	1	
+EXPLAIN PARTITIONS SELECT * FROM t1 where a = '2007-07-30 17:35:48';
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	p1	system	PRIMARY	NULL	NULL	NULL	1	
 ALTER TABLE t1 REORGANIZE PARTITION pmax INTO (
 PARTITION p3 VALUES LESS THAN (1247688000),
 PARTITION pmax VALUES LESS THAN MAXVALUE);
@@ -151,6 +235,15 @@ a	b
 2007-07-30 17:35:48	p1
 2009-07-14 17:35:55	pmax
 2009-09-21 17:31:42	pmax
+SELECT * FROM t1 where a between '2007-01-01' and '2007-08-01';
+a	b
+2007-07-30 17:35:48	p1
+EXPLAIN PARTITIONS SELECT * FROM t1 where a between '2007-01-01' and '2007-08-01';
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	p1	system	PRIMARY	NULL	NULL	NULL	1	
+EXPLAIN PARTITIONS SELECT * FROM t1 where a = '2007-07-30 17:35:48';
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	p1	system	PRIMARY	NULL	NULL	NULL	1	
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -176,14 +269,23 @@ partition by list (a)
 partition p1 values in (2));
 insert into t1 values (1,1),(2,1),(2,2),(2,3);
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
-t1	1	a	1	a	A	NULL	NULL	NULL	YES	BTREE	
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
+t1	1	a	1	a	A	NULL	NULL	NULL	YES	BTREE		
 analyze table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show indexes from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment
-t1	1	a	1	a	A	1	NULL	NULL	YES	BTREE	
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment
+t1	1	a	1	a	A	1	NULL	NULL	YES	BTREE		
+drop table t1;
+create table t1 (a int)
+partition by hash (a);
+create index i on t1 (a);
+insert into t1 values (1);
+insert into t1 select * from t1;
+create index i on t1 (a);
+ERROR 42000: Duplicate key name 'i'
+create index i2 on t1 (a);
 drop table t1;
 CREATE TABLE t1 (a INT, FOREIGN KEY (a) REFERENCES t0 (a))
 ENGINE=MyISAM
@@ -200,6 +302,42 @@ INSERT INTO t1 VALUES (NULL);
 INSERT INTO t1 VALUES (NULL);
 SELECT * FROM t1 WHERE pk < 0 ORDER BY pk;
 pk
+DROP TABLE t1;
+CREATE TABLE t1 (a INT)
+ENGINE=NonExistentEngine;
+Warnings:
+Warning	1286	Unknown storage engine 'NonExistentEngine'
+Warning	1266	Using storage engine MyISAM for table 't1'
+DROP TABLE t1;
+CREATE TABLE t1 (a INT)
+ENGINE=NonExistentEngine
+PARTITION BY HASH (a);
+Warnings:
+Warning	1286	Unknown storage engine 'NonExistentEngine'
+Warning	1266	Using storage engine MyISAM for table 't1'
+DROP TABLE t1;
+CREATE TABLE t1 (a INT)
+ENGINE=Memory;
+ALTER TABLE t1 ENGINE=NonExistentEngine;
+Warnings:
+Warning	1286	Unknown storage engine 'NonExistentEngine'
+ALTER TABLE t1
+PARTITION BY HASH (a)
+(PARTITION p0 ENGINE=Memory,
+PARTITION p1 ENGINE=NonExistentEngine);
+Warnings:
+Warning	1286	Unknown storage engine 'NonExistentEngine'
+ALTER TABLE t1 ENGINE=NonExistentEngine;
+Warnings:
+Warning	1286	Unknown storage engine 'NonExistentEngine'
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int(11) DEFAULT NULL
+) ENGINE=MEMORY DEFAULT CHARSET=latin1
+/*!50100 PARTITION BY HASH (a)
+(PARTITION p0 ENGINE = MEMORY,
+ PARTITION p1 ENGINE = MEMORY) */
 DROP TABLE t1;
 CREATE TABLE t1 (a INT NOT NULL, KEY(a))
 PARTITION BY RANGE(a)
@@ -379,6 +517,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	2
+Handler_read_last	0
 Handler_read_next	4
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -397,6 +536,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	2
+Handler_read_last	0
 Handler_read_next	4
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -427,6 +567,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	1
+Handler_read_last	0
 Handler_read_next	2
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -443,6 +584,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	1
+Handler_read_last	0
 Handler_read_next	2
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -459,6 +601,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	1
+Handler_read_last	0
 Handler_read_next	2
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -475,6 +618,7 @@ SHOW STATUS LIKE 'Handler_read_%';
 Variable_name	Value
 Handler_read_first	0
 Handler_read_key	1
+Handler_read_last	0
 Handler_read_next	2
 Handler_read_prev	0
 Handler_read_rnd	0
@@ -540,14 +684,12 @@ create table t1 (a bigint)
 partition by range (a)
 (partition p0 values less than (0xFFFFFFFFFFFFFFFF),
 partition p1 values less than (10));
-ERROR 42000: VALUES value must be of same type as partition function near '),
-partition p1 values less than (10))' at line 3
+ERROR HY000: VALUES value for partition 'p0' must have type INT
 create table t1 (a bigint)
 partition by list (a)
 (partition p0 values in (0xFFFFFFFFFFFFFFFF),
 partition p1 values in (10));
-ERROR 42000: VALUES value must be of same type as partition function near '),
-partition p1 values in (10))' at line 3
+ERROR HY000: VALUES value for partition 'p0' must have type INT
 create table t1 (a bigint unsigned)
 partition by range (a)
 (partition p0 values less than (100),
@@ -1361,7 +1503,6 @@ COMMIT;
 END|
 CALL test.p1(12);
 Warnings:
-Note	1051	Unknown table 't1'
 Warning	1196	Some non-transactional changed tables couldn't be rolled back
 CALL test.p1(13);
 Warnings:
@@ -1542,7 +1683,7 @@ DROP TABLE t1;
 CREATE TABLE t1 (a int)
 PARTITION BY RANGE(a)
 (PARTITION p0 VALUES LESS THAN (NULL));
-ERROR 42000: Not allowed to use NULL value in VALUES LESS THAN near '))' at line 3
+ERROR HY000: Not allowed to use NULL value in VALUES LESS THAN
 create table t1 (s1 int auto_increment primary key)
 partition by list (s1)
 (partition p1 values in (1),
@@ -2177,23 +2318,24 @@ COUNT(*)
 DROP TABLE t1;
 SET SESSION SQL_MODE=DEFAULT;
 #
-# BUG#45816 - assertion failure with index containing double 
-#             column on partitioned table
+# Bug#46198: Hang after failed ALTER TABLE on partitioned table.
 #
-CREATE TABLE t1 (
-a INT DEFAULT NULL,
-b DOUBLE DEFAULT NULL,
-c INT DEFAULT NULL,
-KEY idx2(b,a)
-) PARTITION BY HASH(c) PARTITIONS 3;
-INSERT INTO t1 VALUES (6,8,9);
-INSERT INTO t1 VALUES (6,8,10);
-SELECT  1 FROM t1 JOIN t1 AS t2 USING (a) FOR UPDATE;
-1
-1
-1
-1
-1
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (s1 INT PRIMARY KEY) PARTITION BY HASH(s1);
+LOCK TABLES t1 WRITE, t1 b READ;
+UNLOCK TABLES;
+ALTER TABLE t1 DROP PARTITION p1;
+ERROR HY000: DROP PARTITION can only be used on RANGE/LIST partitions
+SELECT * FROM t1;
+s1
+DROP TABLE t1;
+CREATE TABLE t1 (s1 VARCHAR(5) PRIMARY KEY) PARTITION BY KEY(s1);
+LOCK TABLES t1 WRITE, t1 b READ;
+UNLOCK TABLES;
+ALTER TABLE t1 ADD COLUMN (s3 VARCHAR(5) UNIQUE);
+ERROR HY000: A UNIQUE INDEX must include all columns in the table's partitioning function
+SELECT * FROM t1;
+s1
 DROP TABLE t1;
 #
 # BUG#51868 - crash with myisam_use_mmap and partitioned myisam tables
@@ -2206,4 +2348,92 @@ TRUNCATE TABLE t1;
 INSERT INTO t1 VALUES(0);
 DROP TABLE t1;
 SET GLOBAL myisam_use_mmap=default;
+#
+# Bug#13580775 ASSERTION FAILED: RECORD_LENGTH == M_RECORD_LENGTH,
+# FILE FILESORT_UTILS.CC
+#
+CREATE TABLE t1 (
+a INT PRIMARY KEY,
+b INT,
+c CHAR(1),
+d INT,
+KEY (c,d)
+) PARTITION BY KEY () PARTITIONS 1;
+INSERT INTO t1 VALUES (1,1,'a',1), (2,2,'a',1);
+SELECT 1 FROM t1 WHERE 1 IN
+(SELECT  group_concat(b)
+FROM t1
+WHERE c > geomfromtext('point(1 1)')
+GROUP BY b
+);
+1
+1
+1
+DROP TABLE t1;
+#
+# Bug#13011410 CRASH IN FILESORT CODE WITH GROUP BY/ROLLUP
+#
+CREATE TABLE t1 (
+a INT,
+b MEDIUMINT,
+c VARCHAR(300) CHARACTER SET hp8 COLLATE hp8_bin,
+PRIMARY KEY (a,c(299))) 
+ENGINE=myisam
+PARTITION BY LINEAR KEY () PARTITIONS 2;
+INSERT INTO t1 VALUES (1,2,'test'), (2,3,'hi'), (4,5,'bye');
+SELECT 1 FROM t1 WHERE b < SOME
+( SELECT 1 FROM t1 WHERE a >= 1
+GROUP BY b WITH ROLLUP
+HAVING b > geomfromtext("")
+);
+1
+DROP TABLE t1;
 End of 5.1 tests
+#
+# BUG#55385: UPDATE statement throws an error, but still updates
+#            the table entries
+CREATE TABLE t1_part (
+partkey int,
+nokey int
+) PARTITION BY LINEAR HASH(partkey) PARTITIONS 3;
+INSERT INTO t1_part VALUES (1, 1) , (10, 10);
+CREATE VIEW v1 AS SELECT * FROM t1_part;
+
+# Should be (1,1),(10,10)
+SELECT * FROM t1_part;
+partkey	nokey
+1	1
+10	10
+
+# Case 1
+# Update is refused because partitioning key is updated
+UPDATE t1_part AS A NATURAL JOIN t1_part B SET A.partkey = 2, B.nokey = 3;
+ERROR HY000: Primary key/partition key update is not allowed since the table is updated both as 'A' and 'B'.
+UPDATE t1_part AS A NATURAL JOIN t1_part B SET A.nokey = 2, B.partkey = 3;
+ERROR HY000: Primary key/partition key update is not allowed since the table is updated both as 'A' and 'B'.
+
+# Case 2
+# Like 1, but partition accessed through a view
+UPDATE t1_part AS A NATURAL JOIN v1 as B SET A.nokey = 2 , B.partkey = 3;
+ERROR HY000: Primary key/partition key update is not allowed since the table is updated both as 'A' and 'B'.
+UPDATE v1 AS A NATURAL JOIN t1_part as B SET A.nokey = 2 , B.partkey = 3;
+ERROR HY000: Primary key/partition key update is not allowed since the table is updated both as 'A' and 'B'.
+
+# Should be (1,1),(10,10)
+SELECT * FROM t1_part;
+partkey	nokey
+1	1
+10	10
+
+# Case 3
+# Update is accepted because partitioning key is not updated
+UPDATE t1_part AS A NATURAL JOIN t1_part B SET A.nokey = 2 , B.nokey = 3;
+
+# Should be (1,3),(10,3)
+SELECT * FROM t1_part;
+partkey	nokey
+1	3
+10	3
+
+DROP VIEW v1;
+DROP TABLE t1_part;

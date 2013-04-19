@@ -1,12 +1,12 @@
-#MNPP  Mac + Nginx + Percona + PHP or Python
+#MNPP  Mac + Nginx + Percona + PHP
 ###A high performance web server in a one-click installer.
 
 ## Contributors
 **This project is currently maintained by the following people:**    
 
 [Jair Gaxiola](https://github.com/jyr) (Core developer)    
+[Dmitry Demenchuk](https://github.com/mrded)    
 [César Salazar](http://cesarsalazar.mx/)    
-[HackerHub](http://www.hackerhub.com)
 
 **Pull requests authors**
 
@@ -17,7 +17,6 @@
 ##Features
 
 * Start / stop services global
-* Start / stop services individually
 * Open the default page MNPP
 * Set preferences - start  / stop global services
 
@@ -25,31 +24,46 @@
 
 * x86_64
 
+## Provisions
+
+Needs a update of php, percona or nginx? Only change the software version in bootstrap.sh, example:
+
+	PERCONA_URL='http://www.percona.com/redir/downloads/Percona-Server-5.5/Percona-Server-5.5.30-30.2/source/'
+	PERCONA_FILE='Percona-Server-5.5.30-rel30.2'
+
+After run
+
+	sudo sh /Applications/MNPP/provisions/bash/bootstrap.sh
+
 ##Set environment
 
 <pre><code>$ sudo sh /Applications/MNPP/init/environment.sh</code></pre>
 <pre><code>$ source /Users/youruser/.bash_profile</code></pre>
 
+## Dynamic Extensions
+
+MNPP by default only have mcrypt and gettext enabled, but if  you need more can you install it for each php version, before install autoconf.
+	
+	$ brew install autoconf
+
+Version: 52 | 53 | 54    
+
+	$ /Applications/MNPP/Library/php[VERSION]/bin/pecl install apc
+	
+You should add "extension=apc.so" to php.ini
+
 ##Runs from console
 
-Start    
-<pre><code>$ sudo mnpp --php[Version] --start</code></pre>
-Start only one service    
-<pre><code>$ sudo mnpp --start [service]</code></pre>
+All    
+<pre><code>$ sudo mnpp [Option] [Version]</code></pre>
+Only one service    
+<pre><code>$ sudo mnpp [Service] [Option]</code></pre>
 For php    
-<pre><code>$ sudo mnpp --start php[Version]</code></pre>
-version: 52 | 53    
-service: nginx | percona | uwsgi
+<pre><code>$sudo mnpp php [Option] [Version]</code></pre>
+Version: 52 | 53 | 54    
+Service: nginx | percona | php    
+Option: start | stop | restart    
 
-Stop    
-<pre><code>$ sudo mnpp --php[Version] --stop</code></pre>
-Stop only one service    
-<pre><code>$ sudo mnpp --stop [service]</code></pre>
-For php    
-<pre><code>$ sudo mnpp --stop php[Version]</code></pre>
-
-version: 52 | 53    
-service: nginx | percona | uwsgi
 
 ##Percona account
 

@@ -1308,9 +1308,11 @@ select f3()|
 select id, f3() from t1 as t11 order by id|
 # Degenerate cases work too :)
 select f0()|
+# But these should not (particularly views should be locked explicitly).
+--error ER_TABLE_NOT_LOCKED
 select * from v0|
+--error ER_TABLE_NOT_LOCKED
 select *, f0() from v0, (select 123) as d1|
-# But these should not !
 --error ER_TABLE_NOT_LOCKED
 select id, f3() from t1|
 --error ER_TABLE_NOT_LOCKED
@@ -2882,7 +2884,6 @@ create procedure bug4902()
 begin
   show charset like 'foo';
   show collation like 'foo';
-  show column types;
   show create table t1;
   show create database test;
   show databases like 'foo';
@@ -3335,28 +3336,20 @@ drop table t3|
 --disable_warnings
 drop procedure if exists bug6857|
 --enable_warnings
-create procedure bug6857(counter int)
+create procedure bug6857()
 begin
   declare t0, t1 int;
   declare plus bool default 0;
-
-  set t0 = current_time();
-  while counter > 0 do
-    set counter = counter - 1;
-  end while;
-  set t1 = current_time();
+  set t0 = unix_timestamp();
+  select sleep(1.1);
+  set t1 = unix_timestamp();
   if t1 > t0 then
     set plus = 1;
   end if;
   select plus;
 end|
 
-# QQ: This is currently disabled. Not only does it slow down a normal test
-#     run, it makes running with valgrind (or similar tools) extremely
-#     painful.
-# Make sure this takes at least one second on all machines in all builds.
-# 30000 makes it about 3 seconds on an old 1.1GHz linux.
-#call bug6857(300000)|
+call bug6857()|
 
 drop procedure bug6857|
 
@@ -3749,7 +3742,7 @@ begin
 end|
 
 set @qcs1 = @@query_cache_size|
-set global query_cache_size = 100000|
+set global query_cache_size = 102400|
 set @x = 1|
 insert into t1 values ("qc", 42)|
 select bug9902() from t1|
@@ -4062,34 +4055,41 @@ drop procedure bug11529|
 # BUG#6063: Stored procedure labels are subject to restrictions (partial)
 # BUG#7088: Stored procedures: labels won't work if character set is utf8
 #
+
+set character set utf8|
+
 --disable_warnings
 drop procedure if exists bug6063|
 drop procedure if exists bug7088_1|
 drop procedure if exists bug7088_2|
 --enable_warnings
 
---disable_parsing # temporarily disabled until Bar fixes BUG#11986
 create procedure bug6063()
-  lâbel: begin end|
-call bug6063()|
-# QQ Known bug: this will not show the label correctly.
-show create procedure bug6063|
+begin
+  lâbel: begin end;
+  label: begin end;
+  label1: begin end;
+end|
 
-set character set utf8|
 create procedure bug7088_1()
   label1: begin end label1|
+
 create procedure bug7088_2()
   läbel1: begin end|
+
+call bug6063()|
 call bug7088_1()|
 call bug7088_2()|
+
 set character set default|
+
+show create procedure bug6063|
 show create procedure bug7088_1|
 show create procedure bug7088_2|
 
 drop procedure bug6063|
 drop procedure bug7088_1|
 drop procedure bug7088_2|
---enable_parsing
 
 #
 # BUG#9565: "Wrong locking in stored procedure if a sub-sequent procedure
@@ -5208,20 +5208,15 @@ drop procedure bug5967|
 
 --disable_warnings
 drop procedure if exists bug13012|
+--enable_warnings
 # Disable warnings also for BACKUP/RESTORE: they are deprecated.
---replace_result $MYSQLTEST_VARDIR <MYSQLTEST_VARDIR>
 eval create procedure bug13012()
     BEGIN
        REPAIR TABLE t1;
-       BACKUP TABLE t1 to '$backupdir';
-       DROP TABLE t1;
-       RESTORE TABLE t1 FROM '$backupdir';
     END|
 call bug13012()|
 
 --enable_warnings
---remove_file $backupdir/t1.frm
---remove_file $backupdir/t1.MYD
 
 drop procedure bug13012|
 
@@ -5429,6 +5424,8 @@ drop procedure if exists bug15231_1|
 drop procedure if exists bug15231_2|
 drop procedure if exists bug15231_3|
 drop procedure if exists bug15231_4|
+drop procedure if exists bug15231_5|
+drop procedure if exists bug15231_6|
 --enable_warnings
 
 create table t3 (id int not null)|
@@ -5458,7 +5455,7 @@ end|
 create procedure bug15231_3()
 begin
   declare exit handler for sqlwarning
-    select 'Caught it (wrong)' as 'Result';
+    select 'Caught it (correct)' as 'Result';
 
   call bug15231_4();
 end|
@@ -5469,16 +5466,37 @@ begin
 
   set x = 'zap';
   select 'Missed it (correct)' as 'Result';
+  show warnings;
+end|
+
+create procedure bug15231_5()
+begin
+  declare exit handler for sqlwarning
+    select 'Caught it (wrong)' as 'Result';
+
+  call bug15231_6();
+end|
+
+create procedure bug15231_6()
+begin
+  declare x decimal(2,1);
+
+  set x = 'zap';
+  select 'Missed it (correct)' as 'Result';
+  select id from t3;
 end|
 
 call bug15231_1()|
 call bug15231_3()|
+call bug15231_5()|
 
-drop table if exists t3|
-drop procedure if exists bug15231_1|
-drop procedure if exists bug15231_2|
-drop procedure if exists bug15231_3|
-drop procedure if exists bug15231_4|
+drop table t3|
+drop procedure bug15231_1|
+drop procedure bug15231_2|
+drop procedure bug15231_3|
+drop procedure bug15231_4|
+drop procedure bug15231_5|
+drop procedure bug15231_6|
 
 
 #
@@ -7073,11 +7091,14 @@ select bug20777(9223372036854775807) as '9223372036854775807   2**63-1';
 select bug20777(9223372036854775808) as '9223372036854775808   2**63+0';
 select bug20777(9223372036854775809) as '9223372036854775809   2**63+1';
 select bug20777(9223372036854775810) as '9223372036854775810   2**63+2';
+--error ER_DATA_OUT_OF_RANGE
 select bug20777(-9223372036854775808) as 'lower bounds signed bigint';
 select bug20777(9223372036854775807) as 'upper bounds signed bigint';
+--error ER_DATA_OUT_OF_RANGE
 select bug20777(0) as 'lower bounds unsigned bigint';
 select bug20777(18446744073709551615) as 'upper bounds unsigned bigint';
 select bug20777(18446744073709551616) as 'upper bounds unsigned bigint + 1';
+--error ER_DATA_OUT_OF_RANGE
 select bug20777(-1) as 'lower bounds unsigned bigint - 1';
 
 create table examplebug20777 as select 
@@ -7088,10 +7109,8 @@ create table examplebug20777 as select
   bug20777(9223372036854775809) as '2**63+1',
   bug20777(18446744073709551614) as '2**64-2',
   bug20777(18446744073709551615) as '2**64-1', 
-  bug20777(18446744073709551616) as '2**64',
-  bug20777(0) as '0',
-  bug20777(-1) as '-1';
-insert into examplebug20777 values (1, 9223372036854775806, 9223372036854775807, 223372036854775808, 9223372036854775809, 18446744073709551614, 18446744073709551615, 8446744073709551616, 0, -1);
+  bug20777(18446744073709551616) as '2**64';
+insert into examplebug20777 values (1, 9223372036854775806, 9223372036854775807, 223372036854775808, 9223372036854775809, 18446744073709551614, 18446744073709551615, 8446744073709551616);
 show create table examplebug20777;
 select * from examplebug20777 order by i;
 
@@ -8203,14 +8222,13 @@ DROP FUNCTION f1;
 drop procedure if exists p;
 --enable_warnings
 set @old_mode= @@sql_mode;
-set @@sql_mode= pow(2,32)-1;
+set @@sql_mode= cast(pow(2,32)-1 as unsigned integer);
 select @@sql_mode into @full_mode;
 create procedure p() begin end;
 call p();
-select @@sql_mode;
 set @@sql_mode= @old_mode;
 # Rename SQL modes that differ in name between the server and the table definition.
-select replace(@full_mode, '?', 'NOT_USED') into @full_mode;
+select replace(@full_mode, ',,,', ',NOT_USED,') into @full_mode;
 select replace(@full_mode, 'ALLOW_INVALID_DATES', 'INVALID_DATES') into @full_mode;
 select name from mysql.proc where name = 'p' and sql_mode = @full_mode;
 drop procedure p;
@@ -8400,3 +8418,678 @@ DROP TABLE t1, t2;
 --echo # ------------------------------------------------------------------
 --echo # -- End of 5.1 tests
 --echo # ------------------------------------------------------------------
+
+#
+# Bug#39255: Stored procedures: crash if function references nonexistent table
+#
+
+--disable_warnings
+DROP FUNCTION IF EXISTS f1;
+DROP TABLE IF EXISTS t_non_existing;
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+delimiter |;
+CREATE FUNCTION f1() RETURNS INT
+BEGIN
+   DECLARE v INT;
+   SELECT a INTO v FROM t_non_existing;
+   RETURN 1;
+END|
+delimiter ;|
+
+CREATE TABLE t1 (a INT) ENGINE = myisam;
+INSERT INTO t1 VALUES (1);
+
+--error ER_NO_SUCH_TABLE
+SELECT * FROM t1 WHERE a = f1();
+
+DROP FUNCTION f1;
+DROP TABLE t1;
+
+#
+# Bug#36649: Condition area is not properly cleaned up after stored routine invocation
+#
+
+--disable_warnings
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+delimiter |;
+CREATE PROCEDURE p1(a INT, b CHAR)
+BEGIN
+  IF a > 0 THEN
+    CALL p1(a-1, 'ab');
+  ELSE
+    SELECT 1;
+  END IF;
+END|
+delimiter ;|
+
+SET @save_max_sp_recursion= @@max_sp_recursion_depth;
+SET @@max_sp_recursion_depth= 5;
+CALL p1(4, 'a');
+SET @@max_sp_recursion_depth= @save_max_sp_recursion;
+
+DROP PROCEDURE p1;
+
+#
+# Ensure that rules for message list clean up are being respected.
+#
+
+--disable_warnings
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+delimiter |;
+CREATE PROCEDURE p1(a CHAR)
+BEGIN
+  SELECT 1;
+  SELECT CAST('10 ' as UNSIGNED INTEGER);
+  SELECT 1;
+END|
+delimiter ;|
+
+CALL p1('data truncated parameter');
+
+DROP PROCEDURE p1;
+
+#
+# Cascading stored procedure/function calls.
+#
+
+--disable_warnings
+DROP PROCEDURE IF EXISTS p1;
+DROP PROCEDURE IF EXISTS p2;
+DROP PROCEDURE IF EXISTS p3;
+DROP PROCEDURE IF EXISTS p4;
+--enable_warnings
+
+delimiter |;
+CREATE PROCEDURE p1()
+  CALL p2()|
+CREATE PROCEDURE p2()
+  CALL p3()|
+CREATE PROCEDURE p3()
+  CALL p4()|
+CREATE PROCEDURE p4()
+BEGIN
+  SELECT 1;
+  SELECT CAST('10 ' as UNSIGNED INTEGER);
+  SELECT 2;
+END|
+delimiter ;|
+
+CALL p1();
+
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+DROP PROCEDURE p3;
+DROP PROCEDURE p4;
+
+--disable_warnings
+DROP FUNCTION IF EXISTS f1;
+DROP FUNCTION IF EXISTS f2;
+DROP FUNCTION IF EXISTS f3;
+DROP FUNCTION IF EXISTS f4;
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (a CHAR(2));
+
+INSERT INTO t1 VALUES ('aa');
+
+delimiter |;
+CREATE FUNCTION f1() RETURNS CHAR
+  RETURN (SELECT f2())|
+CREATE FUNCTION f2() RETURNS CHAR
+  RETURN (SELECT f3())|
+CREATE FUNCTION f3() RETURNS CHAR
+  RETURN (SELECT f4())|
+CREATE FUNCTION f4() RETURNS CHAR
+BEGIN
+  RETURN (SELECT a FROM t1);
+END|
+delimiter ;|
+
+SELECT f1();
+
+DROP FUNCTION f1;
+DROP FUNCTION f2;
+DROP FUNCTION f3;
+DROP FUNCTION f4;
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#34197: CREATE PROCEDURE fails when COMMENT truncated in non 
+--echo #            strict SQL mode
+--echo #
+
+--disable_warnings
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE PROCEDURE p1 ()
+COMMENT
+'12345678901234567890123456789012345678901234567890123456789012345678901234567890'
+BEGIN
+END;
+
+SELECT comment FROM mysql.proc WHERE name = "p1";
+
+SELECT routine_comment FROM information_schema.routines WHERE routine_name = "p1";
+
+DROP PROCEDURE p1;
+
+
+--echo #
+--echo # Bug #47313 assert in check_key_in_view during CALL procedure
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP VIEW IF EXISTS t1, t2_unrelated;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE VIEW t1 AS SELECT 10 AS f1;
+
+--echo # t1 refers to the view
+--error ER_NON_INSERTABLE_TABLE
+CALL p1(1);
+
+CREATE TEMPORARY TABLE t1 (f1 INT);
+
+--echo # t1 still refers to the view since it was inlined
+--error ER_NON_INSERTABLE_TABLE
+CALL p1(2);
+
+DROP VIEW t1;
+
+--echo # t1 now refers to the temporary table
+CALL p1(3);
+
+--echo # Check which values were inserted into the temp table.
+SELECT * FROM t1;
+
+DROP TEMPORARY TABLE t1;
+DROP PROCEDURE p1;
+
+--echo # Now test what happens if the sp cache is invalidated.
+
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE VIEW t1 AS SELECT 10 AS f1;
+CREATE VIEW v2_unrelated AS SELECT 1 AS r1;
+
+--echo # Load the procedure into the sp cache
+--error ER_NON_INSERTABLE_TABLE
+CALL p1(4);
+
+CREATE TEMPORARY TABLE t1 (f1 int);
+
+ALTER VIEW v2_unrelated AS SELECT 2 AS r1;
+
+--echo # Alter view causes the sp cache to be invalidated.
+--echo # Now t1 refers to the temporary table, not the view.
+CALL p1(5);
+
+--echo # Check which values were inserted into the temp table.
+SELECT * FROM t1;
+
+DROP TEMPORARY TABLE t1;
+DROP VIEW t1, v2_unrelated;
+DROP PROCEDURE p1;
+
+CREATE PROCEDURE p1(IN x INT) INSERT INTO t1 VALUES (x);
+CREATE TEMPORARY TABLE t1 (f1 INT);
+
+--echo # t1 refers to the temporary table
+CALL p1(6);
+
+CREATE VIEW t1 AS SELECT 10 AS f1;
+
+--echo # Create view causes the sp cache to be invalidated.
+--echo # t1 still refers to the temporary table since it shadows the view.
+CALL p1(7);
+
+DROP VIEW t1;
+
+--echo # Check which values were inserted into the temp table.
+SELECT * FROM t1;
+
+DROP TEMPORARY TABLE t1;
+DROP PROCEDURE p1;
+
+--echo #
+--echo # Bug #11918 Can't use a declared variable in LIMIT clause
+--echo #
+--disable_warnings
+drop table if exists t1;
+drop procedure if exists p1;
+--enable_warnings
+create table t1 (c1 int);
+insert into t1 (c1) values (1), (2), (3), (4), (5);
+
+delimiter |;
+create procedure p1()
+begin
+  declare a integer;
+  declare b integer;
+  select * from t1 limit a, b;
+end|
+delimiter ;|
+--echo # How do we handle NULL limit values?
+call p1();
+drop table t1;
+create table t1 (a int);
+insert into t1 (a) values (1), (2), (3), (4), (5);
+--echo #
+--echo # Do we correctly resolve identifiers in LIMIT?
+--echo # Since DROP and CREATE did not invalidate
+--echo # the SP cache, we can't test until
+--echo # we drop and re-create the procedure.
+--echo #
+--error ER_BAD_FIELD_ERROR
+call p1();
+--echo # 
+--echo # Drop and recreate the procedure, then repeat
+--echo #
+drop procedure p1;
+delimiter |;
+create procedure p1()
+begin
+  declare a integer;
+  declare b integer;
+  select * from t1 limit a, b;
+end|
+delimiter ;|
+--echo # Stored procedure variables are resolved correctly in the LIMIT
+call p1();
+drop table t1;
+create table t1 (c1 int);
+insert into t1 (c1) values (1), (2), (3), (4), (5);
+drop procedure p1;
+--echo # Try to create a procedure that
+--echo # refers to non-existing variables.
+--error ER_SP_UNDECLARED_VAR
+create procedure p1(p1 integer, p2 integer)
+  select * from t1 limit a, b;
+--echo #
+--echo # Try to use data types not allowed in LIMIT 
+--echo #
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 date, p2 date) select * from t1 limit p1, p2;
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 integer, p2 float) select * from t1 limit p1, p2;
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 integer, p2 char(1)) select * from t1 limit p1, p2;
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 varchar(5), p2 char(1)) select * from t1 limit p1, p2;
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 decimal, p2 decimal) select * from t1 limit p1, p2;
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create procedure p1(p1 double, p2 double) select * from t1 limit p1, p2;
+
+--echo #
+--echo # Finally, test the valid case.
+--echo #
+create procedure p1(p1 integer, p2 integer)
+  select * from t1 limit p1, p2;
+
+call p1(NULL, NULL);
+call p1(0, 0);
+call p1(0, -1);
+call p1(-1, 0);
+call p1(-1, -1);
+call p1(0, 1);
+call p1(1, 0);
+call p1(1, 5);
+call p1(3, 2);
+
+delimiter |;
+--echo # Try to create a function that
+--echo # refers to non-existing variables.
+--error ER_SP_UNDECLARED_VAR
+create function f1(p1 integer, p2 integer)
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit a, b);
+  return a;
+end|
+
+create function f1()
+  returns int
+begin
+  declare a, b, c int;
+  set a = (select count(*) from t1 limit b, c);
+  return a;
+end|
+
+delimiter ;|
+--echo # How do we handle NULL limit values?
+select f1();
+
+drop function f1;
+
+delimiter |;
+--echo #
+--echo # Try to use data types not allowed in LIMIT 
+--echo #
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 date, p2 date)
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 integer, p2 float)
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 integer, p2 char(1))
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 varchar(5), p2 char(1))
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 decimal, p2 decimal)
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--error ER_WRONG_SPVAR_TYPE_IN_LIMIT
+create function f1(p1 double, p2 double)
+  returns int
+begin
+  declare a int;
+  set a = (select count(*) from t1 limit p1, p2);
+  return a;
+end|
+
+--echo #
+--echo # Finally, test the valid case.
+--echo #
+
+create function f1(p1 integer, p2 integer)
+returns int
+begin
+  declare count int;
+  set count= (select count(*) from (select * from t1 limit p1, p2) t_1);
+  return count;
+end|
+
+delimiter ;|
+
+select f1(0, 0);
+select f1(0, -1);
+select f1(-1, 0);
+select f1(-1, -1);
+select f1(0, 1);
+select f1(1, 0);
+select f1(1, 5);
+select f1(3, 2);
+
+--echo # Cleanup
+drop table t1;
+drop procedure p1;
+drop function f1;
+
+--echo # 
+--echo # BUG#11766234: 59299: ASSERT (TABLE_REF->TABLE || TABLE_REF->VIEW) 
+--echo #               FAILS IN SET_FIELD_ITERATOR
+--echo # 
+
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 (a INT);
+CREATE VIEW v1 AS SELECT a FROM t2;
+CREATE PROCEDURE proc() SELECT * FROM t1 NATURAL JOIN v1;
+ALTER TABLE t2 CHANGE COLUMN a b CHAR;
+
+--echo
+--error ER_VIEW_INVALID
+CALL proc();
+--error ER_VIEW_INVALID
+CALL proc();
+
+--echo
+DROP TABLE t1,t2;
+DROP VIEW v1;
+DROP PROCEDURE proc;
+
+
+--echo
+--echo # --
+--echo # -- Bug 11765684 - 58674: SP-cache does not detect changes in
+--echo # -- pre-locking list caused by triggers
+--echo # --- 
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+DROP TABLE IF EXISTS t3;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE TABLE t1(a INT);
+CREATE TABLE t2(a INT);
+CREATE TABLE t3(a INT);
+
+CREATE PROCEDURE p1()
+  INSERT INTO t1(a) VALUES (1);
+
+--echo
+CREATE TRIGGER t1_ai AFTER INSERT ON t1
+  FOR EACH ROW
+    INSERT INTO t2(a) VALUES (new.a);
+
+--echo
+CALL p1();
+
+--echo
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1
+  FOR EACH ROW
+    INSERT INTO t3(a) VALUES (new.a);
+
+--echo
+CALL p1();
+
+--echo
+DROP TABLE t1, t2, t3;
+DROP PROCEDURE p1;
+--echo
+
+
+--echo
+--echo # --
+--echo # -- Bug#12652769 - 61470: case operator in stored routine retains old
+--echo # -- value of input parameter
+--echo # --- 
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE TABLE t1 (s1 CHAR(5) CHARACTER SET utf8);
+INSERT INTO t1 VALUES ('a');
+
+delimiter |;
+
+CREATE PROCEDURE p1(dt DATETIME, i INT)
+BEGIN
+  SELECT
+    CASE
+      WHEN i = 1 THEN 2
+      ELSE dt
+    END AS x1;
+
+  SELECT
+    CASE _latin1'a'
+      WHEN _utf8'a' THEN 'A'
+    END AS x2;
+
+  SELECT
+    CASE _utf8'a'
+      WHEN _latin1'a' THEN _utf8'A'
+    END AS x3;
+
+  SELECT
+    CASE s1
+      WHEN _latin1'a' THEN _latin1'b'
+      ELSE _latin1'c'
+    END AS x4
+  FROM t1;
+END|
+
+delimiter ;|
+
+--echo
+CALL p1('2011-04-03 05:14:10', 1);
+CALL p1('2011-04-03 05:14:11', 2);
+CALL p1('2011-04-03 05:14:12', 2);
+CALL p1('2011-04-03 05:14:13', 2);
+
+--echo
+DROP TABLE t1;
+DROP PROCEDURE p1;
+--echo
+
+--echo #
+--echo # Bug#12621017 - Crash if a sp variable is used in the
+--echo #                limit clause of a set statement
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP PROCEDURE IF EXISTS p1; 
+DROP PROCEDURE IF EXISTS p2;
+--enable_warnings
+
+CREATE TABLE t1 (c1 INT); 
+INSERT INTO t1 VALUES (1);
+
+delimiter |;
+
+CREATE PROCEDURE p1() 
+BEGIN 
+  DECLARE foo, cnt INT UNSIGNED DEFAULT 1; 
+  SET foo = (SELECT MIN(c1) FROM t1 LIMIT cnt); 
+END| 
+
+CREATE PROCEDURE p2()
+BEGIN
+
+DECLARE iLimit INT;
+DECLARE iVal INT;
+
+DECLARE cur1 CURSOR FOR
+  SELECT c1 FROM t1
+  LIMIT iLimit;
+
+SET iLimit=1;
+
+OPEN cur1;
+FETCH cur1 INTO iVal;
+
+END|
+
+delimiter ;|
+
+CALL p1();
+CALL p2();
+
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+DROP TABLE t1;
+
+--echo
+--echo # Bug#13805127: Stored program cache produces wrong result in same THD
+--echo
+
+delimiter |;
+
+CREATE PROCEDURE p1(x INT UNSIGNED)
+BEGIN
+  SELECT c1, t2.c2, count(c3)
+  FROM
+    (
+    SELECT 3 as c2 FROM dual WHERE x = 1
+    UNION
+    SELECT 2       FROM dual WHERE x = 1 OR x = 2
+    ) AS t1,
+    (
+    SELECT '2012-03-01 01:00:00' AS c1, 3 as c2, 1 as c3 FROM dual
+    UNION
+    SELECT '2012-03-01 02:00:00',       3,       2       FROM dual
+    UNION
+    SELECT '2012-03-01 01:00:00',       2,       1       FROM dual
+    ) AS t2
+  WHERE t2.c2 = t1.c2
+  GROUP BY c1, c2
+  ;
+END|
+
+delimiter ;|
+
+--echo
+CALL p1(1);
+CALL p1(2);
+CALL p1(1);
+
+DROP PROCEDURE p1;
+
+--echo # End of 5.5 test
+
+
+--echo #
+--echo # Bug#12663165 SP DEAD CODE REMOVAL DOESN'T UNDERSTAND CONTINUE HANDLERS
+--echo #
+
+--disable_warnings
+DROP FUNCTION IF EXISTS f1;
+--enable_warnings
+
+delimiter $;
+CREATE FUNCTION f1() RETURNS INT
+BEGIN
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+  BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION RETURN f1();
+    BEGIN
+     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION RETURN f1();
+     RETURN f1();
+    END;
+  END;
+RETURN 1;
+END $ 
+delimiter ;$
+
+# This used to cause an assertion.
+SELECT f1();
+
+DROP FUNCTION f1;

@@ -322,7 +322,7 @@ set session low_priority_updates=on;
 connection rl_wait;
 let $wait_condition=
   select count(*) = 1 from information_schema.processlist
-  where state = "Locked" and
+  where state = "Waiting for table level lock" and
   info = "update t1 set value='updated' where value='old'";
 --source include/wait_condition.inc
 
@@ -369,16 +369,6 @@ DROP PROCEDURE p1;
 
 DELETE FROM mysql.user WHERE User='mysqltest_1';
 FLUSH PRIVILEGES;
-
-
-#
-# Restore global concurrent_insert value. Keep in the end of the test file.
-#
-
-set @@global.concurrent_insert= @old_concurrent_insert;
-
-# Wait till all disconnects are completed
---source include/wait_until_count_sessions.inc
 
 
 --echo #
@@ -449,7 +439,73 @@ DROP FUNCTION f1;
 --disconnect con1
 --disconnect con2
 
-
 --echo # ------------------------------------------------------------------
 --echo # -- End of 5.1 tests
 --echo # ------------------------------------------------------------------
+
+--echo #
+--echo # Test for bug#11763757 "56510: ERROR 42000: FUNCTION DOES NOT EXIST
+--echo # IF NOT-PRIV USER RECONNECTS ".
+--echo #
+--echo # The real problem was that server was unable handle properly stored
+--echo # functions in databases which names contained dot.
+--echo #
+
+connection default;
+
+--disable_warnings
+DROP DATABASE IF EXISTS `my.db`;
+--enable_warnings
+
+create database `my.db`;
+use `my.db`;
+
+CREATE FUNCTION f1(a int) RETURNS INT RETURN a;
+
+--echo # Create new connection.
+connect (addcon, localhost, root,,);
+connection addcon;
+USE `my.db`;
+SELECT f1(1);
+SELECT `my.db`.f1(2);
+
+--echo # Switching to default connection.
+connection default;
+disconnect addcon;
+DROP DATABASE `my.db`;
+USE test;
+
+
+--echo #
+--echo # Bug#11763507 - 56224: FUNCTION NAME IS CASE-SENSITIVE
+--echo #
+SET @@SQL_MODE = '';
+DELIMITER $;
+
+CREATE EVENT teste_bug11763507 ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 HOUR 
+DO SELECT 1 $
+
+DELIMITER ;$
+# EVENTS
+--replace_column 6 # 7 # 8 # 9 #
+SHOW EVENTS LIKE 'teste_bug11763507';
+--replace_column 6 # 7 # 8 # 9 #
+SHOW EVENTS LIKE 'TESTE_bug11763507';
+
+--replace_column 4 # 
+SHOW CREATE EVENT teste_bug11763507;
+--replace_column 4 # 
+SHOW CREATE EVENT TESTE_bug11763507;
+
+DROP EVENT teste_bug11763507;
+--echo #END OF BUG#11763507 test.
+
+
+#
+# Restore global concurrent_insert value. Keep in the end of the test file.
+#
+
+set @@global.concurrent_insert= @old_concurrent_insert;
+
+# Wait till all disconnects are completed
+--source include/wait_until_count_sessions.inc

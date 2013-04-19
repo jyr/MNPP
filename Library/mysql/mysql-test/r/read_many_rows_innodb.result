@@ -64,8 +64,7 @@ start transaction;
 insert into t2 values(123);
 insert into t1 values(1);
 insert into t1 values(1);
-ERROR HY000: Lock wait timeout exceeded; try restarting transaction
-rollback;
+ERROR 40001: Deadlock found when trying to get lock; try restarting transaction
 select @a;
 @a
 NULL
@@ -78,10 +77,9 @@ start transaction;
 insert into t2 values(123);
 call proc24989();
 insert into t1 values(1);
-rollback;
 select @a,@b;
 @a	@b
-exception	NULL
+exception	deadlock
 select * from t2;
 f2
 commit;
@@ -92,9 +90,10 @@ insert into t2 values(123);
 call proc24989_2();
 insert into t1 values(1);
 commit;
+exception
+Outer handler
 continued
 continued
-rollback;
 select * from t2;
 f2
 drop procedure proc24989;

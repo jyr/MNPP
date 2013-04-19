@@ -1,6 +1,5 @@
 # -*- cperl -*-
-# Copyright (c) 2004-2006 MySQL AB, 2008 Sun Microsystems, Inc.
-# Use is subject to license terms.
+# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,7 +141,6 @@ sub mtr_exe_maybe_exists (@) {
   my @path= @_;
 
   map {$_.= ".exe"} @path if $::glob_win32;
-  map {$_.= ".nlm"} @path if $::glob_netware;
   foreach my $path ( @path )
   {
     if($::glob_win32)

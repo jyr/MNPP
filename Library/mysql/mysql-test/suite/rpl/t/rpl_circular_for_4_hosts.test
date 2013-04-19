@@ -14,6 +14,9 @@
 
 --source include/have_innodb.inc
 
+# Use wait_for_slave_to_(start|stop) for current connections
+let $keep_connection= 1;
+
 # Set up circular ring and new names for servers
 --echo *** Set up circular replication on four servers *** 
 --let $rpl_topology= 1->2->3->4->1
@@ -27,6 +30,7 @@ CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b VARCHAR(100), c INT NOT NULL, 
 CREATE TABLE t2 (a INT NOT NULL AUTO_INCREMENT, b VARCHAR(100), c INT NOT NULL, PRIMARY KEY(a)) ENGINE=InnoDB;
 --source include/rpl_sync.inc
 --connection server_4
+call mtr.add_suppression("Slave SQL.*Request to stop slave SQL Thread received while applying a group that has non-transactional changes; waiting for completion of the group");
 --echo
 
 #

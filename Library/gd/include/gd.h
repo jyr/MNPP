@@ -7,9 +7,9 @@ extern "C" {
 
 #define GD_MAJOR_VERSION 2
 #define GD_MINOR_VERSION 0
-#define GD_RELEASE_VERSION 34
+#define GD_RELEASE_VERSION 36
 #define GD_EXTRA_VERSION ""
-#define GD_VERSION_STRING "2.0.34"
+#define GD_VERSION_STRING "2.0.36"
 
 
 /* Do the DLL dance: dllexport when building the DLL,
@@ -62,6 +62,11 @@ extern "C"
 #endif
 
 /* some might want to set DEFAULT_FONTPATH from configure in config.h */
+#ifdef NETWARE
+/* default fontpath for netware systems, could probably be handled in configure for 2.1 */
+#define DEFAULT_FONTPATH "sys:/java/nwgfx/lib/x11/fonts/ttf;."
+#define PATHSEPARATOR ";"
+#endif
 
 /* 2.0.23: more Type 1 fonts */
 #ifndef DEFAULT_FONTPATH
@@ -130,7 +135,7 @@ extern "C"
 	based on the alpha channel value of the source color.
 	The resulting color is opaque. */
 
-   BGD_DECLARE(int) gdAlphaBlend (int dest, int src);
+BGD_DECLARE(int) gdAlphaBlend (int dest, int src);
 
   typedef struct gdImageStruct
   {
@@ -372,7 +377,8 @@ BGD_DECLARE(void) gdImageStringUp16 (gdImagePtr im, gdFontPtr f, int x, int y,
 BGD_DECLARE(int) gdFontCacheSetup (void);
 
 /* Optional: clean up after application is done using fonts in 
-BGD_DECLARE( ) gdImageStringFT(). */
+BGD_DECLARE( ) 
+ gdImageStringFT(). */
 BGD_DECLARE(void) gdFontCacheShutdown (void);
 /* 2.0.20: for backwards compatibility. A few applications did start calling
  this function when it first appeared although it was never documented. 

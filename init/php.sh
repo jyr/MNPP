@@ -8,17 +8,17 @@
 #              any size, especially busier sites.
 # processname: php-fpm
 
-if [ $1 == 53 ];then
-  php_fpm_CONF=/Applications/MNPP/conf/fpm/php-fpm.conf
-else
+if [ "$1" == "52" ];then
   php_fpm_CONF=/Applications/MNPP/conf/php52/php-fmp
+else
+  php_fpm_CONF=/Applications/MNPP/conf/php$1/php-fpm.conf
 fi
 
 prefix=/Applications/MNPP/Library/php$1
 exec_prefix=${prefix} 
 php_fpm_BIN=${exec_prefix}/sbin/php-fpm
 php_fpm_PID=/Applications/MNPP/run/php-fpm.pid
- 
+
 php_opts="--fpm-config $php_fpm_CONF"
  
 wait_for_pid () {
@@ -68,8 +68,8 @@ __export_library( ){
 	export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH
 	
   	if [ $found = 0 ] ; then
-		echo "alias drush='/Applications/MNPP/Library/php53/bin/php /Applications/MNPP/Library/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
-		echo "export PATH=/Applications/MNPP/init:/Applications/MNPP/Library/php53/bin:/Applications/MNPP/Library/mysql/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
+		echo "alias drush='/Applications/MNPP/Library/php54/bin/php /Applications/MNPP/Library/drush/drush.php'" >> /Users/$SUDO_USER/.bash_profile
+		echo "export PATH=/Applications/MNPP/init:/Applications/MNPP/Library/php54/bin:/Applications/MNPP/Library/mysql/bin:\$PATH" >> /Users/$SUDO_USER/.bash_profile
 		echo "alias mysql='/Applications/MNPP/Library/mysql/bin/mysql --socket=/Applications/MNPP/tmp/mysql/mysql.sock'" >> /Users/$SUDO_USER/.bash_profile
 		echo "export DYLD_LIBRARY_PATH=/Applications/MNPP/init:/Applications/MNPP/Library/lib:$DYLD_LIBRARY_PATH" >> /Users/$SUDO_USER/.bash_profile
   	fi
@@ -77,7 +77,7 @@ __export_library( ){
 
 __show_usage( ) {
  
-  echo "Usage: ${0} {53|52} {start|stop|quit|restart|reload|logrotate}"
+  echo "Usage: ${0} {54|53|52} {start|stop|quit|restart|reload|logrotate}"
   exit 1
 }
 
@@ -85,9 +85,10 @@ __set_privilegies
 __hosts
 __export_library
 
-if [ $1 == 53 ];then
+if [ "$1" == "53" ] || [ "$1" == "54" ];then
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/php52/bin/php-cgi" | wc -l`
+  #found=`ps -ef | grep "/Applications/MNPP/Library/php52/bin/php-cgi" | wc -l`
+  found=`ps -ef | grep "php-cgi" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-cgi
   fi
@@ -95,7 +96,6 @@ if [ $1 == 53 ];then
   case "$2" in
       start)
           echo -n "Starting php-fpm "
-
           $php_fpm_BIN $php_opts
 
           if [ "$?" != 0 ] ; then
@@ -154,8 +154,8 @@ if [ $1 == 53 ];then
       ;;
 
       restart)
-          $0 stop
-          $0 start
+          /Applications/MNPP/init/stop$1
+          /Applications/MNPP/init/start$1
       ;;
 
       reload)
@@ -179,11 +179,12 @@ if [ $1 == 53 ];then
   esac
 else
   
-  found=`ps -ef | grep "/Applications/MNPP/Library/php53/sbin/php-fpm" | wc -l`
+  #found=`ps -ef | grep "/Applications/MNPP/Library/php${1}/sbin/php-fpm" | wc -l`
+  found=`ps -ef | grep "php-fpm" | wc -l`
   if [ $found -gt 1 ] ; then
     killall php-fpm
   fi
-  
+
   case "${2}" in
       start|stop|quit|restart|reload|logrotate)
           /Applications/MNPP/Library/php52/sbin/php-fpm ${2}
@@ -193,3 +194,4 @@ else
         ;;
   esac
 fi
+

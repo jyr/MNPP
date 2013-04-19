@@ -3,20 +3,20 @@
 SED="/usr/bin/sed"
 prefix="/Applications/MNPP/Library/php53"
 exec_prefix="/Applications/MNPP/Library/php53"
-version="5.3.8"
-vernum="50308"
+version="5.3.24"
+vernum="50324"
 include_dir="${prefix}/include/php"
 includes="-I$include_dir -I$include_dir/main -I$include_dir/TSRM -I$include_dir/Zend -I$include_dir/ext -I$include_dir/ext/date/lib"
-ldflags=" -L/Applications/MNPP/Library/libxml/lib -L/Applications/MNPP/Library/zlib/lib -L/Applications/MNPP/Library/jpeg/lib -L/Applications/MNPP/Library/libpng/lib -L/usr/X11R6/lib -L/Applications/MNPP/Library/freetype/lib -L/Applications/MNPP/Library/gd/lib -L/Applications/MNPP/Library/libiconv/lib -L/Applications/MNPP/Library/mysql/lib/mysql -L/Applications/MNPP/Library/tidy/lib -L/Applications/MNPP/Library/libxslt/lib"
-libs="  -lexslt -ltidy -lresolv -ledit -lncurses -lmysqlclient -liconv -liconv -lgd -lfreetype -lX11 -lXpm -lpng -lz -ljpeg -lcurl -lbz2 -lz -lm  -lxml2 -lz -liconv -lm -lssl -lcrypto -lz -lcurl -lxml2 -lz -liconv -lm -lmysqlclient -lz -lm -lmysqlclient -lz -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxslt -lxml2 -lz -licucore -lm "
+ldflags=" -L/Applications/MNPP/Library/xml/lib -L/Applications/MNPP/Library/jpeg/lib -L/Applications/MNPP/Library/png/lib -L/Applications/MNPP/Library/freetype/lib -L/Applications/MNPP/Library/gd/lib -L/Applications/MNPP/Library/iconv/lib -L/Applications/MNPP/Library/mysql/lib -L/Applications/MNPP/Library/xslt/lib"
+libs="  -lexslt -lresolv -ledit -lncurses -lmysqlclient -liconv -liconv -lgd -lfreetype -lpng -lz -ljpeg -lcurl -lbz2 -lz -lm  -lxml2 -lz -liconv -lm -lcurl -lxml2 -lz -liconv -lm -lmysqlclient -lz -lmysqlclient -lz -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxml2 -lz -liconv -lm -lxslt -lxml2 "
 extension_dir='/Applications/MNPP/Library/php53/lib/php/extensions/no-debug-non-zts-20090626'
 man_dir=`eval echo ${prefix}/man`
 program_prefix=""
 program_suffix=""
-exe_extension=".dSYM"
+exe_extension=""
 php_cli_binary=NONE
 php_cgi_binary=NONE
-configure_options=" '--prefix=/Applications/MNPP/Library/php53' '--exec-prefix=/Applications/MNPP/Library/php53' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-tidy=/Applications/MNPP/Library/tidy' '--with-gd=/Applications/MNPP/Library/gd' '--with-gettext=shared,/Applications/MNPP/Library/gettext' '--with-freetype-dir=/Applications/MNPP/Library/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/libxml' '--with-xsl=/Applications/MNPP/Library/libxslt' '--with-mcrypt=shared,/Applications/MNPP/Library/mcrypt' '--with-mhash' '--with-mysql=/Applications/MNPP/Library/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config' '--with-openssl' '--with-zlib-dir=/Applications/MNPP/Library/zlib' '--with-png-dir=/Applications/MNPP/Library/libpng' '--with-readline' '--with-xpm-dir=/Applications/MNPP/Library/xpm' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php53' '--enable-fpm' '--with-fpm-user=www-data' '--with-fpm-group=www-data' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/libiconv' '--with-pdo-mysql=/Applications/MNPP/Library/mysql/bin/mysql_config' '--enable-soap'"
+configure_options=" '--prefix=/Applications/MNPP/Library/php53' '--exec-prefix=/Applications/MNPP/Library/php53' '--enable-cli' '--enable-gd-jis-conv' '--enable-gd-native-ttf' '--enable-mbstring' '--with-bz2' '--with-curl' '--with-gd=/Applications/MNPP/Library/gd' '--with-gettext=shared,/Applications/MNPP/Library/gettext' '--with-freetype-dir=/Applications/MNPP/Library/freetype' '--with-jpeg-dir=/Applications/MNPP/Library/jpeg' '--with-libxml-dir=/Applications/MNPP/Library/xml' '--with-xsl=/Applications/MNPP/Library/xslt' '--with-mcrypt=shared,/Applications/MNPP/Library/mcrypt' '--with-mhash=/Applications/MNPP/Library/mhash' '--with-mysql=/Applications/MNPP/Library/mysql' '--enable-sockets' '--with-mysqli=/Applications/MNPP/Library/mysql/bin/mysql_config' '--with-openssl-dir=/usr/include/openssl' '--with-zlib-dir=/Applications/MNPP/Library/zlib' '--with-png-dir=/Applications/MNPP/Library/png' '--with-readline' '--with-zlib' '--with-config-file-path=/Applications/MNPP/conf/php53' '--enable-fpm' '--with-fpm-user=www' '--with-fpm-group=www' '--with-libedit' '--enable-libxml' '--enable-dom' '--enable-simplexml' '--with-iconv=/Applications/MNPP/Library/iconv' '--with-pdo-mysql=/Applications/MNPP/Library/mysql/bin/mysql_config' '--enable-soap'"
 php_sapis="cli fpm"
 
 # Set php_cli_binary and php_cgi_binary if available

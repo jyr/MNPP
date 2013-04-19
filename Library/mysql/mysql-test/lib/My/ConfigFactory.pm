@@ -31,8 +31,19 @@ use File::Basename;
 #
 # Rules to run first of all
 #
+
+sub add_opt_values {
+  my ($self, $config)= @_;
+
+  # add auto-options
+  $config->insert('OPT', 'port'   => fix_port($self, $config) );
+  $config->insert('OPT', 'vardir' => sub { $self->{ARGS}->{vardir} });
+  $config->insert('mysqld', "loose-skip-$_" => undef) for (@::optional_plugins);
+}
+
 my @pre_rules=
 (
+  \&add_opt_values,
 );
 
 
@@ -53,6 +64,15 @@ sub get_testdir {
   return $testdir;
 }
 
+# Retrive build directory (which is different from basedir in out-of-source build)
+sub get_bindir {
+  if (defined $ENV{MTR_BINDIR})
+  {
+    return $ENV{MTR_BINDIR};
+  }
+  my ($self, $group)= @_;
+  return $self->get_basedir($group);
+}
 
 sub fix_charset_dir {
   my ($self, $config, $group_name, $group)= @_;
@@ -62,8 +82,8 @@ sub fix_charset_dir {
 
 sub fix_language {
   my ($self, $config, $group_name, $group)= @_;
-  return my_find_dir($self->get_basedir($group),
-		     \@share_locations, "english");
+  return my_find_dir($self->get_bindir($group),
+		     \@share_locations);
 }
 
 sub fix_datadir {
@@ -80,8 +100,8 @@ sub fix_pidfile {
 
 sub fix_port {
   my ($self, $config, $group_name, $group)= @_;
-  my $hostname= $group->value('#host');
-  return $self->{HOSTS}->{$hostname}++;
+  my $port= $self->{PORT}++;
+  return $port;
 }
 
 sub fix_host {
@@ -225,7 +245,7 @@ my @mysqld_rules=
  { 'basedir' => sub { return shift->{ARGS}->{basedir}; } },
  { 'tmpdir' => \&fix_tmpdir },
  { 'character-sets-dir' => \&fix_charset_dir },
- { 'language' => \&fix_language },
+ { 'lc-messages-dir' => \&fix_language },
  { 'datadir' => \&fix_datadir },
  { 'pid-file' => \&fix_pidfile },
  { '#host' => \&fix_host },
@@ -361,6 +381,7 @@ my @mysql_upgrade_rules=
 sub post_check_client_group {
   my ($self, $config, $client_group_name, $mysqld_group_name)= @_;
 
+
   #  Settings needed for client, copied from its "mysqld"
   my %client_needs=
     (
@@ -370,7 +391,6 @@ sub post_check_client_group {
      user       => '#user',
      password   => '#password',
     );
-
   my $group_to_copy_from= $config->group($mysqld_group_name);
   while (my ($name_to, $name_from)= each( %client_needs )) {
     my $option= $group_to_copy_from->option($name_from);
@@ -639,6 +659,7 @@ sub new_config {
   my $self= bless {
 		   CONFIG       => $config,
 		   ARGS         => $args,
+		   PORT         => $args->{baseport},
 		   HOSTS        => $hosts,
 		   NEXT_HOST    => 0,
 		   SERVER_ID    => 1,

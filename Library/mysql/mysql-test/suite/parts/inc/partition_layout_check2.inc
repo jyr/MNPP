@@ -43,6 +43,9 @@ if ($do_file_tests)
     --list_files_append_file $ls_file $MYSQLTEST_VARDIR/mysql-test-idx-dir t1*
   }
   eval SET @aux = load_file('$ls_file');
+
+  # clean up
+  --remove_file $ls_file
 }
 if (!$do_file_tests)
 {
@@ -64,7 +67,7 @@ let $run= `SELECT @aux`;
 if ($run)
 {
    --vertical_results
-   --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
+   --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR #p# #P# #sp# #SP#
    SELECT state,
    REPLACE(create_command,'\n',' ') AS "Table definition",
    REPLACE(file_list     ,'\n',' ') AS "File list"

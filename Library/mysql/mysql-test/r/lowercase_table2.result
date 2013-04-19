@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS t1,t2,t3,t2aA,t1Aa;
 DROP DATABASE IF EXISTS `TEST_$1`;
 DROP DATABASE IF EXISTS `test_$1`;
 DROP DATABASE IF EXISTS mysqltest_LC2;
-CREATE TABLE T1 (a int);
+CREATE TABLE T1 (a int) ENGINE=MyISAM;
 INSERT INTO T1 VALUES (1);
 SHOW TABLES LIKE "T1";
 Tables_in_test (T1)
@@ -204,4 +204,76 @@ BUP_XPFM_COMPAT_DB2	trigger1	table1
 BUP_XPFM_COMPAT_DB2	TRIGGER2	TABLE2
 BUP_XPFM_COMPAT_DB2	TrigGer3	table3
 DROP DATABASE BUP_XPFM_COMPAT_DB2;
-End of 5.1 tests
+# End of 5.1 tests
+#
+# Test for bug #44738 "fill_schema_table_from_frm() opens tables without
+# lowercasing table name". Due to not properly normalizing table names
+# in lower_case_table_names modes in this function queries to I_S which
+# were executed through it left entries with incorrect key in table
+# definition cache. As result further queries to I_S that used this
+# function produced stale results in cases when table definition was
+# changed by a DDL statement. Also combination of this issue and a
+# similar problem in CREATE TABLE (it also has peeked into table
+# definition cache using non-normalized key) led to spurious
+# ER_TABLE_EXISTS_ERROR errors when one tried to create table with the
+# same name as a previously existing but dropped table.
+#
+drop database if exists mysqltest_UPPERCASE;
+drop table if exists t_bug44738_UPPERCASE;
+create database mysqltest_UPPERCASE;
+use mysqltest_UPPERCASE;
+create table t_bug44738_UPPERCASE (i int) comment='Old comment';
+create table t_bug44738_lowercase (i int) comment='Old comment';
+select table_schema, table_name, table_comment from information_schema.tables
+where table_schema like 'mysqltest_%' and table_name like 't_bug44738_%'
+  order by table_name;
+table_schema	table_name	table_comment
+mysqltest_UPPERCASE	t_bug44738_lowercase	Old comment
+mysqltest_UPPERCASE	t_bug44738_UPPERCASE	Old comment
+alter table t_bug44738_UPPERCASE comment='New comment';
+alter table t_bug44738_lowercase comment='New comment';
+# There should be no stale entries in TDC for our tables after the
+# above ALTER TABLE statements so new version of comments should be
+# returned by the below query to I_S.
+select table_schema, table_name, table_comment from information_schema.tables
+where table_schema like 'mysqltest_%' and table_name like 't_bug44738_%'
+  order by table_name;
+table_schema	table_name	table_comment
+mysqltest_UPPERCASE	t_bug44738_lowercase	New comment
+mysqltest_UPPERCASE	t_bug44738_UPPERCASE	New comment
+drop database mysqltest_UPPERCASE;
+use test;
+# Let us check that the original test case which led to discovery
+# of this problem also works.
+create table t_bug44738_UPPERCASE (i int);
+select table_schema, table_name, table_comment from information_schema.tables
+where table_schema = 'test' and table_name like 't_bug44738_%';
+table_schema	table_name	table_comment
+test	t_bug44738_UPPERCASE	
+drop table t_bug44738_UPPERCASE;
+# After the above DROP TABLE there are no entries in TDC which correspond
+# to our table and therefore the below statement should succeed.
+create table t_bug44738_UPPERCASE (i int);
+drop table t_bug44738_UPPERCASE;
+# Finally, let us check that another issue which was exposed by
+# the original test case is solved. I.e. that the table is not 
+# created if there is an entry for it in TDC even though it was 
+# removed from disk.
+create table t_bug44738_UPPERCASE (i int) engine = myisam;
+# Load table definition in TDC.
+select table_schema, table_name, table_comment from information_schema.tables
+where table_schema = 'test' and table_name like 't_bug44738_%';
+table_schema	table_name	table_comment
+test	t_bug44738_UPPERCASE	
+# Simulate manual removal of the table.
+# Check that still there is an entry for table in TDC.
+show open tables like 't_bug44738_%';
+Database	Table	In_use	Name_locked
+test	t_bug44738_uppercase	0	0
+# So attempt to create table with the same name should fail.
+create table t_bug44738_UPPERCASE (i int);
+ERROR HY000: Can't find file: 't_bug44738_uppercase' (errno: 2)
+# And should succeed after FLUSH TABLES.
+flush tables;
+create table t_bug44738_UPPERCASE (i int);
+drop table t_bug44738_UPPERCASE;

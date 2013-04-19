@@ -1,6 +1,5 @@
 # -*- cperl -*-
-# Copyright (c) 2004-2006 MySQL AB, 2008 Sun Microsystems, Inc.
-# Use is subject to license terms.
+# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +80,7 @@ sub mtr_get_opts_from_file ($) {
   {
     chomp;
 
-    #    --set-variable=init_connect=set @a='a\\0c'
+    #    --init_connect=set @a='a\\0c'
     s/^\s+//;                           # Remove leading space
     s/\s+$//;                           # Remove ending space
 

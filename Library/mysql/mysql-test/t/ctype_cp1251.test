@@ -47,6 +47,16 @@ insert into t1 (a) values ('air'),
 select * from t1 where a like 'we_%';
 drop table t1;
 
+#
+# Bug#158 ENUM and SET types does not accept valid cp1251 character
+#
+CREATE TABLE t1 (
+  e1 enum('ябълка'),
+  e2 enum('мляко')
+) ENGINE=MYISAM character set cp1251;
+SHOW CREATE TABLE t1;
+DROP TABLE t1;
+
 # End of 4.1 tests
 
 --echo #
@@ -61,10 +71,30 @@ drop table t1;
 #            (triggered by Valgrind tests)
 #  (see also ctype_eucjpms.test, ctype_cp1250.test, ctype_cp1251.test)
 #
---error 1105
+--error 1649
 set global LC_TIME_NAMES=convert((-8388608) using cp1251);
 
 
 --echo #
 --echo # End of 5.1 tests
+--echo #
+
+--echo #
+--echo # Start of 5.5 tests
+--echo #
+
+--source include/ctype_numconv.inc
+
+--echo #
+--echo # Bug#60101 COALESCE with cp1251 tables causes [Err] 1267 - Illegal mix of collations
+--echo #
+CREATE TABLE t1 (test1 INT, test2 VARCHAR(255));
+SHOW CREATE TABLE t1;
+SELECT COALESCE(IF(test1=1, 1, NULL), test2) FROM t1;
+SELECT COALESCE(IF(test1=1, NULL, 1), test2) FROM t1;
+DROP TABLE t1;
+
+
+--echo #
+--echo # End of 5.5 tests
 --echo #

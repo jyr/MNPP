@@ -178,17 +178,21 @@ let $binlog_file= query_get_value(SHOW MASTER STATUS, File, 1);
 let $binlog_start= query_get_value(SHOW MASTER STATUS, Position, 1);
 
 --echo
---echo # Case 2: DROP TEMPORARY TABLE in a transacation(happens only on 5.5+)
---echo # --------------------------------------------------------------------
+--echo # Case 2: DROP TEMPORARY TABLE in a transacation
+--echo # ----------------------------------------------
 --echo
 
 BEGIN;
 DROP TEMPORARY TABLE t1;
 
---echo # The statement will binlogged after 'DROP TEMPORARY TABLE t1'
-INSERT INTO t1 VALUES(1);
+# The patch for BUG#55478 fixed the problem only on RBR. The problem on SBR
+# will be fixed by the patch for bug#55709. So This statement cannot be
+# executed until Bug#55709 is fixed
+#
+# INSERT INTO t1 VALUES(1);
 
---echo # The rows event will binlogged after 'INSERT INTO t1 VALUES(1)'
+--echo # The rows event will binlogged before 'DROP TEMPORARY TABLE t1',
+--echo # as t1 is non-transactional table
 INSERT INTO t1 VALUES(Rand());
 COMMIT;
 

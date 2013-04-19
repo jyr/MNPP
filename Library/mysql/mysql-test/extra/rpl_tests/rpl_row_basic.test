@@ -6,6 +6,16 @@
 # First we test tables with only an index.
 #
 
+#BUG#12662190 - COM_COMMIT IS NOT INCREMENTED FROM THE BINARY LOGS ON SLAVE, COM_BEGIN IS
+#Testing command counters -BEFORE 
+#Storing the before counts of Slave
+connection slave;
+let $slave_com_commit_before= query_get_value(SHOW GLOBAL STATUS LIKE 'com_commit', Value, 1);
+let $slave_com_insert_before= query_get_value(SHOW GLOBAL STATUS LIKE 'com_insert', Value, 1);
+let $slave_com_delete_before= query_get_value(SHOW GLOBAL STATUS LIKE 'com_delete', Value, 1);
+let $slave_com_update_before= query_get_value(SHOW GLOBAL STATUS LIKE 'com_update', Value, 1);
+
+connection master;
 eval CREATE TABLE t1 (C1 CHAR(1), C2 CHAR(1), INDEX (C1)$extra_index_t1) ENGINE = $type ;
 SELECT * FROM t1;
 sync_slave_with_master;
@@ -38,6 +48,32 @@ UPDATE t1 SET C2 = 'I' WHERE C1 = 'A' AND C2 = 'C';
 SELECT * FROM t1 ORDER BY C1,C2;
 sync_slave_with_master;
 SELECT * FROM t1 ORDER BY C1,C2;
+
+#BUG#12662190 - COM_COMMIT IS NOT INCREMENTED FROM THE BINARY LOGS ON SLAVE, COM_BEGIN IS
+#Testing command counters -AFTER 
+#Storing the after counts of Slave
+connection slave;
+let $slave_com_commit_after= query_get_value(SHOW GLOBAL STATUS LIKE 'com_commit', Value, 1);
+let $slave_com_insert_after= query_get_value(SHOW GLOBAL STATUS LIKE 'com_insert', Value, 1);
+let $slave_com_delete_after= query_get_value(SHOW GLOBAL STATUS LIKE 'com_delete', Value, 1);
+let $slave_com_update_after= query_get_value(SHOW GLOBAL STATUS LIKE 'com_update', Value, 1);
+
+#Commit count check
+--let $assert_text= Counter for COM_COMMIT is consistent with the number of actual commits
+--let $assert_cond= $slave_com_commit_after - $slave_com_commit_before = 4
+--source include/assert.inc
+#Insert count check
+--let $assert_text= Counter for COM_INSERT is consistent with the number of actual inserts
+--let $assert_cond= $slave_com_insert_after - $slave_com_insert_before = 2
+--source include/assert.inc
+#Delete count check
+--let $assert_text= Counter for COM_DELETE is consistent with the number of actual deletes
+--let $assert_cond= $slave_com_delete_after - $slave_com_delete_before = 1
+--source include/assert.inc
+#Update count check
+--let $assert_text= Counter for COM_UPDATE is consistent with the number of actual updates
+--let $assert_cond= $slave_com_update_after - $slave_com_update_before = 1
+--source include/assert.inc
 
 # Testing update with a condition that does not match any rows, but
 # which has a match for the index.
@@ -156,6 +192,12 @@ SELECT * FROM t5,t2,t3 WHERE t5.C2='Q' AND t2.c12='R' AND t3.C3 ='S' ORDER BY t5
 # Testing special column types
 #
 
+if (`select char_length('$bit_field_special') > 0`) {
+  connection slave;
+  SET @saved_slave_type_conversions = @@SLAVE_TYPE_CONVERSIONS;
+  eval SET GLOBAL SLAVE_TYPE_CONVERSIONS = '$bit_field_special';
+}
+
 connection master;
 eval CREATE TABLE t4 (C1 CHAR(1) PRIMARY KEY, B1 BIT(1), B2 BIT(1) NOT NULL DEFAULT 0, C2 CHAR(1) NOT NULL DEFAULT 'A') ENGINE = $type ;
 
@@ -163,6 +205,10 @@ INSERT INTO t4 SET C1 = 1;
 SELECT C1,HEX(B1),HEX(B2) FROM t4 ORDER BY C1;
 sync_slave_with_master;
 SELECT C1,HEX(B1),HEX(B2) FROM t4 ORDER BY C1;
+
+if (`select char_length('$bit_field_special') > 0`) {
+  SET GLOBAL SLAVE_TYPE_CONVERSIONS = @saved_slave_type_conversions;
+}
 
 #
 # Testing conflicting operations
@@ -347,6 +393,10 @@ eval CREATE TABLE t7 (i INT NOT NULL,
                       c CHAR(255) CHARACTER SET utf8 NOT NULL,
                       j INT NOT NULL) ENGINE = $type ;
 
+connection slave;
+SET @saved_slave_type_conversions = @@slave_type_conversions;
+SET GLOBAL SLAVE_TYPE_CONVERSIONS = 'ALL_NON_LOSSY';
+
 --echo [expecting slave to replicate correctly]
 connection master;
 INSERT INTO t1 VALUES (1, "", 1);
@@ -365,18 +415,11 @@ sync_slave_with_master;
 let $diff_tables= master:t2, slave:t2;
 source include/diff_tables.inc;
 
---echo [expecting slave to stop]
-connection master;
-INSERT INTO t3 VALUES (1, "", 1);
-INSERT INTO t3 VALUES (2, repeat(_utf8'a', 128), 2);
-
 connection slave;
-# 1535 = ER_BINLOG_ROW_WRONG_TABLE_DEF
+SET GLOBAL SLAVE_TYPE_CONVERSIONS = @saved_slave_type_conversions;
 call mtr.add_suppression("Slave SQL.*Table definition on master and slave does not match: Column 1 size mismatch.* Error_code: 1535");
 call mtr.add_suppression("Slave SQL.*Could not execute Delete_rows event on table test.t1.* Error_code: 1032");
---let $slave_sql_errno= 1535
---let $show_slave_sql_error= 1
---source include/wait_for_slave_sql_error.inc
+call mtr.add_suppression("Slave SQL.*Column 1 of table .test.t.. cannot be converted from type.*, Error_code: 1677");
 
 --let $rpl_only_running_threads= 1
 --source include/rpl_reset.inc
@@ -396,8 +439,8 @@ INSERT INTO t5 VALUES (1, "", 1);
 INSERT INTO t5 VALUES (2, repeat(_utf8'a', 255), 2);
 
 connection slave;
-# 1535 = ER_BINLOG_ROW_WRONG_TABLE_DEF 
---let $slave_sql_errno= 1535
+# 1677 = ER_SLAVE_CONVERSION_FAILED 
+--let $slave_sql_errno= 1677 
 --let $show_slave_sql_error= 1
 --source include/wait_for_slave_sql_error.inc
 
@@ -409,8 +452,8 @@ INSERT INTO t6 VALUES (1, "", 1);
 INSERT INTO t6 VALUES (2, repeat(_utf8'a', 255), 2);
 
 connection slave;
-# 1535 = ER_BINLOG_ROW_WRONG_TABLE_DEF 
---let $slave_sql_errno= 1535
+# 1677 = ER_SLAVE_CONVERSION_FAILED 
+--let $slave_sql_errno= 1677 
 --let $show_slave_sql_error= 1
 --source include/wait_for_slave_sql_error.inc
 
@@ -575,7 +618,15 @@ sync_slave_with_master;
 
 connection master;
 
+# Since t1 contain a bit field, we have to do this trick to handle InnoDB
+if (`select char_length('$bit_field_special') > 0`) {
+  connection slave;
+  SET @saved_slave_type_conversions = @@SLAVE_TYPE_CONVERSIONS;
+  eval SET GLOBAL SLAVE_TYPE_CONVERSIONS = '$bit_field_special';
+}
+
 --disable_warnings
+connection master;
 eval CREATE TABLE t1 (a bit) ENGINE=$type;
 INSERT IGNORE INTO t1 VALUES (NULL);
 INSERT INTO t1 ( a ) VALUES ( 0 );
@@ -619,6 +670,10 @@ UPDATE t1 SET a = 9 WHERE a < 5 LIMIT 3;
 --enable_warnings
 
 sync_slave_with_master;
+
+if (`select char_length('$bit_field_special') > 0`) {
+  SET GLOBAL SLAVE_TYPE_CONVERSIONS = @saved_slave_type_conversions;
+}
 
 let $diff_tables= master:t1, slave:t1;
 source include/diff_tables.inc;

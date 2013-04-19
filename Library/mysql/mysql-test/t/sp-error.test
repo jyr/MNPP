@@ -723,7 +723,7 @@ lock table t1 read|
 # This should fail since we forgot to lock mysql.proc for writing
 # explicitly, and we can't open mysql.proc for _writing_ if there
 # are locked tables.
---error 1100
+--error ER_LOCK_OR_ACTIVE_TRANSACTION
 alter procedure bug9566 comment 'Some comment'|
 unlock tables|
 # This should succeed
@@ -1325,11 +1325,6 @@ CREATE TRIGGER tr1 BEFORE INSERT ON t1 FOR EACH ROW BEGIN DROP TRIGGER test1; EN
 -- error ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG
 CREATE FUNCTION bug_13627_f() returns int BEGIN DROP TRIGGER test1; return 1; END |
 
--- error ER_SP_BADSTATEMENT
-CREATE TRIGGER tr1 BEFORE INSERT ON t1 FOR EACH ROW BEGIN load table t1 from master; END |
--- error ER_SP_BADSTATEMENT
-CREATE FUNCTION bug_13627_f() returns int BEGIN load table t1 from master; return 1; END |
-
 -- error ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG
 CREATE TRIGGER tr1 BEFORE INSERT ON t1 FOR EACH ROW BEGIN create table t2 (a int); END |
 -- error ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG
@@ -1578,18 +1573,6 @@ DROP FUNCTION IF EXISTS bug13012|
 CREATE FUNCTION bug13012() RETURNS INT
 BEGIN
   REPAIR TABLE t1;
-  RETURN 1;
-END|
---error ER_SP_NO_RETSET
-CREATE FUNCTION bug13012() RETURNS INT
-BEGIN
-  BACKUP TABLE t1 TO '/tmp';
-  RETURN 1;
-END|
---error ER_SP_NO_RETSET
-CREATE FUNCTION bug13012() RETURNS INT
-BEGIN
-  RESTORE TABLE t1 FROM '/tmp';
   RETURN 1;
 END|
 create table t1 (a int)|
@@ -2386,7 +2369,7 @@ drop procedure if exists p1;
 delimiter |;
 create procedure p1()
 begin
-  create table t1 (a int) type=MyISAM;
+  create table t1 (a int) engine=MyISAM;
   drop table t1;
 end|
 delimiter ;|
@@ -2419,6 +2402,64 @@ end$$
 
 delimiter ;$$
 
+#
+# Bug#36510 (Stored Procedures: mysql_error_code 0 should be illegal)
+#
+
+--disable_warnings
+drop procedure if exists proc_36510;
+--enable_warnings
+
+delimiter $$;
+
+--error ER_SP_BAD_SQLSTATE
+create procedure proc_36510()
+begin
+  declare should_be_illegal condition for sqlstate '00123';
+  declare continue handler for should_be_illegal set @x=0;
+end$$
+
+--error ER_SP_BAD_SQLSTATE
+create procedure proc_36510()
+begin
+  declare continue handler for sqlstate '00123' set @x=0;
+end$$
+
+--error ER_WRONG_VALUE
+create procedure proc_36510()
+begin
+  declare should_be_illegal condition for 0;
+  declare continue handler for should_be_illegal set @x=0;
+end$$
+
+--error ER_WRONG_VALUE
+create procedure proc_36510()
+begin
+  declare continue handler for 0 set @x=0;
+end$$
+delimiter ;$$
+
+#
+# Bug#15192: "fatal errors" are caught by handlers in stored procedures
+#
+
+--disable_warnings
+drop procedure if exists p1;
+--enable_warnings
+set @old_recursion_depth = @@max_sp_recursion_depth;
+set @@max_sp_recursion_depth = 255;
+delimiter |;
+create procedure p1(a int)
+begin
+  declare continue handler for 1436 -- ER_STACK_OVERRUN_NEED_MORE
+    select 'exception';
+  call p1(a+1);
+end|
+delimiter ;|
+--error 0,ER_STACK_OVERRUN_NEED_MORE,ER_SP_RECURSION_LIMIT
+call p1(1);
+set @@max_sp_recursion_depth = @old_recursion_depth;
+drop procedure p1;
 
 #
 # BUG#NNNN: New bug synopsis
@@ -2448,6 +2489,35 @@ SELECT AVG (a) FROM t1 WHERE b = 999999;
 --error ER_SP_DOES_NOT_EXIST
 SELECT non_existent (a) FROM t1 WHERE b = 999999;
 DROP TABLE t1;
+
+
+#
+# Bug #46374 crash, INSERT INTO t1 uses function, function modifies t1
+#
+CREATE TABLE t1 ( f2 INTEGER, f3 INTEGER );
+INSERT INTO t1 VALUES  ( 1, 1 );
+
+delimiter |;
+
+CREATE FUNCTION func_1 () RETURNS INTEGER
+BEGIN
+  INSERT INTO t1 SELECT * FROM t1 ;
+  RETURN 1 ;
+END|
+
+delimiter ;|
+
+# The bug caused the following INSERT statement to trigger
+# an assertion.   Error 1442 is the correct response
+#
+--error 1442
+INSERT INTO t1 SELECT * FROM (SELECT 2 AS f1, 2 AS f2) AS A WHERE func_1() = 5;
+
+# Cleanup
+DROP FUNCTION func_1;
+DROP TABLE t1;
+
+
 
 --echo #
 --echo # Bug #47788: Crash in TABLE_LIST::hide_view_error on UPDATE + VIEW + 
@@ -2494,3 +2564,320 @@ SELECT db_name.very_long_fn_name_11111111111111111111111111111111111111111111111
 --error ER_TOO_LONG_IDENT
 CALL db_name.very_long_pr_name_111111111111111111111111111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222999999999999999999999();
 --echo End of 5.1 tests
+
+--echo #
+--echo # Bug#23032: Handlers declared in a SP do not handle warnings generated in sub-SP
+--echo #
+
+--echo
+--echo # - Case 1
+--echo
+
+--disable_warnings
+DROP PROCEDURE IF EXISTS p1;
+DROP PROCEDURE IF EXISTS p2;
+DROP PROCEDURE IF EXISTS p3;
+DROP PROCEDURE IF EXISTS p4;
+DROP PROCEDURE IF EXISTS p5;
+DROP PROCEDURE IF EXISTS p6;
+--enable_warnings
+
+delimiter |;
+
+CREATE PROCEDURE p1()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+    SELECT 1;
+    CALL p2();
+  END|
+
+CREATE PROCEDURE p2()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+  END|
+
+delimiter ;|
+
+CALL p1();
+
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+
+--echo
+--echo # - Case 2
+--echo
+
+delimiter |;
+
+CREATE PROCEDURE p1()
+  BEGIN
+    DECLARE c INT DEFAULT 0;
+    DECLARE CONTINUE HANDLER FOR SQLWARNING SET c = c + 1;
+    CALL p2();
+    CALL p3();
+    CALL p4();
+    SELECT c;
+    SELECT @@warning_count;
+    SHOW WARNINGS;
+  END|
+
+CREATE PROCEDURE p2()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+  END|
+
+CREATE PROCEDURE p3()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+    SELECT 1;
+  END|
+
+CREATE PROCEDURE p4()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+    CALL p2();
+  END|
+
+CREATE PROCEDURE p5()
+  BEGIN
+    SELECT CAST('10 ' as unsigned integer);
+    SHOW WARNINGS;
+  END|
+
+CREATE PROCEDURE P6()
+  BEGIN
+    DECLARE c INT DEFAULT 0;
+    DECLARE CONTINUE HANDLER FOR SQLWARNING SET c = c + 1;
+    CALL p5();
+    SELECT c;
+  END|
+
+delimiter ;|
+
+CALL p1();
+CALL p6();
+
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+DROP PROCEDURE p3;
+DROP PROCEDURE p4;
+DROP PROCEDURE p5;
+DROP PROCEDURE p6;
+
+--echo
+--echo # - Case 3: check that "Exception trumps No Data".
+--echo
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1(a INT);
+INSERT INTO t1 VALUES (1), (2), (3);
+
+delimiter |;
+
+CREATE PROCEDURE p1()
+BEGIN
+  DECLARE c CURSOR FOR SELECT a FROM t1;
+
+  OPEN c;
+  
+  BEGIN
+    DECLARE v1 INT;
+    DECLARE v2 INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+      SELECT "Error caught (expected)";
+
+    DECLARE EXIT HANDLER FOR NOT FOUND
+      SELECT "End of Result Set found!";
+
+    WHILE TRUE DO
+      FETCH c INTO v1, v2;
+    END WHILE;
+  END;
+
+  CLOSE c;
+
+  SELECT a INTO @foo FROM t1 LIMIT 1; # Clear warning stack
+END|
+
+delimiter ;|
+
+CALL p1();
+
+DROP PROCEDURE p1;
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#36185: Incorrect precedence for warning and exception handlers
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE TABLE t1 (a INT, b INT NOT NULL);
+
+delimiter |;
+
+CREATE PROCEDURE p1()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR SQLWARNING SELECT 'warning';
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SELECT 'exception';
+  INSERT INTO t1 VALUES (CAST('10 ' AS SIGNED), NULL);
+END|
+
+delimiter ;|
+
+CALL p1();
+
+DROP TABLE t1;
+DROP PROCEDURE p1;
+
+--echo #
+--echo # Bug#5889: Exit handler for a warning doesn't hide the warning in trigger
+--echo #
+
+CREATE TABLE t1(a INT, b INT);
+INSERT INTO t1 VALUES (1, 2);
+
+delimiter |;
+
+CREATE TRIGGER t1_bu BEFORE UPDATE ON t1 FOR EACH ROW
+BEGIN
+  DECLARE EXIT HANDLER FOR SQLWARNING
+    SET NEW.a = 10;
+
+  SET NEW.a = 99999999999;
+END|
+
+delimiter ;|
+
+UPDATE t1 SET b = 20;
+
+SHOW WARNINGS;
+
+SELECT * FROM t1;
+
+DROP TRIGGER t1_bu;
+DROP TABLE t1;
+
+--echo #
+--echo # Bug#9857: Stored procedures: handler for sqlwarning ignored
+--echo #
+
+SET @sql_mode_saved = @@sql_mode;
+SET sql_mode = traditional;
+
+delimiter |;
+
+CREATE PROCEDURE p1()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR SQLWARNING
+    SELECT 'warning caught (expected)';
+  
+  SELECT 5 / 0;
+END|
+
+CREATE PROCEDURE p2()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    SELECT 'error caught (unexpected)';
+  
+  SELECT 5 / 0;
+END|
+
+delimiter ;|
+
+CALL p1();
+SHOW WARNINGS;
+
+CALL p2();
+SHOW WARNINGS;
+
+DROP PROCEDURE p1;
+DROP PROCEDURE p2;
+SET sql_mode = @sql_mode_saved;
+
+--echo #
+--echo # Bug#55850: Trigger warnings not cleared.
+--echo #
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+DROP TABLE IF EXISTS t2;
+DROP PROCEDURE IF EXISTS p1;
+--enable_warnings
+
+CREATE TABLE t1(x SMALLINT, y SMALLINT, z SMALLINT);
+CREATE TABLE t2(a SMALLINT, b SMALLINT, c SMALLINT,
+                d SMALLINT, e SMALLINT, f SMALLINT);
+
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW
+  INSERT INTO t2(a, b, c) VALUES(99999, 99999, 99999);
+
+CREATE TRIGGER t1_ai AFTER INSERT ON t1 FOR EACH ROW
+  INSERT INTO t2(d, e, f) VALUES(99999, 99999, 99999);
+
+CREATE PROCEDURE p1()
+  INSERT INTO t1 VALUES(99999, 99999, 99999);
+
+# What happened before the patch was:
+#  - INSERT INTO t1 added 3 warnings about overflow in 'x', 'y' and 'z' columns;
+#  - t1_bi run and added 3 warnings about overflow in 'a', 'b' and 'c' columns;
+#  - t1_ai run and added 3 warnings about overflow in 'd', 'e' and 'f' columns;
+# => we had 9 warnings.
+#
+# Now what happens is:
+#  - INSERT INTO t1 adds 3 warnings about overflow in 'x', 'y' and 'z' columns;
+#  - t1_bi adds 3 warnings about overflow in 'a', 'b' and 'c' columns;
+#  - The warnings added by triggers are cleared;
+#  - t1_ai run and added 3 warnings about overflow in 'd', 'e' and 'f' columns;
+#  - The warnings added by triggers are cleared;
+# => we have 3 warnings.
+
+--echo
+CALL p1();
+
+--echo
+SHOW WARNINGS;
+
+--echo
+DROP TABLE t1;
+DROP TABLE t2;
+DROP PROCEDURE p1;
+
+--echo # ----------------------------------------------------------------------
+
+CREATE TABLE t1(x SMALLINT, y SMALLINT, z SMALLINT);
+CREATE TABLE t2(a SMALLINT, b SMALLINT, c SMALLINT NOT NULL);
+
+delimiter |;
+
+CREATE TRIGGER t1_bi BEFORE INSERT ON t1 FOR EACH ROW
+BEGIN
+  INSERT INTO t2 VALUES(
+    CAST('111111 ' AS SIGNED),
+    CAST('222222 ' AS SIGNED),
+    NULL);
+END|
+
+delimiter ;|
+
+CREATE PROCEDURE p1()
+  INSERT INTO t1 VALUES(99999, 99999, 99999);
+
+--echo
+--error ER_BAD_NULL_ERROR
+CALL p1();
+
+--echo
+SHOW WARNINGS;
+
+--echo
+DROP TABLE t1;
+DROP TABLE t2;
+DROP PROCEDURE p1;

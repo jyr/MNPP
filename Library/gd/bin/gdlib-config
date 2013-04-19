@@ -56,7 +56,7 @@ while test $# -gt 0; do
 	echo $includedir
 	;;
     --version)
-	echo 2.0.34
+	echo 2.0.36
 	;;
     --majorversion)
 	echo 2
@@ -65,28 +65,28 @@ while test $# -gt 0; do
 	echo 0
 	;;
     --revision)
-	echo 34
+	echo 36
 	;;
     --ldflags)
-	echo  -L/usr/X11/lib  -L/usr/X11/lib -arch x86_64 -bind_at_load -L/Applications/MNPP/Library/jpeg/lib
+	echo  -L/usr/local/Cellar/libpng/1.5.14/lib 
 	;;
     --libs)
-	echo -lXpm -lX11 -ljpeg -lfontconfig -lfreetype -lpng -lz  -liconv
+	echo -ljpeg -lpng -lz  -liconv
 	;;
     --cflags|--includes)
 	echo -I${prefix}/include
 	;;
     --features)
-	echo GD_XPM GD_JPEG GD_FONTCONFIG GD_FREETYPE GD_PNG GD_GIF GD_GIFANIM GD_OPENPOLYGON
+	echo GD_JPEG GD_PNG GD_GIF GD_GIFANIM GD_OPENPOLYGON
 	;;
     --all)
-	echo "GD library  2.0.34"
+	echo "GD library  2.0.36"
 	echo "includedir: $includedir"
 	echo "cflags:     -I${prefix}/include"
-	echo "ldflags:     -L/usr/X11/lib  -L/usr/X11/lib -arch x86_64 -bind_at_load -L/Applications/MNPP/Library/jpeg/lib"
-	echo "libs:       -lXpm -lX11 -ljpeg -lfontconfig -lfreetype -lpng -lz  -liconv"
+	echo "ldflags:     -L/usr/local/Cellar/libpng/1.5.14/lib "
+	echo "libs:       -ljpeg -lpng -lz  -liconv"
 	echo "libdir:     $libdir"
-	echo "features:   GD_XPM GD_JPEG GD_FONTCONFIG GD_FREETYPE GD_PNG GD_GIF GD_GIFANIM GD_OPENPOLYGON"
+	echo "features:   GD_JPEG GD_PNG GD_GIF GD_GIFANIM GD_OPENPOLYGON"
 	;;
     *)
 	usage 1 1>&2

@@ -1,6 +1,3 @@
-set @saved_binlog_format = @@global.binlog_format;
-SET SESSION BINLOG_FORMAT=ROW;
-SET GLOBAL BINLOG_FORMAT=ROW;
 stop slave;
 drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
 reset master;
@@ -20,6 +17,8 @@ reset slave;
 set @my_max_binlog_size= @@global.max_binlog_size;
 set global max_binlog_size=8192;
 set global max_relay_log_size=8192-1;
+Warnings:
+Warning	1292	Truncated incorrect max_relay_log_size value: '8191'
 select @@global.max_relay_log_size;
 @@global.max_relay_log_size
 4096
@@ -73,4 +72,3 @@ set global max_binlog_size= @my_max_binlog_size;
 #
 # End of 4.1 tests
 # 
-SET GLOBAL BINLOG_FORMAT= @saved_binlog_format;

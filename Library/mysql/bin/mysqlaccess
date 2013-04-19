@@ -481,8 +481,8 @@ MySQLaccess::Report::Print_Header();
   if (-f "./$script_conf") {
      require "./$script_conf";
   }
-  elsif (-f "/Applications/MNPP/Library/mysql/etc/$script_conf") {
-     require "/Applications/MNPP/Library/mysql/etc/$script_conf";
+  elsif (-f "/Applications/MNPP/Library/mysql/$script_conf") {
+     require "/Applications/MNPP/Library/mysql/$script_conf";
   }
   elsif (-f "/etc/$script_conf") {
      require "/etc/$script_conf";
@@ -951,7 +951,7 @@ sub MergeConfigFile {
 # =================================
 sub MergeConfigFiles {
     my ($name,$pass,$uid,$gid,$quota,$comment,$gcos,$dir,$shell) = getpwuid $<;
-    MergeConfigFile("/Applications/MNPP/Library/mysql/etc/my.cnf");
+    MergeConfigFile("/Applications/MNPP/Library/mysql/my.cnf");
     MergeConfigFile("/etc/my.cnf");
     MergeConfigFile("$dir/.my.cnf");
 }

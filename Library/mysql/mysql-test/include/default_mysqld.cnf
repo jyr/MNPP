@@ -11,13 +11,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 # Default values that applies to all MySQL Servers
 [mysqld]
 open-files-limit=           1024
 local-infile
-default-character-set=      latin1
+character-set-server=      latin1
 
 # Increase default connect_timeout to avoid intermittent
 # disconnects when test servers are put under load see BUG#28359
@@ -29,8 +29,25 @@ sort_buffer=                256K
 max_heap_table_size=        1M
 
 loose-innodb_data_file_path=      ibdata1:10M:autoextend
+loose-innodb_buffer_pool_size=    32M
+loose-innodb_write_io_threads=    2
+loose-innodb_read_io_threads=     2
+loose-innodb_log_buffer_size=     1M
+loose-innodb_log_file_size=       5M
+loose-innodb_additional_mem_pool_size= 1M
+loose-innodb_log_files_in_group=  2
 
 slave-net-timeout=120
 
 log-bin=mysqld-bin
 
+# Run tests with the performance schema instrumentation
+loose-enable-performance-schema
+# Run tests with a small number of instrumented objects
+# to limit memory consumption with MTR
+loose-performance-schema-max-mutex-instances=10000
+loose-performance-schema-max-rwlock-instances=10000
+loose-performance-schema-max-table-instances=500
+loose-performance-schema-max-table-handles=1000
+
+binlog-direct-non-transactional-updates
