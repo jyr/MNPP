@@ -1,5 +1,5 @@
 ===== Information about the build process: =====
-Build was run at 2013-04-19 04:59:17 on host 'MacBook-Pro-de-Jair.local'
+Build was run at 2013-04-19 23:49:39 on host 'MacBook-Pro-de-Jair.local'
 
 Build was done on  Darwin-12.0.0 using i386
 Build was done using cmake 2.8.10 
@@ -7,9 +7,9 @@ Build was done using cmake 2.8.10
 ===== Compiler flags used (from the 'sql/' subdirectory): =====
 # compile C with /usr/bin/cc
 # compile CXX with /usr/bin/c++
-C_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/include -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/sql -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/regex   
+C_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer  -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/include -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/sql -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/regex   
 C_DEFINES = -DDBUG_OFF -DHAVE_CONFIG_H -DHAVE_EVENT_SCHEDULER -DHAVE_POOL_OF_THREADS -DHAVE_RESPONSE_TIME_DISTRIBUTION -DMYSQL_SERVER
-CXX_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti  -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/include -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/sql -I/Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/regex   
+CXX_FLAGS = -arch i386 -arch x86_64 -O3 -fno-omit-frame-pointer -felide-constructors -fno-exceptions -fno-rtti  -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/include -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/sql -I/Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/regex   
 CXX_DEFINES = -DDBUG_OFF -DHAVE_CONFIG_H -DHAVE_EVENT_SCHEDULER -DHAVE_POOL_OF_THREADS -DHAVE_RESPONSE_TIME_DISTRIBUTION -DMYSQL_SERVER
 
 Pointer size: 8
