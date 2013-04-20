@@ -15,9 +15,5 @@
 *.log
 *.err
 
-# Databases #
-#############
-Library/mysql/var/*
-
 # Processes #
 *.pid

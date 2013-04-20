@@ -42,10 +42,10 @@ EQUALS = =
 CMAKE_EDIT_COMMAND = /usr/local/Cellar/cmake/2.8.10.2/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2
+CMAKE_SOURCE_DIR = /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2
+CMAKE_BINARY_DIR = /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -104,7 +104,7 @@ list_install_components/fast: list_install_components
 # Special rule for the target package
 package: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool..."
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && /usr/local/Cellar/cmake/2.8.10.2/bin/cpack --config ./CPackConfig.cmake
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && /usr/local/Cellar/cmake/2.8.10.2/bin/cpack --config ./CPackConfig.cmake
 .PHONY : package
 
 # Special rule for the target package
@@ -114,7 +114,7 @@ package/fast: package
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && /usr/local/Cellar/cmake/2.8.10.2/bin/cpack --config ./CPackSourceConfig.cmake /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/CPackSourceConfig.cmake
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && /usr/local/Cellar/cmake/2.8.10.2/bin/cpack --config ./CPackSourceConfig.cmake /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/CPackSourceConfig.cmake
 .PHONY : package_source
 
 # Special rule for the target package_source
@@ -143,14 +143,14 @@ test/fast: test
 
 # The main all target
 all: cmake_check_build_system
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -E cmake_progress_start /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/CMakeFiles /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/mysql-test/CMakeFiles/progress.marks
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2/CMakeFiles 0
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -E cmake_progress_start /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/CMakeFiles /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/mysql-test/CMakeFiles/progress.marks
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/clean
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/clean
 .PHONY : clean
 
 # The main clean target
@@ -159,22 +159,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/preinstall
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/preinstall
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 mysql-test/CMakeFiles/test-bt.dir/rule:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt.dir/rule
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt.dir/rule
 .PHONY : mysql-test/CMakeFiles/test-bt.dir/rule
 
 # Convenience name for target.
@@ -183,12 +183,12 @@ test-bt: mysql-test/CMakeFiles/test-bt.dir/rule
 
 # fast build rule for target.
 test-bt/fast:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt.dir/build.make mysql-test/CMakeFiles/test-bt.dir/build
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt.dir/build.make mysql-test/CMakeFiles/test-bt.dir/build
 .PHONY : test-bt/fast
 
 # Convenience name for target.
 mysql-test/CMakeFiles/test-bt-debug.dir/rule:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt-debug.dir/rule
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt-debug.dir/rule
 .PHONY : mysql-test/CMakeFiles/test-bt-debug.dir/rule
 
 # Convenience name for target.
@@ -197,12 +197,12 @@ test-bt-debug: mysql-test/CMakeFiles/test-bt-debug.dir/rule
 
 # fast build rule for target.
 test-bt-debug/fast:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt-debug.dir/build.make mysql-test/CMakeFiles/test-bt-debug.dir/build
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt-debug.dir/build.make mysql-test/CMakeFiles/test-bt-debug.dir/build
 .PHONY : test-bt-debug/fast
 
 # Convenience name for target.
 mysql-test/CMakeFiles/test-bt-fast.dir/rule:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt-fast.dir/rule
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-bt-fast.dir/rule
 .PHONY : mysql-test/CMakeFiles/test-bt-fast.dir/rule
 
 # Convenience name for target.
@@ -211,12 +211,12 @@ test-bt-fast: mysql-test/CMakeFiles/test-bt-fast.dir/rule
 
 # fast build rule for target.
 test-bt-fast/fast:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt-fast.dir/build.make mysql-test/CMakeFiles/test-bt-fast.dir/build
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-bt-fast.dir/build.make mysql-test/CMakeFiles/test-bt-fast.dir/build
 .PHONY : test-bt-fast/fast
 
 # Convenience name for target.
 mysql-test/CMakeFiles/test-force.dir/rule:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-force.dir/rule
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f CMakeFiles/Makefile2 mysql-test/CMakeFiles/test-force.dir/rule
 .PHONY : mysql-test/CMakeFiles/test-force.dir/rule
 
 # Convenience name for target.
@@ -225,7 +225,7 @@ test-force: mysql-test/CMakeFiles/test-force.dir/rule
 
 # fast build rule for target.
 test-force/fast:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-force.dir/build.make mysql-test/CMakeFiles/test-force.dir/build
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(MAKE) -f mysql-test/CMakeFiles/test-force.dir/build.make mysql-test/CMakeFiles/test-force.dir/build
 .PHONY : test-force/fast
 
 # Help Target
@@ -258,6 +258,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /Applications/MNPP/src/jpeg-9/libpng-1.6.1/freetype-2.4.11/gettext-0.18.2/libmcrypt-2.5.8/mcrypt-2.6.8/libxml2-2.8.0/libxslt-1.1.28/libiconv-1.14/mhash-0.9.9.9/gd-2.0.36RC1/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /Applications/MNPP/src/Percona-Server-5.5.30-rel30.2 && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
