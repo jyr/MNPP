@@ -1,5 +1,6 @@
 #MNPP  Mac + Nginx + Percona + PHP
 ###A high performance web server in a one-click installer.
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/jyr/MNPP?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Contributors
 **This project is currently maintained by the following people:**    
